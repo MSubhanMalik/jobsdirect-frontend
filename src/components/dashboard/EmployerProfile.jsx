@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { digify } from "@/api/digifyClient";
+import employerService from "@/services/employer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
-import { useAuth } from "@/lib/AuthContext";
+import { toast } from "react-toastify";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { getAdultDateMax, isAtLeast18 } from "@/lib/age";
 import FormFieldRenderer from "@/components/forms/FormFieldRenderer";
 import {
@@ -22,12 +22,11 @@ function createEmployerForm(employer) {
 }
 
 export default function EmployerProfile({ employer, setEmployer }) {
-  const { toast } = useToast();
-  const { appPublicSettings } = useAuth();
+  const { settings: appSettings } = useSiteSettings();
   const [form, setForm] = useState(() => createEmployerForm(employer));
   const [saving, setSaving] = useState(false);
   const maxDateOfBirth = getAdultDateMax();
-  const companyFormConfig = appPublicSettings?.public_settings?.employer_company_form_config || {};
+  const companyFormConfig = appSettings?.employer_company_form_config || {};
 
   useEffect(() => {
     setForm(createEmployerForm(employer));
@@ -51,11 +50,7 @@ export default function EmployerProfile({ employer, setEmployer }) {
 
   const handleSave = async () => {
     if (form.date_of_birth && !isAtLeast18(form.date_of_birth)) {
-      toast({
-        title: "Invalid Date of Birth",
-        description: "Employer profile users must be at least 18 years old.",
-        variant: "destructive",
-      });
+      toast.error("Invalid Date of Birth — Employer profile users must be at least 18 years old.");
       return;
     }
 
@@ -63,11 +58,7 @@ export default function EmployerProfile({ employer, setEmployer }) {
       for (const field of group.fields) {
         const control = companyFormConfig?.[field.key];
         if (control?.required && !hasFieldValue(field, form[field.key])) {
-          toast({
-            title: "Missing required field",
-            description: `${field.label} is required before saving this profile.`,
-            variant: "destructive",
-          });
+          toast.error(`Missing required field — ${field.label} is required before saving this profile.`);
           return;
         }
       }
@@ -75,9 +66,9 @@ export default function EmployerProfile({ employer, setEmployer }) {
 
     setSaving(true);
     try {
-      const updated = await digify.entities.Employer.update(employer.id, form);
+      const updated = await employerService.update(employer.id, form);
       setEmployer({ ...employer, ...updated });
-      toast({ title: "Profile Updated", description: "Your employer profile has been saved." });
+      toast.success("Profile Updated — Your employer profile has been saved.");
     } finally {
       setSaving(false);
     }
@@ -91,7 +82,7 @@ export default function EmployerProfile({ employer, setEmployer }) {
       <CardContent className="space-y-6">
         {!visibleGroups.length ? (
           <div className="rounded-lg border border-dashed p-5 text-sm text-muted-foreground">
-            All employer company fields are currently hidden. Enable them from Super Admin Site CMS.
+            All employer company fields are currently hidden. Enable them from Admin Site CMS.
           </div>
         ) : null}
 

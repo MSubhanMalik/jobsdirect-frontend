@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { digify } from "@/api/digifyClient";
+import jobService from "@/services/job";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,17 +19,19 @@ const jobTypeLabels = {
 };
 
 export default function FeaturedJobs() {
-  const { data: jobs = [], isLoading } = useQuery({
+  const { data: featuredData, isLoading } = useQuery({
     queryKey: ["featured-jobs"],
-    queryFn: () => digify.entities.Job.filter({ status: "approved", is_featured: true }, "-created_date", 6),
+    queryFn: () => jobService.list({ status: "approved", is_featured: "true", pageSize: 6 }),
   });
+  const jobs = featuredData?.items || [];
 
   // If no featured jobs, show latest approved
-  const { data: latestJobs = [] } = useQuery({
+  const { data: latestData } = useQuery({
     queryKey: ["latest-jobs"],
-    queryFn: () => digify.entities.Job.filter({ status: "approved" }, "-created_date", 6),
+    queryFn: () => jobService.list({ status: "approved", pageSize: 6 }),
     enabled: !isLoading && jobs.length === 0,
   });
+  const latestJobs = latestData?.items || [];
 
   const displayJobs = jobs.length > 0 ? jobs : latestJobs;
 

@@ -181,7 +181,7 @@ export const COMPANY_FIELD_GROUPS = [
   {
     id: "admin",
     title: "Admin Controls",
-    description: "Super admin only controls.",
+    description: "Admin only controls.",
     fields: [
       field("verification_status", { label: "Verification Status", type: "select", options: [
         { value: "draft", label: "Draft" },
@@ -269,13 +269,12 @@ export const JOB_FIELD_GROUPS = [
     fields: [
       field("benefits", { label: "Benefits", type: "textarea", defaultValue: "", employerDefaultVisible: true, span: 2 }),
       field("is_featured", { label: "Featured Listing", type: "boolean", defaultValue: false, employerDefaultVisible: true }),
-      field("is_highlighted", { label: "Highlighted Listing", type: "boolean", defaultValue: false, employerDefaultVisible: true }),
     ],
   },
   {
     id: "admin",
     title: "Admin Controls",
-    description: "Super admin only controls.",
+    description: "Admin only controls.",
     fields: [
       field("status", { label: "Status", type: "select", options: [
         { value: "approved", label: "Live" },
@@ -326,6 +325,20 @@ export const EMPLOYER_JOB_FORM_CONTROL_DEFAULTS = JOB_FIELDS
     return acc;
   }, {});
 
+export const DEFAULT_PRICING_PRODUCTS = {
+  JOB_28_DAY: "prod_UQThsVxVfaPvOw",
+  DUPLICATE_JOB: "prod_UQTeSnBFgn8oQK",
+  IMPORT_JOB: "prod_UQTg3IhpffMh9g",
+  ADDON_FEATURED: "prod_UQTjviX3572NOe",
+};
+
+export const DEFAULT_PAYMENT_PLANS = [
+  { id: "credit_1", label: "1 Credit", description: "1 job listing credit (28-day posting)", stripe_product_id: "prod_UQUFjROQmVu0tN", kind: "credits", credits_cents: 1500, mode: "payment", enabled: true },
+  { id: "credit_5", label: "5 Credits", description: "5 job listing credits (bulk discount)", stripe_product_id: "prod_UQUFyUvzYVhPle", kind: "credits", credits_cents: 7500, mode: "payment", enabled: true },
+  { id: "credit_10", label: "10 Credits", description: "10 job listing credits (best value)", stripe_product_id: "prod_UQUGjvbTa5pH35", kind: "credits", credits_cents: 15000, mode: "payment", enabled: true },
+  { id: "candidate_db", label: "Candidate Database", description: "Monthly access to the full candidate database", stripe_product_id: "prod_UQUIq75PfheouQ", kind: "candidate_database", credits_cents: 0, mode: "subscription", enabled: true },
+];
+
 export const DEFAULT_SITE_SETTINGS = {
   auth_required: false,
   brand_name: "JobsDirect.ie",
@@ -343,6 +356,8 @@ export const DEFAULT_SITE_SETTINGS = {
   featured_jobs_enabled: true,
   employer_approval_required: true,
   job_approval_required: true,
+  pricing_products: DEFAULT_PRICING_PRODUCTS,
+  payment_plans: DEFAULT_PAYMENT_PLANS,
   employer_company_form_config: EMPLOYER_COMPANY_FORM_CONTROL_DEFAULTS,
   employer_job_form_config: EMPLOYER_JOB_FORM_CONTROL_DEFAULTS,
 };
@@ -371,6 +386,8 @@ export function mergeSiteSettingsWithDefaults(settings = {}) {
   return {
     ...DEFAULT_SITE_SETTINGS,
     ...settings,
+    pricing_products: { ...DEFAULT_PRICING_PRODUCTS, ...(settings?.pricing_products || {}) },
+    payment_plans: Array.isArray(settings?.payment_plans) ? settings.payment_plans : [],
     employer_company_form_config: mergeFieldControlConfig(
       EMPLOYER_COMPANY_FORM_CONTROL_DEFAULTS,
       settings?.employer_company_form_config,

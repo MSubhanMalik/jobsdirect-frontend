@@ -5,12 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, MapPin, Briefcase, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
-import { useAuth } from "@/lib/AuthContext";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 export default function HeroSection() {
   const navigate = useNavigate();
-  const { appPublicSettings } = useAuth();
-  const settings = appPublicSettings?.public_settings || {};
+  const { settings } = useSiteSettings();
   const [keyword, setKeyword] = useState("");
   const [location, setLocation] = useState("");
   const [jobType, setJobType] = useState("");

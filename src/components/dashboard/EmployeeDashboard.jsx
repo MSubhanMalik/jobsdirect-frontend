@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { digify } from "@/api/digifyClient";
+import authService from "@/services/auth";
+import applicationService from "@/services/application";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -32,10 +33,11 @@ export default function EmployeeDashboard({ user, employee, setEmployee }) {
     window.sessionStorage.setItem(tabStorageKey, activeTab);
   }, [tabStorageKey, activeTab]);
 
-  const { data: applications = [] } = useQuery({
+  const { data: appsData } = useQuery({
     queryKey: ["my-applications", user.email],
-    queryFn: () => digify.entities.Application.filter({ employee_email: user.email }, "-created_date"),
+    queryFn: () => applicationService.list({ employee_email: user.email, pageSize: 100 }),
   });
+  const applications = appsData?.items || [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -53,7 +55,7 @@ export default function EmployeeDashboard({ user, employee, setEmployee }) {
             <Button
               variant="ghost"
               className="text-accent-foreground/60 hover:text-accent-foreground"
-              onClick={() => digify.auth.logout("/")}
+              onClick={() => authService.logout("/")}
             >
               <LogOut className="w-4 h-4 mr-2" />
               Logout

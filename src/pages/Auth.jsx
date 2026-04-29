@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AlertCircle, Briefcase, KeyRound, Lock, Mail, User } from 'lucide-react';
-import { digify } from '@/api/digifyClient';
+import authService from "@/services/auth";
+import { useAuthStore } from "@/stores/authStore";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -105,23 +106,25 @@ export default function Auth() {
 
     try {
       if (mode === 'register') {
-        await digify.auth.register(form);
+        const result = await authService.register(form);
+        if (result.user) useAuthStore.getState().setUser(result.user);
         navigate('/verify-email', { replace: true });
         return;
       }
 
       if (mode === 'login') {
-        const result = await digify.auth.login(form);
-        if (result.emailVerified === false) {
+        const result = await authService.login(form);
+        if (result.user?.emailVerified === false) {
           navigate('/verify-email', { replace: true });
           return;
         }
+        if (result.user) useAuthStore.getState().setUser(result.user);
         navigate(redirectTo, { replace: true });
         return;
       }
 
       if (mode === 'forgot') {
-        const result = await digify.auth.forgotPassword({ email: forgotEmail });
+        const result = await authService.forgotPassword({ email: forgotEmail });
         setInfo(
           result.reset_token
             ? `Reset token generated: ${result.reset_token}`
@@ -136,7 +139,7 @@ export default function Auth() {
         return;
       }
 
-      await digify.auth.resetPassword(resetForm);
+      await authService.resetPassword(resetForm);
       setInfo('Password reset successful. You can now sign in.');
       setResetForm((current) => ({ ...current, password: '' }));
       setForm((current) => ({ ...current, password: '' }));
@@ -180,8 +183,9 @@ export default function Auth() {
                       setError('');
                       setSubmitting(true);
                       try {
-                        const result = await digify.auth.googleAuth(credential);
+                        const result = await authService.googleAuth(credential);
                         if (result.user) {
+                          useAuthStore.getState().setUser(result.user);
                           navigate(redirectTo, { replace: true });
                         }
                       } catch (err) {
@@ -280,8 +284,6 @@ export default function Auth() {
                       />
                     </div>
                   </div>
-                )}
-
                 )}
 
                 {mode === 'forgot' && (

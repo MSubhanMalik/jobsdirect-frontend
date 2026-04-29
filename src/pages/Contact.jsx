@@ -4,13 +4,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
-import { digify } from "@/api/digifyClient";
+import { toast } from "react-toastify";
+import contactService from "@/services/contact";
 import { Mail, Phone, MapPin, Send, CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Contact() {
-  const { toast } = useToast();
   const [form, setForm] = useState({ name: "", email: "", phone: "", subject: "", message: "" });
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
@@ -18,10 +17,10 @@ export default function Contact() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSending(true);
-    await digify.entities.ContactMessage.create(form);
+    await contactService.create(form);
     setSending(false);
     setSent(true);
-    toast({ title: "Message Sent", description: "We'll get back to you soon." });
+    toast.success("Message Sent — We'll get back to you soon.");
   };
 
   return (

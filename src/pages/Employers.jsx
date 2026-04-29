@@ -7,7 +7,7 @@ import {
   ArrowRight, Star, Zap
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { digify } from "@/api/digifyClient";
+import authService from "@/services/auth";
 
 const benefits = [
   { icon: FileText, title: "Flexible Job Posting", description: "Post jobs with 14-day free listings or 28-day premium placements." },
@@ -46,7 +46,7 @@ export default function Employers() {
             <Button
               size="lg"
               className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold"
-              onClick={() => digify.auth.redirectToLogin()}
+              onClick={() => authService.redirectToLogin()}
             >
               Register as Employer
               <ArrowRight className="w-4 h-4 ml-2" />
@@ -117,7 +117,7 @@ export default function Employers() {
           <Button
             size="lg"
             className="bg-primary hover:bg-primary/90 font-semibold"
-            onClick={() => digify.auth.redirectToLogin()}
+            onClick={() => authService.redirectToLogin()}
           >
             <Zap className="w-4 h-4 mr-2" />
             Get Started Now

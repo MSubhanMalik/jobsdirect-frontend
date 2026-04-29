@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { digify } from "@/api/digifyClient";
+import employerService from "@/services/employer";
+import employeeService from "@/services/employee";
 import { Building2, User } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -14,7 +15,7 @@ export default function RoleSelector({ user, onCreated }) {
     setCreating(true);
     try {
       if (role === "employer") {
-        const employer = await digify.entities.Employer.create({
+        const employer = await employerService.create({
           first_name: firstName,
           last_name: lastName,
           company_name: "",
@@ -22,7 +23,7 @@ export default function RoleSelector({ user, onCreated }) {
         });
         onCreated("employer", employer);
       } else {
-        const employee = await digify.entities.Employee.create({
+        const employee = await employeeService.create({
           first_name: firstName,
           last_name: lastName,
         });

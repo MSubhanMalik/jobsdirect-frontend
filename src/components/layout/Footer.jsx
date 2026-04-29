@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Briefcase, Mail, Phone, MapPin } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/lib/AuthContext";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 const footerLinks = {
   Platform: [
@@ -24,8 +24,7 @@ const footerLinks = {
 };
 
 export default function Footer() {
-  const { appPublicSettings } = useAuth();
-  const settings = appPublicSettings?.public_settings || {};
+  const { settings } = useSiteSettings();
   const brandName = settings.brand_name || "JobsDirect.ie";
 
   return (

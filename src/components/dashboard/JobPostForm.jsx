@@ -1,12 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { digify } from "@/api/digifyClient";
+import jobService from "@/services/job";
+import paymentService from "@/services/payment";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/components/ui/use-toast";
-import { useAuth } from "@/lib/AuthContext";
+import { toast } from "react-toastify";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 import FormFieldRenderer from "@/components/forms/FormFieldRenderer";
 import {
   JOB_FIELD_GROUPS,
@@ -28,9 +29,7 @@ function formatCents(cents) {
 }
 
 export default function JobPostForm({ employer, user, initialJob = null, autoFocusTitle = false, onClose, onSuccess }) {
-  const { toast } = useToast();
-  const { appPublicSettings } = useAuth();
-  const publicSettings = appPublicSettings?.public_settings || {};
+  const { settings: publicSettings } = useSiteSettings();
   const approvalRequired = publicSettings.job_approval_required !== false;
   const titleInputRef = useRef(null);
   const [submitting, setSubmitting] = useState(false);
@@ -45,7 +44,6 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
   const [listingType, setListingType] = useState(initialJob ? "paid" : "free");
   const [addons, setAddons] = useState({
     isFeatured: Boolean(initialJob?.is_featured),
-    isHighlighted: Boolean(initialJob?.is_highlighted),
   });
   const [balance, setBalance] = useState(null);
   const [pricing, setPricing] = useState(null);
@@ -54,8 +52,8 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
 
   // Load balance and pricing
   useEffect(() => {
-    digify.payments.getBalance(employer?.id).then(setBalance).catch(() => {});
-    digify.payments.getPricing().then(setPricing).catch(() => {});
+    paymentService.getBalance(employer?.id).then(setBalance).catch(() => {});
+    paymentService.getPricing().then(setPricing).catch(() => {});
   }, [employer?.id]);
 
   const canPostFree = balance?.canPostFree && !isEditing;
@@ -69,7 +67,6 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
     let cost = pricing.JOB_28_DAY;
     if (copyFromJobsIreland && scraped) cost = pricing.IMPORT_JOB;
     if (addons.isFeatured) cost += pricing.ADDON_FEATURED;
-    if (addons.isHighlighted) cost += pricing.ADDON_HIGHLIGHTED;
     return cost;
   }, [listingType, addons, copyFromJobsIreland, scraped, pricing, isEditing]);
 
@@ -108,11 +105,7 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
       for (const field of group.fields) {
         const control = jobFormConfig?.[field.key];
         if (control?.required && !hasFieldValue(field, form[field.key])) {
-          toast({
-            title: "Missing required field",
-            description: `${field.label} is required before submitting this job.`,
-            variant: "destructive",
-          });
+          toast.error(`Missing required field — ${field.label} is required before submitting this job.`);
           return false;
         }
       }
@@ -137,7 +130,6 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
         status: initialJob?.status || (approvalRequired ? "pending_review" : "approved"),
         source: copyFromJobsIreland && scraped ? "jobsireland" : (initialJob?.source || "manual"),
         is_featured: addons.isFeatured,
-        is_highlighted: addons.isHighlighted,
       };
 
       if (!isEditing) {
@@ -146,29 +138,24 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
       }
 
       if (isEditing) {
-        await digify.entities.Job.update(initialJob.id, payload);
+        await jobService.update(initialJob.id, payload);
       } else {
-        await digify.entities.Job.create(payload);
+        await jobService.create(payload);
       }
 
       // Refresh balance
-      digify.payments.getBalance(employer?.id).then(setBalance).catch(() => {});
+      paymentService.getBalance(employer?.id).then(setBalance).catch(() => {});
 
-      toast({
-        title: isEditing ? "Job Updated" : "Job Submitted",
-        description: isEditing
-          ? "Your job listing has been updated."
+      toast.success(
+        isEditing
+          ? "Job Updated — Your job listing has been updated."
           : listingType === "free"
-            ? "Your free 14-day listing has been submitted for review."
-            : `Your 28-day listing has been submitted. ${formatCents(costCents)} deducted from credits.`,
-      });
+            ? "Job Submitted — Your free 14-day listing has been submitted for review."
+            : `Job Submitted — Your 28-day listing has been submitted. ${formatCents(costCents)} deducted from credits.`
+      );
       onSuccess();
     } catch (error) {
-      toast({
-        title: "Could not save",
-        description: error.message || "Please check the details and try again.",
-        variant: "destructive",
-      });
+      toast.error(`Could not save — ${error.message || "Please check the details and try again."}`);
     } finally {
       setSubmitting(false);
     }
@@ -176,18 +163,13 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
 
   const handleScrape = async () => {
     if (!/^\d{7}$/.test(jobRef)) {
-      toast({
-        title: "Invalid Reference",
-        description: "Please enter a valid 7-digit Job Reference Number.",
-        variant: "destructive",
-      });
+      toast.error("Invalid Reference — Please enter a valid 7-digit Job Reference Number.");
       return;
     }
 
     setScraping(true);
     try {
-      const response = await digify.functions.invoke("scrapeJobsIreland", { ref: jobRef });
-      const data = response.data?.data?.response || response.data?.data || {};
+      const data = await jobService.scrapeJobsIreland({ ref: jobRef });
       setForm((current) => ({
         ...current,
         title: data.title || current.title,
@@ -209,16 +191,9 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
       }));
       setScraped(true);
       setListingType("paid"); // Imported jobs are always paid
-      toast({
-        title: "Job Details Imported!",
-        description: "Fields have been pre-filled. Please review and edit before submitting.",
-      });
+      toast.success("Job Details Imported! Fields have been pre-filled. Please review and edit before submitting.");
     } catch (error) {
-      toast({
-        title: "Import Failed",
-        description: error.message || "Could not fetch job from JobsIreland.ie",
-        variant: "destructive",
-      });
+      toast.error(`Import Failed — ${error.message || "Could not fetch job from JobsIreland.ie"}`);
     } finally {
       setScraping(false);
     }
@@ -302,19 +277,6 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
                       <span className="text-xs text-muted-foreground">Shown in featured carousel on homepage</span>
                     </div>
                     <span className="text-xs font-semibold">{pricing ? formatCents(pricing.ADDON_FEATURED) : "€5.00"}</span>
-                  </label>
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <Checkbox
-                      checked={addons.isHighlighted}
-                      onCheckedChange={(v) => setAddons((a) => ({ ...a, isHighlighted: Boolean(v) }))}
-                    />
-                    <div className="flex-1">
-                      <span className="text-sm font-medium flex items-center gap-1">
-                        <Sparkles className="h-3.5 w-3.5 text-blue-500" /> Highlighted
-                      </span>
-                      <span className="text-xs text-muted-foreground">Stands out with highlight in search results</span>
-                    </div>
-                    <span className="text-xs font-semibold">{pricing ? formatCents(pricing.ADDON_HIGHLIGHTED) : "€5.00"}</span>
                   </label>
                 </div>
               )}
@@ -403,7 +365,7 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
           {/* ─── Job Form Fields ─── */}
           {!visibleGroups.length ? (
             <div className="rounded-lg border border-dashed p-5 text-sm text-muted-foreground">
-              All employer job fields are currently hidden. Enable them from Super Admin Site CMS.
+              All employer job fields are currently hidden. Enable them from Admin Site CMS.
             </div>
           ) : null}
 

@@ -1,6 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
-import { digify } from "@/api/digifyClient";
+import { useQuery } from "@tanstack/react-query";
+import { useAuthStore } from "@/stores/authStore";
+import authService from "@/services/auth";
+import employerService from "@/services/employer";
+import employeeService from "@/services/employee";
 import { Skeleton } from "@/components/ui/skeleton";
 import EmployerDashboard from "../components/dashboard/EmployerDashboard";
 import EmployeeDashboard from "../components/dashboard/EmployeeDashboard";
@@ -8,37 +12,46 @@ import RoleSelector from "../components/dashboard/RoleSelector";
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
-  const [employer, setEmployer] = useState(null);
-  const [employee, setEmployee] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user, isAuthenticated, isLoading: authLoading } = useAuthStore();
 
-  useEffect(() => {
-    const load = async () => {
-      const authed = await digify.auth.isAuthenticated();
-      if (!authed) {
-        digify.auth.redirectToLogin("/dashboard");
-        return;
-      }
-      const me = await digify.auth.me();
-      setUser(me);
+  // Redirect unauthenticated users once auth finishes loading
+  React.useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      authService.redirectToLogin("/dashboard");
+    }
+    if (!authLoading && user?.role === "admin") {
+      navigate("/admin");
+    }
+  }, [authLoading, isAuthenticated, user, navigate]);
 
-      if (me.role === "admin") {
-        navigate("/admin");
-        return;
-      }
+  // Fetch employer and employee profiles in parallel (not waterfall)
+  const { data: employerData, isLoading: employerLoading } = useQuery({
+    queryKey: ["my-employer", user?.email],
+    queryFn: () => employerService.list({ user_email: user.email }),
+    enabled: !!user && user.role !== "admin",
+  });
 
-      // Check if user has employer or employee profile
-      const employers = await digify.entities.Employer.filter({ user_email: me.email });
-      if (employers.length > 0) setEmployer(employers[0]);
+  const { data: employeeData, isLoading: employeeLoading } = useQuery({
+    queryKey: ["my-employee", user?.email],
+    queryFn: () => employeeService.list({ user_email: user.email }),
+    enabled: !!user && user.role !== "admin",
+  });
 
-      const employees = await digify.entities.Employee.filter({ user_email: me.email });
-      if (employees.length > 0) setEmployee(employees[0]);
+  const [employer, setEmployer] = React.useState(null);
+  const [employee, setEmployee] = React.useState(null);
 
-      setLoading(false);
-    };
-    load();
-  }, [navigate]);
+  // Sync query results to local state
+  React.useEffect(() => {
+    const items = employerData?.items || [];
+    if (items.length > 0) setEmployer(items[0]);
+  }, [employerData]);
+
+  React.useEffect(() => {
+    const items = employeeData?.items || [];
+    if (items.length > 0) setEmployee(items[0]);
+  }, [employeeData]);
+
+  const loading = authLoading || !user || employerLoading || employeeLoading;
 
   if (loading) {
     return (

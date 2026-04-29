@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { digify } from "@/api/digifyClient";
+import employeeService from "@/services/employee";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "react-toastify";
 import { getAdultDateMax, isAtLeast18 } from "@/lib/age";
 import { Save, Plus, Trash2 } from "lucide-react";
 
@@ -45,7 +45,6 @@ function createFormState(employee) {
 }
 
 export default function EmployeeProfile({ employee, setEmployee }) {
-  const { toast } = useToast();
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(() => createFormState(employee));
   const [newSkill, setNewSkill] = useState("");
@@ -57,19 +56,15 @@ export default function EmployeeProfile({ employee, setEmployee }) {
 
   const handleSave = async () => {
     if (!isAtLeast18(form.date_of_birth)) {
-      toast({
-        title: "Invalid Date of Birth",
-        description: "Employee profile users must be at least 18 years old.",
-        variant: "destructive",
-      });
+      toast.error("Invalid Date of Birth — Employee profile users must be at least 18 years old.");
       return;
     }
 
     setSaving(true);
-    await digify.entities.Employee.update(employee.id, { ...form, profile_completed: true });
+    await employeeService.update(employee.id, { ...form, profile_completed: true });
     setEmployee({ ...employee, ...form, profile_completed: true });
     setSaving(false);
-    toast({ title: "Profile Updated" });
+    toast.success("Profile Updated");
   };
 
   const addSkill = () => {

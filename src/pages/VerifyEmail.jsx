@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { CheckCircle2, XCircle, Loader2, Mail } from 'lucide-react';
-import { digify } from '@/api/digifyClient';
+import authService from "@/services/auth";
+import { useAuthStore } from "@/stores/authStore";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -20,7 +21,8 @@ export default function VerifyEmail() {
 
     const verify = async () => {
       try {
-        await digify.auth.verifyEmail({ token });
+        const result = await authService.verifyEmail({ token });
+        if (result.user) useAuthStore.getState().setUser(result.user);
         setStatus('success');
       } catch (err) {
         setStatus('error');
@@ -35,7 +37,7 @@ export default function VerifyEmail() {
     setResending(true);
     setResendInfo('');
     try {
-      const result = await digify.auth.resendVerification();
+      const result = await authService.resendVerification();
       setResendInfo(result?.message || 'A new verification email has been sent. Check your inbox.');
     } catch (err) {
       setResendInfo(err.message || 'Could not resend verification email.');
@@ -128,7 +130,7 @@ export default function VerifyEmail() {
                     type="button"
                     className="mt-4 text-sm font-medium text-slate-500 hover:text-slate-800"
                     onClick={() => {
-                      digify.auth.logout('/auth');
+                      authService.logout('/auth');
                     }}
                   >
                     Sign in with a different account

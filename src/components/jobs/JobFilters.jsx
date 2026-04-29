@@ -3,33 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Search, MapPin, X } from "lucide-react";
-
-const categories = [
-  { value: "technology", label: "Technology" },
-  { value: "healthcare", label: "Healthcare" },
-  { value: "finance", label: "Finance" },
-  { value: "education", label: "Education" },
-  { value: "engineering", label: "Engineering" },
-  { value: "sales", label: "Sales" },
-  { value: "marketing", label: "Marketing" },
-  { value: "hospitality", label: "Hospitality" },
-  { value: "retail", label: "Retail" },
-  { value: "construction", label: "Construction" },
-  { value: "transport", label: "Transport" },
-  { value: "admin", label: "Admin" },
-  { value: "legal", label: "Legal" },
-  { value: "manufacturing", label: "Manufacturing" },
-  { value: "other", label: "Other" },
-];
-
-const jobTypes = [
-  { value: "full_time", label: "Full Time" },
-  { value: "part_time", label: "Part Time" },
-  { value: "contract", label: "Contract" },
-  { value: "temporary", label: "Temporary" },
-  { value: "internship", label: "Internship" },
-  { value: "remote", label: "Remote" },
-];
+import { CATEGORY_OPTIONS, JOB_TYPE_OPTIONS } from "@/lib/siteSettings";
 
 export default function JobFilters({ filters, onChange, onClear }) {
   const hasFilters = filters.keyword || filters.location || filters.type || filters.category;
@@ -61,7 +35,7 @@ export default function JobFilters({ filters, onChange, onClear }) {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Types</SelectItem>
-            {jobTypes.map((t) => (
+            {JOB_TYPE_OPTIONS.map((t) => (
               <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
             ))}
           </SelectContent>
@@ -72,7 +46,7 @@ export default function JobFilters({ filters, onChange, onClear }) {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Categories</SelectItem>
-            {categories.map((c) => (
+            {CATEGORY_OPTIONS.map((c) => (
               <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
             ))}
           </SelectContent>

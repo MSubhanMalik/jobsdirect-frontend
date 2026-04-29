@@ -3,8 +3,9 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, Briefcase, Search } from "lucide-react";
-import { digify } from "@/api/digifyClient";
-import { useAuth } from "@/lib/AuthContext";
+import authService from "@/services/auth";
+import { useAuthStore } from "@/stores/authStore";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 const navLinks = [
   { label: "Home", path: "/" },
@@ -16,13 +17,13 @@ const navLinks = [
 
 export default function Navbar() {
   const location = useLocation();
-  const { isAuthenticated, user, appPublicSettings } = useAuth();
+  const { isAuthenticated, user } = useAuthStore();
+  const { settings } = useSiteSettings();
   const [open, setOpen] = useState(false);
-  const settings = appPublicSettings?.public_settings || {};
   const brandName = settings.brand_name || "JobsDirect.ie";
 
   const isActive = (path) => location.pathname === path;
-  const dashboardPath = user?.role === "admin" || user?.role === "super_admin" ? "/admin" : "/dashboard";
+  const dashboardPath = user?.role === "admin" ? "/admin" : "/dashboard";
 
   return (
     <header className="sticky top-0 z-50 w-full bg-card/80 backdrop-blur-xl border-b border-border/50">
@@ -73,13 +74,13 @@ export default function Navbar() {
                 <Button
                   variant="ghost"
                   className="text-muted-foreground font-medium"
-                  onClick={() => digify.auth.redirectToLogin()}
+                  onClick={() => authService.redirectToLogin()}
                 >
                   Login
                 </Button>
                 <Button
                   className="bg-accent hover:bg-accent/90 text-accent-foreground font-medium"
-                  onClick={() => digify.auth.redirectToLogin()}
+                  onClick={() => authService.redirectToLogin()}
                 >
                   Register
                 </Button>
@@ -131,14 +132,14 @@ export default function Navbar() {
                     <>
                       <Button
                         className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
-                        onClick={() => { setOpen(false); digify.auth.redirectToLogin(); }}
+                        onClick={() => { setOpen(false); authService.redirectToLogin(); }}
                       >
                         Register
                       </Button>
                       <Button
                         variant="outline"
                         className="w-full"
-                        onClick={() => { setOpen(false); digify.auth.redirectToLogin(); }}
+                        onClick={() => { setOpen(false); authService.redirectToLogin(); }}
                       >
                         Login
                       </Button>

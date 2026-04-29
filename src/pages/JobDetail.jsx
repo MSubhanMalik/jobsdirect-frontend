@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { digify } from "@/api/digifyClient";
+import authService from "@/services/auth";
+import jobService from "@/services/job";
+import employeeService from "@/services/employee";
+import applicationService from "@/services/application";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "react-toastify";
 import {
   MapPin, Clock, Building2, Euro, ArrowLeft, Share2, Star,
   Calendar, Briefcase, Send, CheckCircle
@@ -29,7 +32,6 @@ const categoryLabels = {
 export default function JobDetail() {
   const { id: jobId } = useParams();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [showApply, setShowApply] = useState(false);
   const [coverLetter, setCoverLetter] = useState("");
   const [applying, setApplying] = useState(false);
@@ -39,23 +41,21 @@ export default function JobDetail() {
 
   const { data: job, isLoading } = useQuery({
     queryKey: ["job", jobId],
-    queryFn: async () => {
-      const results = await digify.entities.Job.filter({ id: jobId });
-      return results[0] || null;
-    },
+    queryFn: () => jobService.getById(jobId),
     enabled: !!jobId,
   });
 
   useEffect(() => {
-    digify.auth.isAuthenticated().then(async (authed) => {
+    authService.isAuthenticated().then(async (authed) => {
       if (authed) {
-        const me = await digify.auth.me();
+        const me = await authService.getUserInfo();
         setUser(me);
-        const emps = await digify.entities.Employee.filter({ user_email: me.email });
+        const empData = await employeeService.list({ user_email: me.email });
+        const emps = empData?.items || [];
         if (emps.length > 0) setEmployee(emps[0]);
-        // Check if already applied
         if (jobId) {
-          const apps = await digify.entities.Application.filter({ job_id: jobId, employee_email: me.email });
+          const appData = await applicationService.list({ job_id: jobId, employee_email: me.email });
+          const apps = appData?.items || [];
           if (apps.length > 0) setApplied(true);
         }
       }
@@ -64,16 +64,16 @@ export default function JobDetail() {
 
   const handleApply = async () => {
     if (!user) {
-      digify.auth.redirectToLogin(window.location.pathname);
+      authService.redirectToLogin(window.location.pathname);
       return;
     }
     if (!employee) {
-      toast({ title: "Complete Your Profile", description: "Please set up your employee profile first.", variant: "destructive" });
+      toast.error("Complete Your Profile — Please set up your employee profile first.");
       navigate("/dashboard");
       return;
     }
     setApplying(true);
-    await digify.entities.Application.create({
+    await applicationService.create({
       job_id: job.id,
       job_title: job.title,
       employee_id: employee.id,
@@ -88,7 +88,7 @@ export default function JobDetail() {
     setApplying(false);
     setApplied(true);
     setShowApply(false);
-    toast({ title: "Application Submitted!", description: "Your application has been sent to the employer." });
+    toast.success("Application Submitted! Your application has been sent to the employer.");
   };
 
   if (isLoading) {
@@ -186,7 +186,7 @@ export default function JobDetail() {
                   <Button
                     className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold"
                     onClick={() => {
-                      if (!user) { digify.auth.redirectToLogin(window.location.pathname); return; }
+                      if (!user) { authService.redirectToLogin(window.location.pathname); return; }
                       setShowApply(true);
                     }}
                   >
@@ -196,7 +196,7 @@ export default function JobDetail() {
                 )}
                 <Button variant="outline" className="w-full" onClick={() => {
                   navigator.clipboard.writeText(window.location.href);
-                  toast({ title: "Link Copied", description: "Job link copied to clipboard." });
+                  toast.success("Link Copied — Job link copied to clipboard.");
                 }}>
                   <Share2 className="w-4 h-4 mr-2" />
                   Share Job

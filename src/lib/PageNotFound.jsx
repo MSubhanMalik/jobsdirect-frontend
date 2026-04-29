@@ -1,5 +1,5 @@
 import { useLocation } from 'react-router-dom';
-import { digify } from '@/api/digifyClient';
+import authService from "@/services/auth";
 import { useQuery } from '@tanstack/react-query';
 
 
@@ -11,7 +11,7 @@ export default function PageNotFound({}) {
         queryKey: ['user'],
         queryFn: async () => {
             try {
-                const user = await digify.auth.me();
+                const user = await authService.getUserInfo();
                 return { user, isAuthenticated: true };
             } catch (error) {
                 return { user: null, isAuthenticated: false };
