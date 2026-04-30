@@ -49,6 +49,11 @@ export const api = {
     ADMIN_USERS: "/api/admin/users",
     ADMIN_USER_DETAIL: "/api/admin/users/:id",
 
+    // Products
+    PRODUCTS: "/api/products",
+    PRODUCTS_ADDONS: "/api/products/addons",
+    PRODUCTS_COST_ESTIMATE: "/api/products/cost-estimate",
+
     // Contact
     CONTACT: "/api/contact",
   },

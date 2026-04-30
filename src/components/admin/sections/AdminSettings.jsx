@@ -90,198 +90,139 @@ export default function AdminSettings({
         </Card>
       </div>
 
-      <Card className="rounded-lg shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-base">Job Listing Cost Products</CardTitle>
-          <p className="text-sm text-muted-foreground">Stripe Product IDs for each cost item. The default price of each product is used to calculate credit deductions. Update prices in Stripe Dashboard.</p>
-        </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2">
-          {[
-            ["JOB_LISTING", "Job Listing (30 Days)"],
-            ["DUPLICATE_JOB", "Duplicate Job"],
-            ["IMPORT_JOB", "Import Job"],
-            ["ADDON_FEATURED", "Featured Add-on"],
-            ["ADDON_HIGHLIGHT", "Highlight Add-on"],
-          ].map(([key, label]) => (
-            <Field key={key} label={`${label} — Stripe Product ID`}>
-              <Input
-                placeholder="prod_xxxxxxxxxx"
-                value={settingsForm.pricing_products?.[key] || ""}
-                onChange={(e) =>
-                  setSettingsForm({
-                    ...settingsForm,
-                    pricing_products: { ...(settingsForm.pricing_products || {}), [key]: e.target.value },
-                  })
-                }
-              />
-            </Field>
-          ))}
-        </CardContent>
-      </Card>
-
-      <Card className="rounded-lg shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-base">Credit Costs</CardTitle>
-          <p className="text-sm text-muted-foreground">How many credits each action costs. These are deducted from the employer's credit balance.</p>
-        </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2">
-          {[
-            ["JOB_LISTING", "Job Listing"],
-            ["DUPLICATE_JOB", "Duplicate Job"],
-            ["IMPORT_JOB", "Import from JobsIreland"],
-            ["ADDON_FEATURED", "Featured Add-on"],
-            ["ADDON_HIGHLIGHT", "Highlight Add-on"],
-          ].map(([key, label]) => (
-            <Field key={key} label={`${label} (credits)`}>
-              <Input
-                type="number"
-                step="0.5"
-                min="0"
-                value={settingsForm.credit_costs?.[key] ?? ""}
-                onChange={(e) =>
-                  setSettingsForm({
-                    ...settingsForm,
-                    credit_costs: { ...(settingsForm.credit_costs || {}), [key]: Number(e.target.value) || 0 },
-                  })
-                }
-              />
-            </Field>
-          ))}
-        </CardContent>
-      </Card>
-
+      {/* ─── Products Catalog ─── */}
       <Card className="rounded-lg shadow-sm">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-base">Payment Plans (Stripe)</CardTitle>
-              <p className="text-sm text-muted-foreground">Configure plans with Stripe Product IDs. The default price of each product is used at checkout.</p>
+              <CardTitle className="text-base">Products</CardTitle>
+              <p className="text-sm text-muted-foreground">All purchasable items: listings, add-ons, credit bundles, subscriptions. Each product has a Stripe Product ID and credit cost.</p>
             </div>
             <Button
               type="button"
               variant="outline"
               size="sm"
-              onClick={() =>
-                setSettingsForm({
-                  ...settingsForm,
-                  payment_plans: [
-                    ...(settingsForm.payment_plans || []),
-                    { id: `plan_${Date.now()}`, label: "", description: "", stripe_product_id: "", kind: "credits", credits: 0, mode: "payment", enabled: true },
-                  ],
-                })
-              }
+              onClick={() => {
+                const products = [...(settingsForm.products || [])];
+                products.push({
+                  id: `product_${Date.now()}`,
+                  name: "",
+                  description: "",
+                  type: "addon",
+                  creditCost: 0,
+                  credits: 0,
+                  stripeProductId: "",
+                  icon: "zap",
+                  appliesTo: "job",
+                  duration: 0,
+                  enabled: true,
+                });
+                setSettingsForm({ ...settingsForm, products });
+              }}
             >
-              <Plus className="h-4 w-4" /> Add Plan
+              <Plus className="h-4 w-4" /> Add Product
             </Button>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {(settingsForm.payment_plans || []).map((plan, index) => (
-            <div key={plan.id || index} className="rounded-lg border p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Badge variant={plan.enabled !== false ? "default" : "secondary"}>{plan.enabled !== false ? "Active" : "Disabled"}</Badge>
-                  <Badge variant="outline">{plan.kind === "candidate_database" ? "Subscription" : "One-time"}</Badge>
+          {(settingsForm.products || []).map((product, index) => {
+            const updateProduct = (key, value) => {
+              const products = [...(settingsForm.products || [])];
+              products[index] = { ...products[index], [key]: value };
+              setSettingsForm({ ...settingsForm, products });
+            };
+            const removeProduct = () => {
+              const products = (settingsForm.products || []).filter((_, i) => i !== index);
+              setSettingsForm({ ...settingsForm, products });
+            };
+
+            return (
+              <div key={product.id || index} className="rounded-lg border p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Badge variant={product.enabled !== false ? "default" : "secondary"}>
+                      {product.enabled !== false ? "Active" : "Disabled"}
+                    </Badge>
+                    <Badge variant="outline">{product.type}</Badge>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch checked={product.enabled !== false} onCheckedChange={(v) => updateProduct("enabled", v)} />
+                    <Button type="button" variant="ghost" size="icon" onClick={removeProduct}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Switch
-                    checked={plan.enabled !== false}
-                    onCheckedChange={(checked) => {
-                      const plans = [...(settingsForm.payment_plans || [])];
-                      plans[index] = { ...plans[index], enabled: checked };
-                      setSettingsForm({ ...settingsForm, payment_plans: plans });
-                    }}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      const plans = (settingsForm.payment_plans || []).filter((_, i) => i !== index);
-                      setSettingsForm({ ...settingsForm, payment_plans: plans });
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </div>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Field label="Plan ID">
-                  <Input
-                    value={plan.id}
-                    onChange={(e) => {
-                      const plans = [...(settingsForm.payment_plans || [])];
-                      plans[index] = { ...plans[index], id: e.target.value };
-                      setSettingsForm({ ...settingsForm, payment_plans: plans });
-                    }}
-                  />
-                </Field>
-                <Field label="Label">
-                  <Input
-                    value={plan.label}
-                    onChange={(e) => {
-                      const plans = [...(settingsForm.payment_plans || [])];
-                      plans[index] = { ...plans[index], label: e.target.value };
-                      setSettingsForm({ ...settingsForm, payment_plans: plans });
-                    }}
-                  />
-                </Field>
-                <Field label="Description" className="sm:col-span-2">
-                  <Input
-                    value={plan.description}
-                    onChange={(e) => {
-                      const plans = [...(settingsForm.payment_plans || [])];
-                      plans[index] = { ...plans[index], description: e.target.value };
-                      setSettingsForm({ ...settingsForm, payment_plans: plans });
-                    }}
-                  />
-                </Field>
-                <Field label="Stripe Product ID">
-                  <Input
-                    placeholder="prod_xxxxxxxxxx"
-                    value={plan.stripe_product_id}
-                    onChange={(e) => {
-                      const plans = [...(settingsForm.payment_plans || [])];
-                      plans[index] = { ...plans[index], stripe_product_id: e.target.value };
-                      setSettingsForm({ ...settingsForm, payment_plans: plans });
-                    }}
-                  />
-                </Field>
-                <Field label="Kind">
-                  <Select
-                    value={plan.kind}
-                    onValueChange={(value) => {
-                      const plans = [...(settingsForm.payment_plans || [])];
-                      plans[index] = { ...plans[index], kind: value, mode: value === "candidate_database" ? "subscription" : "payment" };
-                      setSettingsForm({ ...settingsForm, payment_plans: plans });
-                    }}
-                  >
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="credits">Credits</SelectItem>
-                      <SelectItem value="candidate_database">Candidate Database</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </Field>
-                {plan.kind === "credits" && (
-                  <Field label="Credits">
-                    <Input
-                      type="number"
-                      value={plan.credits}
-                      onChange={(e) => {
-                        const plans = [...(settingsForm.payment_plans || [])];
-                        plans[index] = { ...plans[index], credits: Number(e.target.value) || 0 };
-                        setSettingsForm({ ...settingsForm, payment_plans: plans });
-                      }}
-                    />
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field label="Product ID">
+                    <Input value={product.id} onChange={(e) => updateProduct("id", e.target.value)} />
                   </Field>
-                )}
+                  <Field label="Name">
+                    <Input value={product.name || ""} onChange={(e) => updateProduct("name", e.target.value)} />
+                  </Field>
+                  <Field label="Description" className="sm:col-span-2">
+                    <Input value={product.description || ""} onChange={(e) => updateProduct("description", e.target.value)} />
+                  </Field>
+                  <Field label="Type">
+                    <Select value={product.type} onValueChange={(v) => updateProduct("type", v)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="listing">Listing</SelectItem>
+                        <SelectItem value="addon">Add-on</SelectItem>
+                        <SelectItem value="credit_bundle">Credit Bundle</SelectItem>
+                        <SelectItem value="subscription">Subscription</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                  <Field label="Stripe Product ID">
+                    <Input placeholder="prod_xxx" value={product.stripeProductId || ""} onChange={(e) => updateProduct("stripeProductId", e.target.value)} />
+                  </Field>
+                  {(product.type === "listing" || product.type === "addon") && (
+                    <Field label="Credit Cost">
+                      <Input type="number" step="0.5" min="0" value={product.creditCost ?? ""} onChange={(e) => updateProduct("creditCost", Number(e.target.value) || 0)} />
+                    </Field>
+                  )}
+                  {product.type === "credit_bundle" && (
+                    <Field label="Credits Granted">
+                      <Input type="number" min="0" value={product.credits ?? ""} onChange={(e) => updateProduct("credits", Number(e.target.value) || 0)} />
+                    </Field>
+                  )}
+                  {product.type === "listing" && (
+                    <Field label="Duration (days)">
+                      <Input type="number" min="1" value={product.duration ?? ""} onChange={(e) => updateProduct("duration", Number(e.target.value) || 30)} />
+                    </Field>
+                  )}
+                  {product.type === "addon" && (
+                    <>
+                      <Field label="Icon">
+                        <Select value={product.icon || "zap"} onValueChange={(v) => updateProduct("icon", v)}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="star">Star</SelectItem>
+                            <SelectItem value="sparkles">Sparkles</SelectItem>
+                            <SelectItem value="external-link">External Link</SelectItem>
+                            <SelectItem value="copy">Copy</SelectItem>
+                            <SelectItem value="zap">Zap</SelectItem>
+                            <SelectItem value="briefcase">Briefcase</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </Field>
+                      <Field label="Applies To">
+                        <Select value={product.appliesTo || "job"} onValueChange={(v) => updateProduct("appliesTo", v)}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="job">Job Listing</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </Field>
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
-          {!(settingsForm.payment_plans || []).length && (
+            );
+          })}
+          {!(settingsForm.products || []).length && (
             <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-              No payment plans configured. Add a plan to get started.
+              No products configured. Add a product to get started.
             </div>
           )}
         </CardContent>

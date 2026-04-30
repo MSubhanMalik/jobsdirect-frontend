@@ -1,14 +1,17 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import jobService from "@/services/job";
 import paymentService from "@/services/payment";
+import productService from "@/services/product";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "react-toastify";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { useProducts } from "@/hooks/useProducts";
 import FormFieldRenderer from "@/components/forms/FormFieldRenderer";
+import AddonSelector from "@/components/products/AddonSelector";
+import CostSummary from "@/components/products/CostSummary";
 import {
   JOB_FIELD_GROUPS,
   JOB_FIELDS,
@@ -16,7 +19,8 @@ import {
   buildEntityFormValues,
   hasFieldValue,
 } from "@/lib/siteSettings";
-import { CheckCircle2, CreditCard, ExternalLink, Gift, Loader2, Send, Sparkles, Star, X, Zap } from "lucide-react";
+import { CheckCircle2, CreditCard, ExternalLink, Gift, Loader2, Send, X, Zap } from "lucide-react";
+import ConfirmDialog from "@/components/ui/confirm-dialog";
 
 const EMPLOYER_JOB_FIELDS = JOB_FIELDS.filter((field) => !field.adminOnly && field.manageInEmployerForm !== false);
 
@@ -24,74 +28,76 @@ function createInitialForm(initialJob) {
   return buildEntityFormValues(JOB_FORM_DEFAULTS, EMPLOYER_JOB_FIELDS, initialJob);
 }
 
-function formatCredits(credits) {
-  return `${credits} credit${credits !== 1 ? "s" : ""}`;
+function formatCredits(n) {
+  return `${n} credit${n !== 1 ? "s" : ""}`;
 }
 
 export default function JobPostForm({ employer, user, initialJob = null, autoFocusTitle = false, onClose, onSuccess }) {
   const { settings: publicSettings } = useSiteSettings();
+  const { addons: addonProducts, listing: listingProduct } = useProducts();
   const approvalRequired = publicSettings.job_approval_required !== false;
-  const [creditCosts, setCreditCosts] = useState({});
   const titleInputRef = useRef(null);
+
+  // Form state
+  const [form, setForm] = useState(() => createInitialForm(initialJob));
   const [submitting, setSubmitting] = useState(false);
-  const [copyFromJobsIreland, setCopyFromJobsIreland] = useState(false);
+  const jobFormConfig = publicSettings.employer_job_form_config || {};
+
+  // Input method: null (not chosen), "manual", or "import"
+  const [inputMethod, setInputMethod] = useState(initialJob ? "manual" : null);
   const [jobRef, setJobRef] = useState("");
   const [scraping, setScraping] = useState(false);
   const [scraped, setScraped] = useState(false);
-  const [form, setForm] = useState(() => createInitialForm(initialJob));
-  const jobFormConfig = publicSettings.employer_job_form_config || {};
 
-  // State
-  const [inputMethod, setInputMethod] = useState(initialJob ? "manual" : null); // null = not chosen yet
+  // Pricing state
   const [listingType, setListingType] = useState(initialJob ? "paid" : "free");
-  const [addons, setAddons] = useState({
-    isFeatured: Boolean(initialJob?.is_featured),
-    isHighlighted: Boolean(initialJob?.is_highlighted),
-  });
+  const [selectedAddons, setSelectedAddons] = useState([]);
+  const [costEstimate, setCostEstimate] = useState(null);
   const [balance, setBalance] = useState(null);
 
   const isEditing = Boolean(initialJob?.id);
+  const creditBalance = employer.credits || 0;
 
-  // Load balance + credit costs from backend (single source of truth)
+  // Load balance on mount
   useEffect(() => {
-    paymentService.getBalance(employer?.id).then((b) => {
-      setBalance(b);
-      if (b?.creditCosts) setCreditCosts(b.creditCosts);
-    }).catch(() => {});
+    paymentService.getBalance(employer?.id).then(setBalance).catch(() => {});
   }, [employer?.id]);
 
   const canPostFree = balance?.canPostFree && !isEditing && inputMethod !== "import";
-  const creditBalance = employer.credits || 0;
 
-  // Import from JobsIreland is always paid
+  // Import = always paid
   useEffect(() => {
     if (inputMethod === "import") setListingType("paid");
   }, [inputMethod]);
 
-  // Calculate display cost using server-provided creditCosts (backend recalculates on submit)
-  const creditCost = useMemo(() => {
-    if (isEditing || listingType === "free") return 0;
-    let cost = creditCosts.JOB_LISTING || 0;
-    if (inputMethod === "import") cost += creditCosts.IMPORT_JOB || 0;
-    if (addons.isFeatured) cost += creditCosts.ADDON_FEATURED || 0;
-    if (addons.isHighlighted) cost += creditCosts.ADDON_HIGHLIGHT || 0;
-    return cost;
-  }, [listingType, addons, inputMethod, isEditing, creditCosts]);
+  // Fetch cost estimate from backend whenever addons change
+  useEffect(() => {
+    if (isEditing || listingType === "free") {
+      setCostEstimate(null);
+      return;
+    }
+    const addonIds = [...selectedAddons];
+    if (inputMethod === "import") addonIds.push("addon_import");
+    productService.getCostEstimate(addonIds).then(setCostEstimate).catch(() => {});
+  }, [listingType, selectedAddons, inputMethod, isEditing]);
 
+  // Filter addons: don't show "Import" and "Duplicate" in the checkbox list (they're handled by flow)
+  const selectableAddons = addonProducts.filter((a) => a.id !== "addon_import" && a.id !== "addon_duplicate");
+
+  const totalCost = costEstimate?.total || 0;
+
+  // Reset form on initial job change
   useEffect(() => {
     setForm(createInitialForm(initialJob));
-    setCopyFromJobsIreland(false);
     setJobRef("");
     setScraped(false);
+    setSelectedAddons([]);
   }, [initialJob]);
 
   useEffect(() => {
     if (!autoFocusTitle || !titleInputRef.current) return;
-    const focusTimer = setTimeout(() => {
-      titleInputRef.current?.focus();
-      titleInputRef.current?.select?.();
-    }, 200);
-    return () => clearTimeout(focusTimer);
+    const timer = setTimeout(() => { titleInputRef.current?.focus(); }, 200);
+    return () => clearTimeout(timer);
   }, [autoFocusTitle, initialJob]);
 
   const visibleGroups = useMemo(
@@ -106,7 +112,7 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
     [jobFormConfig],
   );
 
-  const update = (field, value) => setForm((current) => ({ ...current, [field]: value }));
+  const update = (field, value) => setForm((c) => ({ ...c, [field]: value }));
 
   const validateVisibleRequiredFields = () => {
     for (const group of visibleGroups) {
@@ -121,12 +127,28 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
     return true;
   };
 
-  const handleSubmit = async (event) => {
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  const handleSubmit = (event) => {
     event.preventDefault();
     if (!validateVisibleRequiredFields()) return;
 
+    // Free listings and edits don't need confirmation
+    if (isEditing || listingType === "free") {
+      executeSubmit();
+      return;
+    }
+    // Paid listings — show confirmation first
+    setShowConfirm(true);
+  };
+
+  const executeSubmit = async () => {
+    setShowConfirm(false);
     setSubmitting(true);
     try {
+      const addonIds = [...selectedAddons];
+      if (inputMethod === "import" && scraped) addonIds.push("addon_import");
+
       const payload = {
         ...form,
         salary_min: form.salary_min === "" ? undefined : Number(form.salary_min),
@@ -137,8 +159,7 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
         employer_id: employer.id,
         status: initialJob?.status || (approvalRequired ? "pending_review" : "approved"),
         source: inputMethod === "import" && scraped ? "jobsireland" : (initialJob?.source || "manual"),
-        is_featured: addons.isFeatured,
-        is_highlighted: addons.isHighlighted,
+        addons: addonIds,
       };
 
       if (!isEditing) {
@@ -150,8 +171,6 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
         await jobService.update(initialJob.id, payload);
       } else {
         const result = await jobService.create(payload);
-
-        // If backend returned a checkout URL, redirect to Stripe
         if (result.needsCheckout && result.checkoutUrl) {
           toast.info("Redirecting to payment...");
           window.location.assign(result.checkoutUrl);
@@ -159,7 +178,6 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
         }
       }
 
-      // Refresh balance
       paymentService.getBalance(employer?.id).then(setBalance).catch(() => {});
 
       toast.success(
@@ -167,7 +185,7 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
           ? "Job Updated — Your job listing has been updated."
           : listingType === "free"
             ? "Job Submitted — Your free 14-day listing has been submitted for review."
-            : `Job Submitted — Your 30-day listing has been submitted. ${formatCredits(creditCost)} deducted.`
+            : `Job Submitted — Your 30-day listing has been submitted. ${formatCredits(totalCost)} deducted.`
       );
       onSuccess();
     } catch (error) {
@@ -182,39 +200,40 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
       toast.error("Invalid Reference — Please enter a valid 7-digit Job Reference Number.");
       return;
     }
-
     setScraping(true);
     try {
       const result = await jobService.scrapeJobsIreland({ ref: jobRef });
-      const scraped = result.data || result;
+      const data = result.data || result;
       setForm((current) => ({
         ...current,
-        title: scraped.title || current.title,
-        description: scraped.description || current.description,
-        short_description: scraped.short_description || current.short_description,
-        location: scraped.location || current.location,
-        job_type: scraped.job_type || current.job_type,
-        category: scraped.category || current.category,
-        country: scraped.country || current.country,
-        hours_per_week: scraped.hours_per_week ?? current.hours_per_week,
-        positions_count: scraped.positions_count ?? current.positions_count,
-        salary_min: scraped.salary_min ?? current.salary_min,
-        salary_max: scraped.salary_max ?? current.salary_max,
-        salary_period: scraped.salary_period || current.salary_period,
-        career_level: scraped.career_level || current.career_level,
-        application_method: scraped.application_method || current.application_method,
-        application_email: scraped.application_email || current.application_email,
-        application_url: scraped.application_url || current.application_url,
+        title: data.title || current.title,
+        description: data.description || current.description,
+        short_description: data.short_description || current.short_description,
+        location: data.location || current.location,
+        job_type: data.job_type || current.job_type,
+        category: data.category || current.category,
+        country: data.country || current.country,
+        salary_min: data.salary_min ?? current.salary_min,
+        salary_max: data.salary_max ?? current.salary_max,
+        salary_period: data.salary_period || current.salary_period,
       }));
       setScraped(true);
-      setListingType("paid"); // Imported jobs are always paid
-      toast.success("Job Details Imported! Fields have been pre-filled. Please review and edit before submitting.");
+      setListingType("paid");
+      toast.success("Job details imported! Review and edit before submitting.");
     } catch (error) {
-      toast.error(`Import Failed — ${error.message || "Could not fetch job from JobsIreland.ie"}`);
+      toast.error(`Import failed — ${error.message || "Could not fetch job from JobsIreland.ie"}`);
     } finally {
       setScraping(false);
     }
   };
+
+  const handleAddonToggle = (addonId, checked) => {
+    setSelectedAddons((prev) =>
+      checked ? [...prev, addonId] : prev.filter((id) => id !== addonId),
+    );
+  };
+
+  const showForm = isEditing || inputMethod === "manual" || (inputMethod === "import" && scraped);
 
   return (
     <Card>
@@ -227,7 +246,7 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
 
-          {/* ─── Step 1: Choose input method (only for new jobs) ─── */}
+          {/* ─── Step 1: Choose input method ─── */}
           {!isEditing && !inputMethod && (
             <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4 space-y-4">
               <h3 className="text-sm font-semibold">How would you like to create this job?</h3>
@@ -253,13 +272,13 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
                     <span className="text-sm font-semibold">Import from JobsIreland</span>
                   </div>
                   <p className="text-xs text-muted-foreground">Auto-fill from a JobsIreland.ie listing</p>
-                  <p className="text-xs font-semibold text-accent mt-1">{formatCredits((creditCosts.JOB_LISTING || 0) + (creditCosts.IMPORT_JOB || 0))} (listing + import)</p>
+                  <p className="text-xs font-semibold text-accent mt-1">Listing + import add-on (always paid)</p>
                 </button>
               </div>
             </div>
           )}
 
-          {/* ─── Step 2: Import from JobsIreland (if chosen) ─── */}
+          {/* ─── Step 2: Import UI ─── */}
           {!isEditing && inputMethod === "import" && !scraped && (
             <div className="rounded-lg border border-accent/30 bg-accent/5 p-4 space-y-3">
               <div className="flex items-center justify-between">
@@ -271,7 +290,6 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
                   Switch to manual
                 </button>
               </div>
-
               <div className="space-y-3">
                 <div className="flex items-end gap-2">
                   <div className="flex-1 space-y-1">
@@ -279,20 +297,12 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
                     <Input
                       id="jobRef"
                       value={jobRef}
-                      onChange={(event) => {
-                        setJobRef(event.target.value.replace(/\D/g, "").slice(0, 7));
-                        setScraped(false);
-                      }}
+                      onChange={(e) => { setJobRef(e.target.value.replace(/\D/g, "").slice(0, 7)); setScraped(false); }}
                       placeholder="e.g. 1234567"
                       maxLength={7}
                     />
                   </div>
-                  <Button
-                    type="button"
-                    onClick={handleScrape}
-                    disabled={scraping || jobRef.length !== 7}
-                    className="bg-accent text-accent-foreground hover:bg-accent/90"
-                  >
+                  <Button type="button" onClick={handleScrape} disabled={scraping || jobRef.length !== 7} className="bg-accent text-accent-foreground hover:bg-accent/90">
                     {scraping ? <Loader2 className="h-4 w-4 animate-spin" /> : <ExternalLink className="h-4 w-4" />}
                     {scraping ? "Importing..." : "Import"}
                   </Button>
@@ -306,16 +316,16 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
             </div>
           )}
 
-          {/* ─── Imported success ─── */}
+          {/* ─── Import success ─── */}
           {inputMethod === "import" && scraped && (
             <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
               <CheckCircle2 className="h-4 w-4" />
-              Fields pre-filled from JobsIreland. Review and edit below before submitting.
+              Fields pre-filled from JobsIreland. Review and edit below.
             </div>
           )}
 
-          {/* ─── Pricing Section (after method chosen, only for new jobs) ─── */}
-          {!isEditing && (inputMethod === "manual" || (inputMethod === "import" && scraped)) && (
+          {/* ─── Pricing Section ─── */}
+          {!isEditing && showForm && (
             <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4 space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold flex items-center gap-2">
@@ -329,20 +339,11 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
 
               {inputMethod === "import" ? (
                 <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2">
-                  <p className="text-sm font-medium text-amber-800">Imported listings are always paid (30 days, {formatCredits((creditCosts.JOB_LISTING || 0) + (creditCosts.IMPORT_JOB || 0))} — listing + import fee)</p>
+                  <p className="text-sm font-medium text-amber-800">Imported listings are always paid</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    className={`rounded-lg border p-3 text-left transition ${
-                      listingType === "free"
-                        ? "border-emerald-600 bg-emerald-50 shadow-[0_0_0_1px_theme(colors.emerald.600)]"
-                        : "border-slate-200 hover:border-slate-300"
-                    } ${!canPostFree ? "opacity-50 cursor-not-allowed" : ""}`}
-                    onClick={() => canPostFree && setListingType("free")}
-                    disabled={!canPostFree}
-                  >
+                  <button type="button" className={`rounded-lg border p-3 text-left transition ${listingType === "free" ? "border-emerald-600 bg-emerald-50 shadow-[0_0_0_1px_theme(colors.emerald.600)]" : "border-slate-200 hover:border-slate-300"} ${!canPostFree ? "opacity-50 cursor-not-allowed" : ""}`} onClick={() => canPostFree && setListingType("free")} disabled={!canPostFree}>
                     <div className="flex items-center gap-2 mb-1">
                       <Gift className="h-4 w-4 text-emerald-600" />
                       <span className="text-sm font-semibold">Free Listing</span>
@@ -350,88 +351,44 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
                     <p className="text-xs text-muted-foreground">14 days, 1 per month</p>
                     {!canPostFree && <p className="text-xs text-amber-600 mt-1">Used this month</p>}
                   </button>
-                  <button
-                    type="button"
-                    className={`rounded-lg border p-3 text-left transition ${
-                      listingType === "paid"
-                        ? "border-emerald-600 bg-emerald-50 shadow-[0_0_0_1px_theme(colors.emerald.600)]"
-                        : "border-slate-200 hover:border-slate-300"
-                    }`}
-                    onClick={() => setListingType("paid")}
-                  >
+                  <button type="button" className={`rounded-lg border p-3 text-left transition ${listingType === "paid" ? "border-emerald-600 bg-emerald-50 shadow-[0_0_0_1px_theme(colors.emerald.600)]" : "border-slate-200 hover:border-slate-300"}`} onClick={() => setListingType("paid")}>
                     <div className="flex items-center gap-2 mb-1">
                       <Zap className="h-4 w-4 text-amber-500" />
                       <span className="text-sm font-semibold">Paid Listing</span>
                     </div>
-                    <p className="text-xs text-muted-foreground">30 days, {formatCredits(creditCosts.JOB_LISTING)} (or pay via checkout)</p>
+                    <p className="text-xs text-muted-foreground">{listingProduct ? `${listingProduct.duration} days, ${formatCredits(listingProduct.creditCost)}` : "30 days"}</p>
                   </button>
                 </div>
               )}
 
-              {/* Add-ons (only for paid) */}
               {listingType === "paid" && (
-                <div className="space-y-2 pt-1">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Add-ons</p>
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <Checkbox
-                      checked={addons.isFeatured}
-                      onCheckedChange={(v) => setAddons((a) => ({ ...a, isFeatured: Boolean(v) }))}
-                    />
-                    <div className="flex-1">
-                      <span className="text-sm font-medium flex items-center gap-1">
-                        <Star className="h-3.5 w-3.5 text-amber-500" /> Featured
-                      </span>
-                      <span className="text-xs text-muted-foreground">Show in featured carousel on homepage</span>
-                    </div>
-                    <span className="text-xs font-semibold">{formatCredits(creditCosts.ADDON_FEATURED)}</span>
-                  </label>
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <Checkbox
-                      checked={addons.isHighlighted}
-                      onCheckedChange={(v) => setAddons((a) => ({ ...a, isHighlighted: Boolean(v) }))}
-                    />
-                    <div className="flex-1">
-                      <span className="text-sm font-medium flex items-center gap-1">
-                        <Sparkles className="h-3.5 w-3.5 text-blue-500" /> Highlight
-                      </span>
-                      <span className="text-xs text-muted-foreground">Stand out in search results with visual highlight</span>
-                    </div>
-                    <span className="text-xs font-semibold">{formatCredits(creditCosts.ADDON_HIGHLIGHT)}</span>
-                  </label>
-                </div>
+                <AddonSelector
+                  addons={selectableAddons}
+                  selected={selectedAddons}
+                  onToggle={handleAddonToggle}
+                />
               )}
 
-              {/* Cost summary */}
-              {listingType === "paid" && creditCost > 0 && (
-                <div className="rounded-md bg-white border border-slate-200 px-3 py-2 space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Total cost</span>
-                    <span className="text-base font-bold">{formatCredits(creditCost)}</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {creditBalance >= creditCost
-                      ? `Will be deducted from your credits (${creditBalance} available)`
-                      : `Insufficient credits (${creditBalance} available). You'll be redirected to Stripe checkout.`}
-                  </p>
-                </div>
+              {listingType === "paid" && costEstimate && (
+                <CostSummary costEstimate={costEstimate} creditBalance={creditBalance} />
               )}
             </div>
           )}
 
-          {/* ─── Job Form Fields (show when ready) ─── */}
-          {(isEditing || inputMethod === "manual" || (inputMethod === "import" && scraped)) && (
+          {/* ─── Job Form Fields ─── */}
+          {showForm && (
             <>
-              {!visibleGroups.length ? (
+              {!visibleGroups.length && (
                 <div className="rounded-lg border border-dashed p-5 text-sm text-muted-foreground">
                   All employer job fields are currently hidden. Enable them from Admin Site CMS.
                 </div>
-              ) : null}
+              )}
 
               {visibleGroups.map((group) => (
                 <section key={group.id} className="space-y-4">
                   <div>
                     <h3 className="text-sm font-semibold">{group.title}</h3>
-                    {group.description ? <p className="text-xs text-muted-foreground">{group.description}</p> : null}
+                    {group.description && <p className="text-xs text-muted-foreground">{group.description}</p>}
                   </div>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     {group.fields.map((field) => (
@@ -459,9 +416,9 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
                       ? "Save Changes"
                       : listingType === "free"
                         ? "Submit Free Listing"
-                        : creditBalance >= creditCost
-                          ? `Submit (${formatCredits(creditCost)})`
-                          : `Submit & Pay €10`
+                        : creditBalance >= totalCost
+                          ? `Submit (${formatCredits(totalCost)})`
+                          : "Submit & Pay via Stripe"
                   }
                 </Button>
               </div>
@@ -469,6 +426,20 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
           )}
         </form>
       </CardContent>
+
+      <ConfirmDialog
+        open={showConfirm}
+        title="Confirm Job Submission"
+        description={
+          creditBalance >= totalCost
+            ? `This will deduct ${formatCredits(totalCost)} from your balance (${creditBalance} available). Proceed?`
+            : `You don't have enough credits (${creditBalance} available, ${formatCredits(totalCost)} needed). You'll be redirected to Stripe to pay.`
+        }
+        confirmLabel={creditBalance >= totalCost ? `Deduct ${formatCredits(totalCost)}` : "Pay via Stripe"}
+        onConfirm={executeSubmit}
+        onCancel={() => setShowConfirm(false)}
+        disabled={submitting}
+      />
     </Card>
   );
 }

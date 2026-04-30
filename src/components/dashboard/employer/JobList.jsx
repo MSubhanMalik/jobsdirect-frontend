@@ -1,12 +1,14 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import jobService from "@/services/job";
+import productService from "@/services/product";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "react-toastify";
-import { Briefcase, Plus, FileText, Clock, CheckCircle, XCircle, Eye } from "lucide-react";
+import { Briefcase, Plus, FileText, Clock, CheckCircle, XCircle, Eye, Trash2 } from "lucide-react";
+import ConfirmDialog from "@/components/ui/confirm-dialog";
 
 const statusIcons = {
   draft: <FileText className="w-4 h-4" />,
@@ -19,6 +21,43 @@ const statusIcons = {
 export default function JobList({ jobs, user, employer, showJobForm, editingJob, setShowJobForm, setEditingJob, formContainerRef, JobPostForm }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [duplicateConfirm, setDuplicateConfirm] = useState(null);
+  const [duplicating, setDuplicating] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async (jobId) => {
+    setDeleting(true);
+    try {
+      await jobService.remove(jobId);
+      queryClient.invalidateQueries({ queryKey: ["employer-jobs", user.email] });
+      toast.success("Job deleted.");
+    } catch (err) {
+      toast.error(`Could not delete — ${err.message}`);
+    } finally {
+      setDeleting(false);
+      setDeleteConfirm(null);
+    }
+  };
+
+  const handleDuplicate = async (jobId) => {
+    setDuplicating(true);
+    try {
+      const result = await jobService.duplicate(jobId);
+      if (result.needsCheckout && result.checkoutUrl) {
+        toast.info("Redirecting to payment for duplicate...");
+        window.location.assign(result.checkoutUrl);
+        return;
+      }
+      queryClient.invalidateQueries({ queryKey: ["employer-jobs", user.email] });
+      toast.success("Job duplicated — credits deducted, submitted for review.");
+    } catch (err) {
+      toast.error(`Could not duplicate — ${err.message}`);
+    } finally {
+      setDuplicating(false);
+      setDuplicateConfirm(null);
+    }
+  };
 
   return (
     <>
@@ -78,22 +117,17 @@ export default function JobList({ jobs, user, employer, showJobForm, editingJob,
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={async () => {
-                      try {
-                        const result = await jobService.duplicate(job.id);
-                        if (result.needsCheckout && result.checkoutUrl) {
-                          toast.info("Redirecting to payment for duplicate...");
-                          window.location.assign(result.checkoutUrl);
-                          return;
-                        }
-                        queryClient.invalidateQueries({ queryKey: ["employer-jobs", user.email] });
-                        toast.success("Job duplicated — credits deducted, submitted for review.");
-                      } catch (err) {
-                        toast.error(`Could not duplicate — ${err.message}`);
-                      }
-                    }}
+                    onClick={() => setDuplicateConfirm(job)}
                   >
                     Duplicate
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive hover:text-destructive"
+                    onClick={() => setDeleteConfirm(job)}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
                   </Button>
                   <span className="text-xs text-muted-foreground flex items-center gap-1">
                     <Eye className="w-3 h-3" />
@@ -105,6 +139,27 @@ export default function JobList({ jobs, user, employer, showJobForm, editingJob,
           ))
         )}
       </div>
+
+      <ConfirmDialog
+        open={!!duplicateConfirm}
+        title="Duplicate Job"
+        description={`Duplicating "${duplicateConfirm?.title}" will create a new paid listing. Credits for listing + duplicate add-on will be deducted, or you'll be redirected to Stripe.`}
+        confirmLabel={duplicating ? "Processing..." : "Duplicate & Pay"}
+        onConfirm={() => handleDuplicate(duplicateConfirm.id)}
+        onCancel={() => setDuplicateConfirm(null)}
+        disabled={duplicating}
+      />
+
+      <ConfirmDialog
+        open={!!deleteConfirm}
+        title="Delete Job"
+        description={`Are you sure you want to delete "${deleteConfirm?.title}"? This cannot be undone. Credits will not be refunded.`}
+        confirmLabel={deleting ? "Deleting..." : "Delete"}
+        variant="destructive"
+        onConfirm={() => handleDelete(deleteConfirm.id)}
+        onCancel={() => setDeleteConfirm(null)}
+        disabled={deleting}
+      />
     </>
   );
 }

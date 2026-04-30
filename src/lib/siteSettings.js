@@ -326,14 +326,7 @@ export const EMPLOYER_JOB_FORM_CONTROL_DEFAULTS = JOB_FIELDS
     return acc;
   }, {});
 
-export const DEFAULT_PRICING_PRODUCTS = {
-  JOB_LISTING: "",
-  DUPLICATE_JOB: "",
-  IMPORT_JOB: "",
-  ADDON_FEATURED: "",
-  ADDON_HIGHLIGHT: "",
-};
-
+export const DEFAULT_PRICING_PRODUCTS = {};
 export const DEFAULT_CREDIT_COSTS = {};
 
 export const DEFAULT_PAYMENT_PLANS = [];
