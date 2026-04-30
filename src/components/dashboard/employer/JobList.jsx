@@ -80,9 +80,14 @@ export default function JobList({ jobs, user, employer, showJobForm, editingJob,
                     size="sm"
                     onClick={async () => {
                       try {
-                        await jobService.duplicate(job.id);
+                        const result = await jobService.duplicate(job.id);
+                        if (result.needsCheckout && result.checkoutUrl) {
+                          toast.info("Redirecting to payment for duplicate...");
+                          window.location.assign(result.checkoutUrl);
+                          return;
+                        }
                         queryClient.invalidateQueries({ queryKey: ["employer-jobs", user.email] });
-                        toast.success("Job duplicated — A copy has been created and submitted for review.");
+                        toast.success("Job duplicated — credits deducted, submitted for review.");
                       } catch (err) {
                         toast.error(`Could not duplicate — ${err.message}`);
                       }

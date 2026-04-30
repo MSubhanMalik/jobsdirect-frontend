@@ -97,12 +97,13 @@ export default function AdminSettings({
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           {[
-            ["JOB_28_DAY", "28-Day Listing"],
+            ["JOB_LISTING", "Job Listing (30 Days)"],
             ["DUPLICATE_JOB", "Duplicate Job"],
             ["IMPORT_JOB", "Import Job"],
             ["ADDON_FEATURED", "Featured Add-on"],
+            ["ADDON_HIGHLIGHT", "Highlight Add-on"],
           ].map(([key, label]) => (
-            <Field key={key} label={label}>
+            <Field key={key} label={`${label} — Stripe Product ID`}>
               <Input
                 placeholder="prod_xxxxxxxxxx"
                 value={settingsForm.pricing_products?.[key] || ""}
@@ -110,6 +111,37 @@ export default function AdminSettings({
                   setSettingsForm({
                     ...settingsForm,
                     pricing_products: { ...(settingsForm.pricing_products || {}), [key]: e.target.value },
+                  })
+                }
+              />
+            </Field>
+          ))}
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-lg shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-base">Credit Costs</CardTitle>
+          <p className="text-sm text-muted-foreground">How many credits each action costs. These are deducted from the employer's credit balance.</p>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-2">
+          {[
+            ["JOB_LISTING", "Job Listing"],
+            ["DUPLICATE_JOB", "Duplicate Job"],
+            ["IMPORT_JOB", "Import from JobsIreland"],
+            ["ADDON_FEATURED", "Featured Add-on"],
+            ["ADDON_HIGHLIGHT", "Highlight Add-on"],
+          ].map(([key, label]) => (
+            <Field key={key} label={`${label} (credits)`}>
+              <Input
+                type="number"
+                step="0.5"
+                min="0"
+                value={settingsForm.credit_costs?.[key] ?? ""}
+                onChange={(e) =>
+                  setSettingsForm({
+                    ...settingsForm,
+                    credit_costs: { ...(settingsForm.credit_costs || {}), [key]: Number(e.target.value) || 0 },
                   })
                 }
               />
@@ -134,7 +166,7 @@ export default function AdminSettings({
                   ...settingsForm,
                   payment_plans: [
                     ...(settingsForm.payment_plans || []),
-                    { id: `plan_${Date.now()}`, label: "", description: "", stripe_product_id: "", kind: "credits", credits_cents: 0, mode: "payment", enabled: true },
+                    { id: `plan_${Date.now()}`, label: "", description: "", stripe_product_id: "", kind: "credits", credits: 0, mode: "payment", enabled: true },
                   ],
                 })
               }
@@ -232,13 +264,13 @@ export default function AdminSettings({
                   </Select>
                 </Field>
                 {plan.kind === "credits" && (
-                  <Field label="Credits (cents)">
+                  <Field label="Credits">
                     <Input
                       type="number"
-                      value={plan.credits_cents}
+                      value={plan.credits}
                       onChange={(e) => {
                         const plans = [...(settingsForm.payment_plans || [])];
-                        plans[index] = { ...plans[index], credits_cents: Number(e.target.value) || 0 };
+                        plans[index] = { ...plans[index], credits: Number(e.target.value) || 0 };
                         setSettingsForm({ ...settingsForm, payment_plans: plans });
                       }}
                     />

@@ -60,6 +60,19 @@ export default function EmployerDashboard({ user, employer, setEmployer }) {
     enabled: isApproved,
   });
 
+  // Sync employer subscription/credit status from Stripe on dashboard load
+  useEffect(() => {
+    if (!isApproved) return;
+    paymentService.getBalance(employer?.id).then((balance) => {
+      if (!balance) return;
+      const updates = {};
+      if (balance.credits !== undefined && balance.credits !== employer.credits) updates.credits = balance.credits;
+      if (balance.candidateDatabaseAccess !== undefined && balance.candidateDatabaseAccess !== employer.candidate_database_access) updates.candidate_database_access = balance.candidateDatabaseAccess;
+      if (balance.candidateDatabaseStatus && balance.candidateDatabaseStatus !== employer.candidate_database_status) updates.candidate_database_status = balance.candidateDatabaseStatus;
+      if (Object.keys(updates).length) setEmployer((prev) => ({ ...prev, ...updates }));
+    }).catch(() => {});
+  }, [employer?.id, isApproved]);
+
   const profileReady = isProfileReadyForSubmission(employer, companyFormConfig);
   const activeJobs = jobs.filter((j) => j.status === "approved");
   const pendingJobs = jobs.filter((j) => j.status === "pending_review");

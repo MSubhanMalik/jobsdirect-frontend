@@ -24,13 +24,14 @@ function createInitialForm(initialJob) {
   return buildEntityFormValues(JOB_FORM_DEFAULTS, EMPLOYER_JOB_FIELDS, initialJob);
 }
 
-function formatCents(cents) {
-  return `€${(cents / 100).toFixed(2)}`;
+function formatCredits(credits) {
+  return `${credits} credit${credits !== 1 ? "s" : ""}`;
 }
 
 export default function JobPostForm({ employer, user, initialJob = null, autoFocusTitle = false, onClose, onSuccess }) {
   const { settings: publicSettings } = useSiteSettings();
   const approvalRequired = publicSettings.job_approval_required !== false;
+  const [creditCosts, setCreditCosts] = useState({});
   const titleInputRef = useRef(null);
   const [submitting, setSubmitting] = useState(false);
   const [copyFromJobsIreland, setCopyFromJobsIreland] = useState(false);
@@ -40,35 +41,42 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
   const [form, setForm] = useState(() => createInitialForm(initialJob));
   const jobFormConfig = publicSettings.employer_job_form_config || {};
 
-  // Pricing state
+  // State
+  const [inputMethod, setInputMethod] = useState(initialJob ? "manual" : null); // null = not chosen yet
   const [listingType, setListingType] = useState(initialJob ? "paid" : "free");
   const [addons, setAddons] = useState({
     isFeatured: Boolean(initialJob?.is_featured),
+    isHighlighted: Boolean(initialJob?.is_highlighted),
   });
   const [balance, setBalance] = useState(null);
-  const [pricing, setPricing] = useState(null);
 
   const isEditing = Boolean(initialJob?.id);
 
-  // Load balance and pricing
+  // Load balance + credit costs from backend (single source of truth)
   useEffect(() => {
-    paymentService.getBalance(employer?.id).then(setBalance).catch(() => {});
-    paymentService.getPricing().then(setPricing).catch(() => {});
+    paymentService.getBalance(employer?.id).then((b) => {
+      setBalance(b);
+      if (b?.creditCosts) setCreditCosts(b.creditCosts);
+    }).catch(() => {});
   }, [employer?.id]);
 
-  const canPostFree = balance?.canPostFree && !isEditing;
+  const canPostFree = balance?.canPostFree && !isEditing && inputMethod !== "import";
+  const creditBalance = employer.credits || 0;
 
-  // Calculate cost
-  const costCents = useMemo(() => {
-    if (isEditing) return 0; // edits are free
-    if (listingType === "free") return 0;
-    if (!pricing) return 0;
+  // Import from JobsIreland is always paid
+  useEffect(() => {
+    if (inputMethod === "import") setListingType("paid");
+  }, [inputMethod]);
 
-    let cost = pricing.JOB_28_DAY;
-    if (copyFromJobsIreland && scraped) cost = pricing.IMPORT_JOB;
-    if (addons.isFeatured) cost += pricing.ADDON_FEATURED;
+  // Calculate display cost using server-provided creditCosts (backend recalculates on submit)
+  const creditCost = useMemo(() => {
+    if (isEditing || listingType === "free") return 0;
+    let cost = creditCosts.JOB_LISTING || 0;
+    if (inputMethod === "import") cost += creditCosts.IMPORT_JOB || 0;
+    if (addons.isFeatured) cost += creditCosts.ADDON_FEATURED || 0;
+    if (addons.isHighlighted) cost += creditCosts.ADDON_HIGHLIGHT || 0;
     return cost;
-  }, [listingType, addons, copyFromJobsIreland, scraped, pricing, isEditing]);
+  }, [listingType, addons, inputMethod, isEditing, creditCosts]);
 
   useEffect(() => {
     setForm(createInitialForm(initialJob));
@@ -128,13 +136,14 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
         company_name: employer.company_name,
         employer_id: employer.id,
         status: initialJob?.status || (approvalRequired ? "pending_review" : "approved"),
-        source: copyFromJobsIreland && scraped ? "jobsireland" : (initialJob?.source || "manual"),
+        source: inputMethod === "import" && scraped ? "jobsireland" : (initialJob?.source || "manual"),
         is_featured: addons.isFeatured,
+        is_highlighted: addons.isHighlighted,
       };
 
       if (!isEditing) {
         payload.listing_type = listingType;
-        payload.is_imported = Boolean(copyFromJobsIreland && scraped);
+        payload.is_imported = Boolean(inputMethod === "import" && scraped);
       }
 
       if (isEditing) {
@@ -158,7 +167,7 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
           ? "Job Updated — Your job listing has been updated."
           : listingType === "free"
             ? "Job Submitted — Your free 14-day listing has been submitted for review."
-            : `Job Submitted — Your 28-day listing has been submitted. ${formatCents(costCents)} deducted from wallet.`
+            : `Job Submitted — Your 30-day listing has been submitted. ${formatCredits(creditCost)} deducted.`
       );
       onSuccess();
     } catch (error) {
@@ -218,56 +227,146 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
 
-          {/* ─── Pricing Section (only for new jobs) ─── */}
-          {!isEditing && (
+          {/* ─── Step 1: Choose input method (only for new jobs) ─── */}
+          {!isEditing && !inputMethod && (
+            <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4 space-y-4">
+              <h3 className="text-sm font-semibold">How would you like to create this job?</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  className="rounded-lg border border-slate-200 hover:border-primary p-4 text-left transition hover:shadow-sm"
+                  onClick={() => setInputMethod("manual")}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <Send className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-semibold">Create Manually</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Fill in all job details yourself</p>
+                </button>
+                <button
+                  type="button"
+                  className="rounded-lg border border-slate-200 hover:border-accent p-4 text-left transition hover:shadow-sm"
+                  onClick={() => setInputMethod("import")}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <ExternalLink className="h-4 w-4 text-accent" />
+                    <span className="text-sm font-semibold">Import from JobsIreland</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Auto-fill from a JobsIreland.ie listing</p>
+                  <p className="text-xs font-semibold text-accent mt-1">{formatCredits((creditCosts.JOB_LISTING || 0) + (creditCosts.IMPORT_JOB || 0))} (listing + import)</p>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ─── Step 2: Import from JobsIreland (if chosen) ─── */}
+          {!isEditing && inputMethod === "import" && !scraped && (
+            <div className="rounded-lg border border-accent/30 bg-accent/5 p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold flex items-center gap-2">
+                  <ExternalLink className="h-4 w-4 text-accent" />
+                  Import from JobsIreland.ie
+                </h3>
+                <button type="button" className="text-xs text-muted-foreground hover:text-foreground" onClick={() => { setInputMethod("manual"); setScraped(false); setJobRef(""); }}>
+                  Switch to manual
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-end gap-2">
+                  <div className="flex-1 space-y-1">
+                    <Label htmlFor="jobRef" className="text-xs">Job Reference Number (7 digits)</Label>
+                    <Input
+                      id="jobRef"
+                      value={jobRef}
+                      onChange={(event) => {
+                        setJobRef(event.target.value.replace(/\D/g, "").slice(0, 7));
+                        setScraped(false);
+                      }}
+                      placeholder="e.g. 1234567"
+                      maxLength={7}
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    onClick={handleScrape}
+                    disabled={scraping || jobRef.length !== 7}
+                    className="bg-accent text-accent-foreground hover:bg-accent/90"
+                  >
+                    {scraping ? <Loader2 className="h-4 w-4 animate-spin" /> : <ExternalLink className="h-4 w-4" />}
+                    {scraping ? "Importing..." : "Import"}
+                  </Button>
+                </div>
+                {jobRef.length === 7 && (
+                  <a href={`https://jobsireland.ie/en-US/job-Details?id=${jobRef}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-accent underline">
+                    <ExternalLink className="h-3 w-3" /> Preview on JobsIreland.ie
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ─── Imported success ─── */}
+          {inputMethod === "import" && scraped && (
+            <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+              <CheckCircle2 className="h-4 w-4" />
+              Fields pre-filled from JobsIreland. Review and edit below before submitting.
+            </div>
+          )}
+
+          {/* ─── Pricing Section (after method chosen, only for new jobs) ─── */}
+          {!isEditing && (inputMethod === "manual" || (inputMethod === "import" && scraped)) && (
             <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4 space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold flex items-center gap-2">
                   <CreditCard className="h-4 w-4" />
                   Listing Type
                 </h3>
-                {balance && (
-                  <span className="text-xs font-medium text-muted-foreground">
-                    Balance: <span className="font-bold text-foreground">{balance.creditsDisplay}</span>
-                  </span>
-                )}
+                <span className="text-xs font-medium text-muted-foreground">
+                  Balance: <span className="font-bold text-foreground">{creditBalance} credits</span>
+                </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  className={`rounded-lg border p-3 text-left transition ${
-                    listingType === "free"
-                      ? "border-emerald-600 bg-emerald-50 shadow-[0_0_0_1px_theme(colors.emerald.600)]"
-                      : "border-slate-200 hover:border-slate-300"
-                  } ${!canPostFree ? "opacity-50 cursor-not-allowed" : ""}`}
-                  onClick={() => canPostFree && setListingType("free")}
-                  disabled={!canPostFree}
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    <Gift className="h-4 w-4 text-emerald-600" />
-                    <span className="text-sm font-semibold">Free Listing</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">14 days, 1 per month</p>
-                  {!canPostFree && <p className="text-xs text-amber-600 mt-1">Used this month</p>}
-                </button>
-
-                <button
-                  type="button"
-                  className={`rounded-lg border p-3 text-left transition ${
-                    listingType === "paid"
-                      ? "border-emerald-600 bg-emerald-50 shadow-[0_0_0_1px_theme(colors.emerald.600)]"
-                      : "border-slate-200 hover:border-slate-300"
-                  }`}
-                  onClick={() => setListingType("paid")}
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    <Zap className="h-4 w-4 text-amber-500" />
-                    <span className="text-sm font-semibold">Paid Listing</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">28 days, from {pricing ? formatCents(pricing.JOB_28_DAY) : "€15.00"}</p>
-                </button>
-              </div>
+              {inputMethod === "import" ? (
+                <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2">
+                  <p className="text-sm font-medium text-amber-800">Imported listings are always paid (30 days, {formatCredits((creditCosts.JOB_LISTING || 0) + (creditCosts.IMPORT_JOB || 0))} — listing + import fee)</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    className={`rounded-lg border p-3 text-left transition ${
+                      listingType === "free"
+                        ? "border-emerald-600 bg-emerald-50 shadow-[0_0_0_1px_theme(colors.emerald.600)]"
+                        : "border-slate-200 hover:border-slate-300"
+                    } ${!canPostFree ? "opacity-50 cursor-not-allowed" : ""}`}
+                    onClick={() => canPostFree && setListingType("free")}
+                    disabled={!canPostFree}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <Gift className="h-4 w-4 text-emerald-600" />
+                      <span className="text-sm font-semibold">Free Listing</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">14 days, 1 per month</p>
+                    {!canPostFree && <p className="text-xs text-amber-600 mt-1">Used this month</p>}
+                  </button>
+                  <button
+                    type="button"
+                    className={`rounded-lg border p-3 text-left transition ${
+                      listingType === "paid"
+                        ? "border-emerald-600 bg-emerald-50 shadow-[0_0_0_1px_theme(colors.emerald.600)]"
+                        : "border-slate-200 hover:border-slate-300"
+                    }`}
+                    onClick={() => setListingType("paid")}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <Zap className="h-4 w-4 text-amber-500" />
+                      <span className="text-sm font-semibold">Paid Listing</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">30 days, {formatCredits(creditCosts.JOB_LISTING)} (or pay via checkout)</p>
+                  </button>
+                </div>
+              )}
 
               {/* Add-ons (only for paid) */}
               {listingType === "paid" && (
@@ -282,146 +381,92 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
                       <span className="text-sm font-medium flex items-center gap-1">
                         <Star className="h-3.5 w-3.5 text-amber-500" /> Featured
                       </span>
-                      <span className="text-xs text-muted-foreground">Shown in featured carousel on homepage</span>
+                      <span className="text-xs text-muted-foreground">Show in featured carousel on homepage</span>
                     </div>
-                    <span className="text-xs font-semibold">{pricing ? formatCents(pricing.ADDON_FEATURED) : "€5.00"}</span>
+                    <span className="text-xs font-semibold">{formatCredits(creditCosts.ADDON_FEATURED)}</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <Checkbox
+                      checked={addons.isHighlighted}
+                      onCheckedChange={(v) => setAddons((a) => ({ ...a, isHighlighted: Boolean(v) }))}
+                    />
+                    <div className="flex-1">
+                      <span className="text-sm font-medium flex items-center gap-1">
+                        <Sparkles className="h-3.5 w-3.5 text-blue-500" /> Highlight
+                      </span>
+                      <span className="text-xs text-muted-foreground">Stand out in search results with visual highlight</span>
+                    </div>
+                    <span className="text-xs font-semibold">{formatCredits(creditCosts.ADDON_HIGHLIGHT)}</span>
                   </label>
                 </div>
               )}
 
               {/* Cost summary */}
-              {listingType === "paid" && costCents > 0 && (
+              {listingType === "paid" && creditCost > 0 && (
                 <div className="rounded-md bg-white border border-slate-200 px-3 py-2 space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Total cost</span>
-                    <span className="text-base font-bold">{formatCents(costCents)}</span>
+                    <span className="text-base font-bold">{formatCredits(creditCost)}</span>
                   </div>
-                  {balance && (
-                    <p className="text-xs text-muted-foreground">
-                      {(balance.creditsCents || 0) >= costCents
-                        ? `Will be deducted from your wallet (${balance.creditsDisplay} available)`
-                        : `Insufficient wallet balance (${balance.creditsDisplay}). You'll be redirected to Stripe checkout.`}
-                    </p>
-                  )}
+                  <p className="text-xs text-muted-foreground">
+                    {creditBalance >= creditCost
+                      ? `Will be deducted from your credits (${creditBalance} available)`
+                      : `Insufficient credits (${creditBalance} available). You'll be redirected to Stripe checkout.`}
+                  </p>
                 </div>
               )}
             </div>
           )}
 
-          {/* ─── Import from JobsIreland ─── */}
-          {!isEditing && (
-            <div className="rounded-lg border border-accent/30 bg-accent/5 p-4 space-y-3">
-              <div className="flex items-center gap-3">
-                <Checkbox
-                  id="copyJobsIreland"
-                  checked={copyFromJobsIreland}
-                  onCheckedChange={(value) => {
-                    setCopyFromJobsIreland(Boolean(value));
-                    setScraped(false);
-                    if (value) setListingType("paid");
-                  }}
-                />
-                <label htmlFor="copyJobsIreland" className="flex cursor-pointer flex-col">
-                  <span className="text-sm font-semibold">Copy Job from JobsIreland.ie</span>
-                  <span className="text-xs text-muted-foreground">
-                    Import job details automatically ({pricing ? formatCents(pricing.IMPORT_JOB) : "€5.00"})
-                  </span>
-                </label>
-              </div>
-
-              {copyFromJobsIreland ? (
-                <div className="space-y-3 pt-1">
-                  <div className="flex items-end gap-2">
-                    <div className="flex-1 space-y-1">
-                      <Label htmlFor="jobRef" className="text-xs">Job Reference Number (7 digits)</Label>
-                      <Input
-                        id="jobRef"
-                        value={jobRef}
-                        onChange={(event) => {
-                          setJobRef(event.target.value.replace(/\D/g, "").slice(0, 7));
-                          setScraped(false);
-                        }}
-                        placeholder="e.g. 1234567"
-                        maxLength={7}
-                      />
-                    </div>
-                    <Button
-                      type="button"
-                      onClick={handleScrape}
-                      disabled={scraping || jobRef.length !== 7}
-                      className="bg-accent text-accent-foreground hover:bg-accent/90"
-                    >
-                      {scraping ? <Loader2 className="h-4 w-4 animate-spin" /> : <ExternalLink className="h-4 w-4" />}
-                      {scraping ? "Importing..." : "Import"}
-                    </Button>
-                  </div>
-
-                  {jobRef.length === 7 ? (
-                    <a
-                      href={`https://jobsireland.ie/en-US/job-Details?id=${jobRef}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-xs text-accent underline"
-                    >
-                      <ExternalLink className="h-3 w-3" />
-                      Preview on JobsIreland.ie
-                    </a>
-                  ) : null}
-
-                  {scraped ? (
-                    <p className="flex items-center gap-1 text-xs font-medium text-accent">
-                      <CheckCircle2 className="h-3.5 w-3.5" />
-                      Fields pre-filled - review and edit below before submitting.
-                    </p>
-                  ) : null}
+          {/* ─── Job Form Fields (show when ready) ─── */}
+          {(isEditing || inputMethod === "manual" || (inputMethod === "import" && scraped)) && (
+            <>
+              {!visibleGroups.length ? (
+                <div className="rounded-lg border border-dashed p-5 text-sm text-muted-foreground">
+                  All employer job fields are currently hidden. Enable them from Admin Site CMS.
                 </div>
               ) : null}
-            </div>
+
+              {visibleGroups.map((group) => (
+                <section key={group.id} className="space-y-4">
+                  <div>
+                    <h3 className="text-sm font-semibold">{group.title}</h3>
+                    {group.description ? <p className="text-xs text-muted-foreground">{group.description}</p> : null}
+                  </div>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    {group.fields.map((field) => (
+                      <FormFieldRenderer
+                        key={field.key}
+                        field={field}
+                        value={form[field.key]}
+                        onChange={(value) => update(field.key, value)}
+                        required={Boolean(jobFormConfig?.[field.key]?.required)}
+                        inputRef={field.key === "title" ? titleInputRef : undefined}
+                      />
+                    ))}
+                  </div>
+                </section>
+              ))}
+
+              {/* ─── Submit ─── */}
+              <div className="flex gap-3 pt-2">
+                <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+                <Button type="submit" className="bg-accent text-accent-foreground hover:bg-accent/90" disabled={submitting}>
+                  <Send className="mr-2 h-4 w-4" />
+                  {submitting
+                    ? (isEditing ? "Saving..." : "Submitting...")
+                    : isEditing
+                      ? "Save Changes"
+                      : listingType === "free"
+                        ? "Submit Free Listing"
+                        : creditBalance >= creditCost
+                          ? `Submit (${formatCredits(creditCost)})`
+                          : `Submit & Pay €10`
+                  }
+                </Button>
+              </div>
+            </>
           )}
-
-          {/* ─── Job Form Fields ─── */}
-          {!visibleGroups.length ? (
-            <div className="rounded-lg border border-dashed p-5 text-sm text-muted-foreground">
-              All employer job fields are currently hidden. Enable them from Admin Site CMS.
-            </div>
-          ) : null}
-
-          {visibleGroups.map((group) => (
-            <section key={group.id} className="space-y-4">
-              <div>
-                <h3 className="text-sm font-semibold">{group.title}</h3>
-                {group.description ? <p className="text-xs text-muted-foreground">{group.description}</p> : null}
-              </div>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {group.fields.map((field) => (
-                  <FormFieldRenderer
-                    key={field.key}
-                    field={field}
-                    value={form[field.key]}
-                    onChange={(value) => update(field.key, value)}
-                    required={Boolean(jobFormConfig?.[field.key]?.required)}
-                    inputRef={field.key === "title" ? titleInputRef : undefined}
-                  />
-                ))}
-              </div>
-            </section>
-          ))}
-
-          {/* ─── Submit ─── */}
-          <div className="flex gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit" className="bg-accent text-accent-foreground hover:bg-accent/90" disabled={submitting}>
-              <Send className="mr-2 h-4 w-4" />
-              {submitting
-                ? (isEditing ? "Saving..." : "Submitting...")
-                : isEditing
-                  ? "Save Changes"
-                  : listingType === "free"
-                    ? "Submit Free Listing"
-                    : `Submit & Pay ${formatCents(costCents)}`
-              }
-            </Button>
-          </div>
         </form>
       </CardContent>
     </Card>

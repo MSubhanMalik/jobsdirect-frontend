@@ -1,8 +1,8 @@
 export interface PricingProducts {
-  JOB_28_DAY: string;
+  JOB_LISTING: string;
   DUPLICATE_JOB: string;
   IMPORT_JOB: string;
-  ADDON_FEATURED: string;
+  ADDON_HIGHLIGHT: string;
 }
 
 export interface FieldControlConfig {

@@ -51,8 +51,8 @@ export default function DashboardStats({ activeJobs, pendingJobs, applications, 
               <CreditCard className="w-5 h-5 text-accent" />
             </div>
             <div>
-              <p className="text-2xl font-bold">€{(credits / 100).toFixed(2)}</p>
-              <p className="text-xs text-muted-foreground">Wallet</p>
+              <p className="text-2xl font-bold">{credits}</p>
+              <p className="text-xs text-muted-foreground">Credits</p>
             </div>
           </div>
         </CardContent>
