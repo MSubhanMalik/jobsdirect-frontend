@@ -67,6 +67,17 @@ class PaymentService {
     );
     return res.data;
   }
+
+  async getTransactions(employerId?: string, page = 1): Promise<any> {
+    const params = new URLSearchParams();
+    if (employerId) params.set("employerId", employerId);
+    params.set("page", String(page));
+    params.set("pageSize", "20");
+    const res = await axiosInstance.get(
+      `${api.endpoints.PAYMENT_TRANSACTIONS}?${params.toString()}`,
+    );
+    return res.data;
+  }
 }
 
 export default new PaymentService();

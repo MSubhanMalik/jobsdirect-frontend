@@ -39,6 +39,7 @@ export const api = {
     PAYMENT_PORTAL: "/api/payments/portal",
     PAYMENT_PRICING: "/api/payments/pricing",
     PAYMENT_BALANCE: "/api/payments/balance",
+    PAYMENT_TRANSACTIONS: "/api/payments/transactions",
 
     // Settings
     SITE_SETTINGS: "/api/settings/site",

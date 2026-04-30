@@ -4,6 +4,7 @@ import { CreditCard } from "lucide-react";
 import { useProducts } from "@/hooks/useProducts";
 import CreditBundles from "@/components/products/CreditBundles";
 import SubscriptionPlans from "@/components/products/SubscriptionPlans";
+import TransactionHistory from "@/components/products/TransactionHistory";
 
 export default function BillingTab({ employer, checkoutPlanId, onCheckout, onBillingPortal }) {
   const { creditBundles, subscriptions } = useProducts();
@@ -51,6 +52,7 @@ export default function BillingTab({ employer, checkoutPlanId, onCheckout, onBil
         onCheckout={onCheckout}
         onBillingPortal={onBillingPortal}
       />
+      <TransactionHistory employerId={employer.id} />
     </div>
   );
 }
