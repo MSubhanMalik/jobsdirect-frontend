@@ -2,12 +2,11 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import jobService from "@/services/job";
-import productService from "@/services/product";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "react-toastify";
-import { Briefcase, Plus, FileText, Clock, CheckCircle, XCircle, Eye, Trash2 } from "lucide-react";
+import { Briefcase, Plus, FileText, Clock, CheckCircle, XCircle, Eye, Trash2, Star, Sparkles, Send } from "lucide-react";
 import ConfirmDialog from "@/components/ui/confirm-dialog";
 
 const statusIcons = {
@@ -18,6 +17,17 @@ const statusIcons = {
   expired: <Clock className="w-4 h-4 text-muted-foreground" />,
 };
 
+function getTimeLeft(expiresAt) {
+  if (!expiresAt) return null;
+  const diff = new Date(expiresAt) - Date.now();
+  if (diff <= 0) return "Expired";
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  if (days > 1) return `${days} days left`;
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  if (hours > 0) return `${hours}h left`;
+  return "< 1h left";
+}
+
 export default function JobList({ jobs, user, employer, showJobForm, editingJob, setShowJobForm, setEditingJob, formContainerRef, JobPostForm }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -25,6 +35,20 @@ export default function JobList({ jobs, user, employer, showJobForm, editingJob,
   const [duplicating, setDuplicating] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [submittingReview, setSubmittingReview] = useState(null);
+
+  const handleSubmitForReview = async (jobId) => {
+    setSubmittingReview(jobId);
+    try {
+      await jobService.update(jobId, { status: "pending_review" });
+      queryClient.invalidateQueries({ queryKey: ["employer-jobs", user.email] });
+      toast.success("Job submitted for review.");
+    } catch (err) {
+      toast.error(`Could not submit — ${err.message}`);
+    } finally {
+      setSubmittingReview(null);
+    }
+  };
 
   const handleDelete = async (jobId) => {
     setDeleting(true);
@@ -98,45 +122,83 @@ export default function JobList({ jobs, user, employer, showJobForm, editingJob,
             </CardContent>
           </Card>
         ) : (
-          jobs.map((job) => (
-            <Card key={job.id} className="hover:shadow-sm transition-shadow">
-              <CardContent className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  {statusIcons[job.status]}
-                  <div>
-                    <p className="font-medium text-sm">{job.title}</p>
-                    <p className="text-xs text-muted-foreground">{job.location} · {job.job_type?.replace("_", " ")}</p>
+          jobs.map((job) => {
+            const timeLeft = getTimeLeft(job.expires_at);
+            return (
+              <Card key={job.id} className="hover:shadow-sm transition-shadow">
+                <CardContent className="p-4 space-y-3">
+                  {/* Row 1: Title + Status */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      {statusIcons[job.status]}
+                      <div className="min-w-0">
+                        <p className="font-medium text-sm truncate">{job.title}</p>
+                        <p className="text-xs text-muted-foreground">{job.location} · {job.job_type?.replace("_", " ")}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Badge variant={job.status === "approved" ? "default" : "secondary"} className="text-xs">
+                        {job.status?.replace("_", " ")}
+                      </Badge>
+                      {job.listing_type === "free" && <Badge variant="outline" className="text-xs">Free</Badge>}
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Badge variant={job.status === "approved" ? "default" : "secondary"} className="text-xs">
-                    {job.status?.replace("_", " ")}
-                  </Badge>
-                  <Button variant="ghost" size="sm" onClick={() => navigate(`/jobs/${job.id}`)}>View</Button>
-                  <Button variant="outline" size="sm" onClick={() => { setEditingJob(job); setShowJobForm(true); }}>Edit</Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setDuplicateConfirm(job)}
-                  >
-                    Duplicate
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-destructive hover:text-destructive"
-                    onClick={() => setDeleteConfirm(job)}
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
-                  <span className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Eye className="w-3 h-3" />
-                    {job.views_count || 0}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          ))
+
+                  {/* Row 2: Addons + Time Left */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {job.is_featured && (
+                      <Badge variant="secondary" className="text-xs gap-1">
+                        <Star className="w-3 h-3 text-amber-500" /> Featured
+                      </Badge>
+                    )}
+                    {job.is_highlighted && (
+                      <Badge variant="secondary" className="text-xs gap-1">
+                        <Sparkles className="w-3 h-3 text-blue-500" /> Highlighted
+                      </Badge>
+                    )}
+                    {job.is_imported && (
+                      <Badge variant="outline" className="text-xs">Imported</Badge>
+                    )}
+                    {job.is_duplicate && (
+                      <Badge variant="outline" className="text-xs">Duplicate</Badge>
+                    )}
+                    {timeLeft && (
+                      <span className={`text-xs font-medium ${timeLeft === "Expired" ? "text-destructive" : "text-muted-foreground"}`}>
+                        <Clock className="w-3 h-3 inline mr-0.5" />{timeLeft}
+                      </span>
+                    )}
+                    {job.credits_charged > 0 && (
+                      <span className="text-xs text-muted-foreground">{job.credits_charged} credits charged</span>
+                    )}
+                  </div>
+
+                  {/* Row 3: Actions */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {job.status === "draft" && (
+                      <Button
+                        size="sm"
+                        className="bg-accent text-accent-foreground hover:bg-accent/90"
+                        disabled={submittingReview === job.id}
+                        onClick={() => handleSubmitForReview(job.id)}
+                      >
+                        <Send className="w-3.5 h-3.5 mr-1" />
+                        {submittingReview === job.id ? "Submitting..." : "Submit for Review"}
+                      </Button>
+                    )}
+                    <Button variant="ghost" size="sm" onClick={() => navigate(`/jobs/${job.id}`)}>View</Button>
+                    <Button variant="outline" size="sm" onClick={() => { setEditingJob(job); setShowJobForm(true); }}>Edit</Button>
+                    <Button variant="ghost" size="sm" onClick={() => setDuplicateConfirm(job)}>Duplicate</Button>
+                    <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => setDeleteConfirm(job)}>
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                    <span className="text-xs text-muted-foreground flex items-center gap-1 ml-auto">
+                      <Eye className="w-3 h-3" />{job.views_count || 0} views
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })
         )}
       </div>
 
