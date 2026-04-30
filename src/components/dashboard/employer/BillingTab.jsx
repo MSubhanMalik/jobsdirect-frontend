@@ -22,8 +22,8 @@ export default function BillingTab({ employer, creditPlans, subscriptionPlans, c
           <CardContent className="p-5">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-sm text-muted-foreground">Available credits</p>
-                <p className="mt-1 text-3xl font-bold">{employer.credits || 0}</p>
+                <p className="text-sm text-muted-foreground">Wallet balance</p>
+                <p className="mt-1 text-3xl font-bold">€{((employer.credits || 0) / 100).toFixed(2)}</p>
               </div>
               <div className="w-11 h-11 rounded-lg bg-accent/10 flex items-center justify-center">
                 <CreditCard className="w-5 h-5 text-accent" />
@@ -49,7 +49,7 @@ export default function BillingTab({ employer, creditPlans, subscriptionPlans, c
       </div>
 
       <div>
-        <h2 className="text-lg font-semibold mb-4">Buy credits</h2>
+        <h2 className="text-lg font-semibold mb-4">Top up wallet</h2>
         <div className="grid gap-4 md:grid-cols-3">
           {creditPlans.map((plan) => (
             <Card key={plan.id}>

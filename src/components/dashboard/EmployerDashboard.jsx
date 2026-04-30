@@ -87,7 +87,7 @@ export default function EmployerDashboard({ user, employer, setEmployer }) {
     setCheckoutPlanId("syncing");
     paymentService.syncCheckoutSession(sessionId)
       .then((result) => {
-        if (result.employer) setEmployer(result.employer);
+        if (result.employer) setEmployer((prev) => ({ ...prev, ...result.employer }));
         queryClient.invalidateQueries({ queryKey: ["employer-jobs", user.email] });
         toast.success(result.success ? "Payment complete — Your account has been updated." : "Payment received — Stripe is still confirming this payment.");
       })

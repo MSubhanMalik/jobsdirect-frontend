@@ -140,7 +140,14 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
       if (isEditing) {
         await jobService.update(initialJob.id, payload);
       } else {
-        await jobService.create(payload);
+        const result = await jobService.create(payload);
+
+        // If backend returned a checkout URL, redirect to Stripe
+        if (result.needsCheckout && result.checkoutUrl) {
+          toast.info("Redirecting to payment...");
+          window.location.assign(result.checkoutUrl);
+          return;
+        }
       }
 
       // Refresh balance
@@ -151,7 +158,7 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
           ? "Job Updated — Your job listing has been updated."
           : listingType === "free"
             ? "Job Submitted — Your free 14-day listing has been submitted for review."
-            : `Job Submitted — Your 28-day listing has been submitted. ${formatCents(costCents)} deducted from credits.`
+            : `Job Submitted — Your 28-day listing has been submitted. ${formatCents(costCents)} deducted from wallet.`
       );
       onSuccess();
     } catch (error) {
@@ -169,25 +176,26 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
 
     setScraping(true);
     try {
-      const data = await jobService.scrapeJobsIreland({ ref: jobRef });
+      const result = await jobService.scrapeJobsIreland({ ref: jobRef });
+      const scraped = result.data || result;
       setForm((current) => ({
         ...current,
-        title: data.title || current.title,
-        description: data.description || current.description,
-        short_description: data.short_description || current.short_description,
-        location: data.location || current.location,
-        job_type: data.job_type || current.job_type,
-        category: data.category || current.category,
-        country: data.country || current.country,
-        hours_per_week: data.hours_per_week ?? current.hours_per_week,
-        positions_count: data.positions_count ?? current.positions_count,
-        salary_min: data.salary_min ?? current.salary_min,
-        salary_max: data.salary_max ?? current.salary_max,
-        salary_period: data.salary_period || current.salary_period,
-        career_level: data.career_level || current.career_level,
-        application_method: data.application_method || current.application_method,
-        application_email: data.application_email || current.application_email,
-        application_url: data.application_url || current.application_url,
+        title: scraped.title || current.title,
+        description: scraped.description || current.description,
+        short_description: scraped.short_description || current.short_description,
+        location: scraped.location || current.location,
+        job_type: scraped.job_type || current.job_type,
+        category: scraped.category || current.category,
+        country: scraped.country || current.country,
+        hours_per_week: scraped.hours_per_week ?? current.hours_per_week,
+        positions_count: scraped.positions_count ?? current.positions_count,
+        salary_min: scraped.salary_min ?? current.salary_min,
+        salary_max: scraped.salary_max ?? current.salary_max,
+        salary_period: scraped.salary_period || current.salary_period,
+        career_level: scraped.career_level || current.career_level,
+        application_method: scraped.application_method || current.application_method,
+        application_email: scraped.application_email || current.application_email,
+        application_url: scraped.application_url || current.application_url,
       }));
       setScraped(true);
       setListingType("paid"); // Imported jobs are always paid
@@ -283,9 +291,18 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
 
               {/* Cost summary */}
               {listingType === "paid" && costCents > 0 && (
-                <div className="flex items-center justify-between rounded-md bg-white border border-slate-200 px-3 py-2">
-                  <span className="text-sm font-medium">Total cost</span>
-                  <span className="text-base font-bold">{formatCents(costCents)}</span>
+                <div className="rounded-md bg-white border border-slate-200 px-3 py-2 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Total cost</span>
+                    <span className="text-base font-bold">{formatCents(costCents)}</span>
+                  </div>
+                  {balance && (
+                    <p className="text-xs text-muted-foreground">
+                      {(balance.creditsCents || 0) >= costCents
+                        ? `Will be deducted from your wallet (${balance.creditsDisplay} available)`
+                        : `Insufficient wallet balance (${balance.creditsDisplay}). You'll be redirected to Stripe checkout.`}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
