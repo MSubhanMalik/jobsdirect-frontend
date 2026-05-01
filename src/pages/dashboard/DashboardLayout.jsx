@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-toastify";
 import { useAuthStore } from "@/stores/authStore";
 import authService from "@/services/auth";
 import employerService from "@/services/employer";
@@ -36,10 +37,37 @@ export default function DashboardLayout() {
   const location = useLocation();
   const { user, isAuthenticated, isLoading: authLoading } = useAuthStore();
 
+  const queryClient = useQueryClient();
+
   useEffect(() => {
     if (!authLoading && !isAuthenticated) authService.redirectToLogin("/dashboard");
     if (!authLoading && user?.role === "admin") navigate("/admin");
   }, [authLoading, isAuthenticated, user, navigate]);
+
+  // Handle payment redirect (success/cancelled)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const payment = params.get("payment");
+    const sessionId = params.get("session_id");
+
+    if (payment === "success" && sessionId) {
+      paymentService.syncCheckoutSession(sessionId).then((result) => {
+        if (result.success) {
+          toast.success("Payment complete — Your job listing is now pending review.");
+          // Refresh employer data and jobs list
+          queryClient.invalidateQueries({ queryKey: ["my-employer", user?.email] });
+          queryClient.invalidateQueries({ queryKey: ["employer-jobs", user?.email] });
+        }
+      }).catch(() => {
+        toast.error("Could not verify payment. Please refresh.");
+      });
+      // Clear URL params
+      navigate(location.pathname, { replace: true });
+    } else if (payment === "cancelled") {
+      toast.info("Payment cancelled — no charge was made.");
+      navigate(location.pathname, { replace: true });
+    }
+  }, [location.search, navigate, location.pathname, user?.email, queryClient]);
 
   const { data: employerData, isLoading: employerLoading } = useQuery({
     queryKey: ["my-employer", user?.email],

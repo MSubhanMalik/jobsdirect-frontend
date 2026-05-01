@@ -59,6 +59,12 @@ class JobService {
     return res.data;
   }
 
+  async checkout(id: string): Promise<Job> {
+    const url = api.endpoints.JOB_DETAIL.replace(":id", id);
+    const res = await axiosInstance.post<Job>(`${url}/checkout`);
+    return res.data;
+  }
+
   async costEstimate(payload: Record<string, any>): Promise<JobCostEstimate> {
     const res = await axiosInstance.post<JobCostEstimate>(
       api.endpoints.JOB_COST_ESTIMATE,

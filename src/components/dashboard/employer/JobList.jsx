@@ -12,6 +12,7 @@ import { useProducts } from "@/hooks/useProducts";
 import ProductIcon from "@/components/products/ProductIcon";
 
 const statusIcons = {
+  unpaid: <AlertTriangle className="w-4 h-4 text-orange-500" />,
   draft: <FileText className="w-4 h-4" />,
   pending_review: <Clock className="w-4 h-4 text-yellow-500" />,
   approved: <CheckCircle className="w-4 h-4 text-accent" />,
@@ -176,7 +177,7 @@ export default function JobList({ jobs, user, employer, showJobForm, editingJob,
                       </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <Badge variant={job.status === "approved" ? "default" : "secondary"} className="text-xs">
+                      <Badge variant={job.status === "approved" ? "default" : job.status === "unpaid" ? "destructive" : "secondary"} className="text-xs">
                         {job.status?.replace("_", " ")}
                       </Badge>
                       {job.listing_type === "free" && <Badge variant="outline" className="text-xs">Free</Badge>}
@@ -223,6 +224,25 @@ export default function JobList({ jobs, user, employer, showJobForm, editingJob,
 
                   {/* Row 3: Actions */}
                   <div className="flex items-center gap-2 flex-wrap">
+                    {job.status === "unpaid" && (
+                      <Button
+                        size="sm"
+                        className="bg-orange-500 hover:bg-orange-600 text-white"
+                        onClick={async () => {
+                          try {
+                            const result = await jobService.checkout(job.id);
+                            if (result.checkoutUrl) {
+                              window.location.assign(result.checkoutUrl);
+                            }
+                          } catch (err) {
+                            toast.error(err.message || "Could not resume checkout");
+                          }
+                        }}
+                      >
+                        <Zap className="w-3.5 h-3.5 mr-1" />
+                        Complete Payment
+                      </Button>
+                    )}
                     {job.status === "draft" && (
                       <Button
                         size="sm"
