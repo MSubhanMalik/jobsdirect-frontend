@@ -34,7 +34,7 @@ export default function DashboardJobAlerts() {
   const { user } = useOutletContext();
   const queryClient = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
-  const [form, setForm] = useState({ keyword: "", location: "", category: "", jobType: "", frequency: "daily" });
+  const [form, setForm] = useState({ keyword: "", location: "any", category: "any", jobType: "any", frequency: "daily" });
 
   const { data: alerts = [], isLoading } = useQuery({
     queryKey: ["job-alerts"],
@@ -47,7 +47,7 @@ export default function DashboardJobAlerts() {
       queryClient.invalidateQueries({ queryKey: ["job-alerts"] });
       toast.success("Job alert created");
       setShowCreate(false);
-      setForm({ keyword: "", location: "", category: "", jobType: "", frequency: "daily" });
+      setForm({ keyword: "", location: "any", category: "any", jobType: "any", frequency: "daily" });
     },
     onError: (err) => toast.error(err.message || "Failed to create alert"),
   });
@@ -66,11 +66,17 @@ export default function DashboardJobAlerts() {
   });
 
   const handleCreate = () => {
-    if (!form.keyword && !form.location && !form.category && !form.jobType) {
+    const payload = {
+      ...form,
+      location: form.location === "any" ? null : form.location,
+      category: form.category === "any" ? null : form.category,
+      jobType: form.jobType === "any" ? null : form.jobType,
+    };
+    if (!payload.keyword && !payload.location && !payload.category && !payload.jobType) {
       toast.error("Add at least one filter");
       return;
     }
-    createMutation.mutate(form);
+    createMutation.mutate(payload);
   };
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Loading alerts...</p>;
@@ -155,6 +161,9 @@ export default function DashboardJobAlerts() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Create Job Alert</DialogTitle>
+            <p className="text-xs text-muted-foreground mt-1">
+              We'll notify you when new jobs match your criteria. Our matching is flexible, so we'll look for keywords across titles, descriptions, and locations.
+            </p>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-1">
@@ -170,7 +179,7 @@ export default function DashboardJobAlerts() {
               <Select value={form.location} onValueChange={(v) => setForm({ ...form, location: v })}>
                 <SelectTrigger><SelectValue placeholder="Any location" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Any location</SelectItem>
+                  <SelectItem value="any">Any location</SelectItem>
                   {LOCATION_OPTIONS.map((l) => (
                     <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
                   ))}
@@ -182,7 +191,7 @@ export default function DashboardJobAlerts() {
               <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
                 <SelectTrigger><SelectValue placeholder="Any category" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Any category</SelectItem>
+                  <SelectItem value="any">Any category</SelectItem>
                   {categoryOptions.map((c) => (
                     <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
                   ))}
@@ -194,7 +203,7 @@ export default function DashboardJobAlerts() {
               <Select value={form.jobType} onValueChange={(v) => setForm({ ...form, jobType: v })}>
                 <SelectTrigger><SelectValue placeholder="Any type" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Any type</SelectItem>
+                  <SelectItem value="any">Any type</SelectItem>
                   {jobTypeOptions.map((j) => (
                     <SelectItem key={j.value} value={j.value}>{j.label}</SelectItem>
                   ))}
