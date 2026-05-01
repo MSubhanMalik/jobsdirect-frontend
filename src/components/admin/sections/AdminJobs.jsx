@@ -1,4 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
+import { useOutletContext } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-toastify";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -14,9 +17,13 @@ import {
 import {
   Plus, Pencil, CheckCircle2, XCircle, FileText, MoreHorizontal, Trash2, Search,
 } from "lucide-react";
+import ConfirmDialog from "@/components/ui/confirm-dialog";
 import { StatusBadge, SectionHeader, EmptyState } from "../shared/UIComponents";
 import { searchRecords, formatSalary } from "../shared/helpers";
 import { queryKeys } from "../shared/constants";
+import PaginationControls from "@/components/ui/pagination-controls";
+import jobService from "@/services/job";
+import employerService from "@/services/employer";
 
 const JOB_STATUSES = [
   { value: "all", label: "All statuses" },
@@ -27,17 +34,42 @@ const JOB_STATUSES = [
   { value: "archived", label: "Archived" },
 ];
 
-export default function AdminJobs({
-  jobs,
-  employers,
-  search,
-  setSearch,
-  jobStatus,
-  setJobStatus,
-  openEditor,
-  updateEntity,
-  setDeleteDialog,
-}) {
+export default function AdminJobs() {
+  const { search, openEditor } = useOutletContext();
+  const queryClient = useQueryClient();
+  const [jobStatus, setJobStatus] = useState("all");
+  const [deleteDialog, setDeleteDialog] = useState(null);
+  const [page, setPage] = useState(1);
+
+  const jobsQuery = useQuery({ queryKey: [...queryKeys.jobs, page], queryFn: () => jobService.list({ pageSize: 20, page }) });
+  const employersQuery = useQuery({ queryKey: queryKeys.employers, queryFn: () => employerService.list({ pageSize: 100 }) });
+
+  const jobs = jobsQuery.data?.items || [];
+  const totalPages = jobsQuery.data?.totalPages || 1;
+  const employers = employersQuery.data?.items || [];
+
+  const updateEntity = async (id, updates, title) => {
+    try {
+      await jobService.update(id, updates);
+      queryClient.invalidateQueries({ queryKey: queryKeys.jobs });
+      toast.success(title);
+    } catch (err) {
+      toast.error("Failed to update job");
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteDialog) return;
+    try {
+      await jobService.remove(deleteDialog.id);
+      queryClient.invalidateQueries({ queryKey: queryKeys.jobs });
+      toast.success(`Deleted — ${deleteDialog.label}`);
+      setDeleteDialog(null);
+    } catch (err) {
+      toast.error("Failed to delete job");
+    }
+  };
+
   let filtered = searchRecords(jobs, search, ["title", "company_name", "location"]);
   if (jobStatus && jobStatus !== "all") {
     filtered = filtered.filter((job) => job.status === jobStatus);
@@ -48,7 +80,7 @@ export default function AdminJobs({
       <SectionHeader
         title="Jobs CMS"
         action={
-          <Button onClick={() => openEditor("job")}>
+          <Button onClick={() => openEditor("job", null, { employers })}>
             <Plus className="h-4 w-4" />
             New Job
           </Button>
@@ -61,7 +93,7 @@ export default function AdminJobs({
           <Input
             placeholder="Search jobs..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            readOnly
             className="pl-9"
           />
         </div>
@@ -90,7 +122,7 @@ export default function AdminJobs({
                 <TableHead>Location</TableHead>
                 <TableHead>Salary</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Placement</TableHead>
+                <TableHead>Addons</TableHead>
                 <TableHead className="w-12" />
               </TableRow>
             </TableHeader>
@@ -107,10 +139,15 @@ export default function AdminJobs({
                     <StatusBadge value={job.status} />
                   </TableCell>
                   <TableCell>
-                    <div className="flex gap-1">
-                      {job.is_featured && (
-                        <Badge variant="secondary" className="text-xs">Featured</Badge>
-                      )}
+                    <div className="flex gap-1 flex-wrap">
+                      {(job.active_addons || []).length > 0
+                        ? job.active_addons.map((a) => (
+                            <Badge key={a.id} variant={a.status === "active" ? "secondary" : "outline"} className="text-xs">
+                              {a.id.replace("addon_", "").replace("_", " ")}
+                            </Badge>
+                          ))
+                        : <span className="text-xs text-muted-foreground">None</span>
+                      }
                     </div>
                   </TableCell>
                   <TableCell>
@@ -121,37 +158,31 @@ export default function AdminJobs({
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => openEditor("job", job)}>
+                        <DropdownMenuItem onClick={() => openEditor("job", job, { employers })}>
                           <Pencil className="mr-2 h-4 w-4" />
                           Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() =>
-                            updateEntity("Job", job.id, { status: "approved" }, [queryKeys.jobs], "Job approved")
-                          }
+                          onClick={() => updateEntity(job.id, { status: "approved" }, "Job approved")}
                         >
                           <CheckCircle2 className="mr-2 h-4 w-4" />
                           Approve
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() =>
-                            updateEntity("Job", job.id, { status: "rejected" }, [queryKeys.jobs], "Job rejected")
-                          }
+                          onClick={() => updateEntity(job.id, { status: "rejected" }, "Job rejected")}
                         >
                           <XCircle className="mr-2 h-4 w-4" />
                           Reject
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() =>
-                            updateEntity("Job", job.id, { status: "archived" }, [queryKeys.jobs], "Job archived")
-                          }
+                          onClick={() => updateEntity(job.id, { status: "archived" }, "Job archived")}
                         >
                           <FileText className="mr-2 h-4 w-4" />
                           Archive
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           className="text-destructive"
-                          onClick={() => setDeleteDialog({ entity: "Job", id: job.id, label: job.title, keys: [queryKeys.jobs] })}
+                          onClick={() => setDeleteDialog({ id: job.id, label: job.title })}
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
                           Delete
@@ -165,6 +196,18 @@ export default function AdminJobs({
           </Table>
         </div>
       )}
+
+      <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} />
+
+      <ConfirmDialog
+        open={!!deleteDialog}
+        title="Delete this record?"
+        description={deleteDialog?.label ? `"${deleteDialog.label}" will be removed from the CMS.` : "This record will be removed from the CMS."}
+        confirmLabel="Delete"
+        variant="destructive"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteDialog(null)}
+      />
     </div>
   );
 }

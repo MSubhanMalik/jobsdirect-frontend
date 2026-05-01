@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Search, MapPin, X } from "lucide-react";
-import { CATEGORY_OPTIONS, JOB_TYPE_OPTIONS } from "@/lib/siteSettings";
+import { CATEGORY_OPTIONS, JOB_TYPE_OPTIONS, LOCATION_OPTIONS } from "@/lib/siteSettings";
 
 export default function JobFilters({ filters, onChange, onClear }) {
   const hasFilters = filters.keyword || filters.location || filters.type || filters.category;
@@ -20,15 +20,17 @@ export default function JobFilters({ filters, onChange, onClear }) {
             className="pl-9 h-11"
           />
         </div>
-        <div className="relative lg:col-span-1">
-          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Location"
-            value={filters.location}
-            onChange={(e) => onChange({ ...filters, location: e.target.value })}
-            className="pl-9 h-11"
-          />
-        </div>
+        <Select value={filters.location || "all"} onValueChange={(v) => onChange({ ...filters, location: v === "all" ? "" : v })}>
+          <SelectTrigger className="h-11">
+            <SelectValue placeholder="Location" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Locations</SelectItem>
+            {LOCATION_OPTIONS.map((l) => (
+              <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Select value={filters.type || "all"} onValueChange={(v) => onChange({ ...filters, type: v === "all" ? "" : v })}>
           <SelectTrigger className="h-11">
             <SelectValue placeholder="Job Type" />

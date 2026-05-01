@@ -1,15 +1,37 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
+import { useOutletContext } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { CreditCard, BarChart3, Users } from "lucide-react";
 import { StatusBadge, StatCard, SectionHeader, EmptyState } from "../shared/UIComponents";
 import { searchRecords, formatDate, formatMoneyFromCents, humanize } from "../shared/helpers";
+import { queryKeys } from "../shared/constants";
+import PaginationControls from "@/components/ui/pagination-controls";
+import paymentService from "@/services/payment";
 
-export default function AdminPayments({ payments, stats, search }) {
+export default function AdminPayments() {
+  const { search } = useOutletContext();
+  const [page, setPage] = useState(1);
+
+  const paymentsQuery = useQuery({ queryKey: queryKeys.payments, queryFn: () => paymentService.list() });
+  const payments = paymentsQuery.data || [];
+
+  const stats = useMemo(() => {
+    const paidPayments = payments.filter((p) => p.payment_status === "paid").length;
+    const revenue = payments.filter((p) => p.payment_status === "paid").reduce((sum, p) => sum + (Number(p.amount_total) || 0), 0);
+    const subscriptions = payments.filter((p) => p.kind === "subscription" && p.payment_status === "paid").length;
+    return { paidPayments, revenue, subscriptions };
+  }, [payments]);
+
   const filtered = searchRecords(payments, search, [
     "plan_id", "id", "customer_email", "kind",
   ]);
+
+  const PAGE_SIZE = 20;
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE) || 1;
+  const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <div className="space-y-6">
@@ -57,7 +79,7 @@ export default function AdminPayments({ payments, stats, search }) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((payment) => (
+              {paged.map((payment) => (
                 <TableRow key={payment.id}>
                   <TableCell>
                     <p className="font-medium">{humanize(payment.plan_id || payment.kind || "checkout")}</p>
@@ -81,6 +103,8 @@ export default function AdminPayments({ payments, stats, search }) {
           </Table>
         </div>
       )}
+
+      <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} />
     </div>
   );
 }

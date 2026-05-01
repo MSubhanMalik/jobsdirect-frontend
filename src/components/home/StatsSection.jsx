@@ -1,15 +1,35 @@
 import React from "react";
+import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Briefcase, Building2, Users, TrendingUp } from "lucide-react";
-
-const stats = [
-  { icon: Briefcase, label: "Active Jobs", value: "500+", color: "text-accent" },
-  { icon: Building2, label: "Companies", value: "200+", color: "text-primary" },
-  { icon: Users, label: "Job Seekers", value: "5,000+", color: "text-accent" },
-  { icon: TrendingUp, label: "Placements", value: "1,000+", color: "text-primary" },
-];
+import jobService from "@/services/job";
+import employerService from "@/services/employer";
+import employeeService from "@/services/employee";
 
 export default function StatsSection() {
+  const { data: jobsData } = useQuery({
+    queryKey: ["stats-jobs"],
+    queryFn: () => jobService.list({ status: "approved", pageSize: 1 }),
+    staleTime: 5 * 60 * 1000,
+  });
+  const { data: employersData } = useQuery({
+    queryKey: ["stats-employers"],
+    queryFn: () => employerService.list({ pageSize: 1 }),
+    staleTime: 5 * 60 * 1000,
+  });
+  const { data: employeesData } = useQuery({
+    queryKey: ["stats-employees"],
+    queryFn: () => employeeService.list({ pageSize: 1 }),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const stats = [
+    { icon: Briefcase, label: "Active Jobs", value: jobsData?.total ?? "—", color: "text-accent" },
+    { icon: Building2, label: "Companies", value: employersData?.total ?? "—", color: "text-primary" },
+    { icon: Users, label: "Job Seekers", value: employeesData?.total ?? "—", color: "text-accent" },
+    { icon: TrendingUp, label: "Applications", value: "—", color: "text-primary" },
+  ];
+
   return (
     <section className="py-16 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

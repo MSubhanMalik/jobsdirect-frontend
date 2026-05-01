@@ -8,8 +8,10 @@ import { toast } from "react-toastify";
 import contactService from "@/services/contact";
 import { Mail, Phone, MapPin, Send, CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 export default function Contact() {
+  const { settings } = useSiteSettings();
   const [form, setForm] = useState({ name: "", email: "", phone: "", subject: "", message: "" });
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
@@ -46,7 +48,7 @@ export default function Contact() {
                     </div>
                     <div>
                       <p className="text-sm font-medium">Email</p>
-                      <p className="text-sm text-muted-foreground">info@jobsdirect.ie</p>
+                      <p className="text-sm text-muted-foreground">{settings.contact_email || "info@jobsdirect.ie"}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -61,7 +63,7 @@ export default function Contact() {
                     </div>
                     <div>
                       <p className="text-sm font-medium">Phone</p>
-                      <p className="text-sm text-muted-foreground">+353 1 234 5678</p>
+                      <p className="text-sm text-muted-foreground">{settings.contact_phone || "+353 1 234 5678"}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -76,7 +78,7 @@ export default function Contact() {
                     </div>
                     <div>
                       <p className="text-sm font-medium">Address</p>
-                      <p className="text-sm text-muted-foreground">Dublin, Ireland</p>
+                      <p className="text-sm text-muted-foreground">{settings.office_location || "Dublin, Ireland"}</p>
                     </div>
                   </div>
                 </CardContent>

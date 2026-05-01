@@ -31,6 +31,14 @@ class ApplicationService {
     return res.data;
   }
 
+  async guestApply(payload: Record<string, any>): Promise<any> {
+    const res = await axiosInstance.post(
+      api.endpoints.APPLICATION_GUEST,
+      payload,
+    );
+    return res.data;
+  }
+
   async update(id: string, updates: ApplicationUpdatePayload): Promise<Application> {
     const url = api.endpoints.APPLICATION_DETAIL.replace(":id", id);
     const res = await axiosInstance.put<Application>(url, updates);

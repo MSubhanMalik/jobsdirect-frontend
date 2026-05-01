@@ -41,6 +41,18 @@ class JobService {
     await axiosInstance.delete(url);
   }
 
+  async renew(id: string): Promise<Job> {
+    const url = api.endpoints.JOB_DETAIL.replace(":id", id);
+    const res = await axiosInstance.post<Job>(`${url}/renew`);
+    return res.data;
+  }
+
+  async activateAddon(id: string, addonId: string): Promise<Job> {
+    const url = api.endpoints.JOB_ACTIVATE_ADDON.replace(":id", id);
+    const res = await axiosInstance.post<Job>(url, { addonId });
+    return res.data;
+  }
+
   async duplicate(id: string): Promise<Job> {
     const url = api.endpoints.JOB_DUPLICATE.replace(":id", id);
     const res = await axiosInstance.post<Job>(url);

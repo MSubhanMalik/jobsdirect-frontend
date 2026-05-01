@@ -79,14 +79,16 @@ export default function Admin() {
   }, [navigate]);
 
   const enabled = !checkingAuth;
-  const jobsQuery = useQuery({ queryKey: queryKeys.jobs, queryFn: () => jobService.list({ pageSize: 100 }), enabled });
-  const employersQuery = useQuery({ queryKey: queryKeys.employers, queryFn: () => employerService.list({ pageSize: 100 }), enabled });
-  const employeesQuery = useQuery({ queryKey: queryKeys.employees, queryFn: () => employeeService.list({ pageSize: 100 }), enabled });
-  const applicationsQuery = useQuery({ queryKey: queryKeys.applications, queryFn: () => applicationService.list({ pageSize: 100 }), enabled });
-  const messagesQuery = useQuery({ queryKey: queryKeys.messages, queryFn: () => contactService.list(), enabled });
-  const paymentsQuery = useQuery({ queryKey: queryKeys.payments, queryFn: () => paymentService.list(), enabled });
-  const usersQuery = useQuery({ queryKey: queryKeys.users, queryFn: () => adminService.listUsers(), enabled });
-  const settingsQuery = useQuery({ queryKey: queryKeys.settings, queryFn: () => settingsService.getSiteSettings(), enabled });
+
+  // Only fetch data for the ACTIVE section — not everything at once
+  const jobsQuery = useQuery({ queryKey: queryKeys.jobs, queryFn: () => jobService.list({ pageSize: 100 }), enabled: enabled && (activeSection === "overview" || activeSection === "jobs") });
+  const employersQuery = useQuery({ queryKey: queryKeys.employers, queryFn: () => employerService.list({ pageSize: 100 }), enabled: enabled && (activeSection === "overview" || activeSection === "employers") });
+  const employeesQuery = useQuery({ queryKey: queryKeys.employees, queryFn: () => employeeService.list({ pageSize: 100 }), enabled: enabled && activeSection === "employees" });
+  const applicationsQuery = useQuery({ queryKey: queryKeys.applications, queryFn: () => applicationService.list({ pageSize: 100 }), enabled: enabled && (activeSection === "overview" || activeSection === "applications") });
+  const messagesQuery = useQuery({ queryKey: queryKeys.messages, queryFn: () => contactService.list(), enabled: enabled && (activeSection === "overview" || activeSection === "messages") });
+  const paymentsQuery = useQuery({ queryKey: queryKeys.payments, queryFn: () => paymentService.list(), enabled: enabled && activeSection === "payments" });
+  const usersQuery = useQuery({ queryKey: queryKeys.users, queryFn: () => adminService.listUsers(), enabled: enabled && activeSection === "users" });
+  const settingsQuery = useQuery({ queryKey: queryKeys.settings, queryFn: () => settingsService.getSiteSettings(), enabled: enabled && (activeSection === "settings" || activeSection === "overview") });
 
   const jobs = jobsQuery.data?.items || [];
   const employers = employersQuery.data?.items || [];
@@ -96,7 +98,6 @@ export default function Admin() {
   const payments = paymentsQuery.data || [];
   const users = usersQuery.data || [];
   const siteSettings = settingsQuery.data || null;
-  const dataLoading = [jobsQuery, employersQuery, employeesQuery, applicationsQuery, messagesQuery, paymentsQuery, usersQuery].some((q) => q.isLoading);
 
   useEffect(() => {
     if (!settingsQuery.isLoading && siteSettings) {
@@ -109,11 +110,8 @@ export default function Admin() {
     const liveJobs = jobs.filter((j) => j.status === "approved").length;
     const pendingEmployers = employers.filter((e) => ["pending", "submitted"].includes(e.verification_status)).length;
     const newMessages = messages.filter((m) => m.status === "new").length;
-    const paidPayments = payments.filter((p) => p.payment_status === "paid");
-    const revenue = paidPayments.reduce((sum, p) => sum + Number(p.amount_total || 0), 0);
-    const subscriptions = payments.filter((p) => p.kind === "candidate_database" && p.payment_status === "paid").length;
-    return { pendingJobs, liveJobs, pendingEmployers, newMessages, paidPayments: paidPayments.length, revenue, subscriptions };
-  }, [jobs, employers, messages, payments]);
+    return { pendingJobs, liveJobs, pendingEmployers, newMessages, paidPayments: 0, revenue: 0, subscriptions: 0 };
+  }, [jobs, employers, messages]);
 
   const invalidate = (...keys) => keys.forEach((key) => queryClient.invalidateQueries({ queryKey: key }));
 
@@ -341,7 +339,7 @@ export default function Admin() {
     settings: <AdminSettings settingsForm={settingsForm} setSettingsForm={setSettingsForm} siteSettings={siteSettings} saving={saving} onSave={saveSettings} updateSettingsFieldControl={updateSettingsFieldControl} />,
   }[activeSection]);
 
-  if (checkingAuth || dataLoading) {
+  if (checkingAuth) {
     return (
       <div className="min-h-screen bg-muted/30 p-6">
         <div className="mx-auto max-w-7xl space-y-4">

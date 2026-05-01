@@ -1,22 +1,50 @@
-import React from "react";
+import React, { useState } from "react";
+import { useOutletContext } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-toastify";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { SectionHeader, EmptyState } from "../shared/UIComponents";
 import { searchRecords, formatDate } from "../shared/helpers";
 import { queryKeys } from "../shared/constants";
+import PaginationControls from "@/components/ui/pagination-controls";
+import applicationService from "@/services/application";
 
 const APPLICATION_STATUSES = [
   { value: "submitted", label: "Submitted" },
+  { value: "viewed", label: "Viewed" },
   { value: "shortlisted", label: "Shortlisted" },
-  { value: "rejected", label: "Rejected" },
+  { value: "contacted", label: "Contacted" },
+  { value: "interview", label: "Interview" },
   { value: "hired", label: "Hired" },
+  { value: "rejected", label: "Rejected" },
+  { value: "closed", label: "Closed" },
 ];
 
-export default function AdminApplications({ applications, search, updateEntity }) {
+export default function AdminApplications() {
+  const { search } = useOutletContext();
+  const queryClient = useQueryClient();
+  const [page, setPage] = useState(1);
+
+  const applicationsQuery = useQuery({ queryKey: [...queryKeys.applications, page], queryFn: () => applicationService.list({ pageSize: 20, page }) });
+  const applications = applicationsQuery.data?.items || [];
+  const totalPages = applicationsQuery.data?.totalPages || 1;
+
+  const updateEntity = async (id, updates, title) => {
+    try {
+      await applicationService.update(id, updates);
+      queryClient.invalidateQueries({ queryKey: queryKeys.applications });
+      toast.success(title);
+    } catch (err) {
+      toast.error("Failed to update application");
+    }
+  };
+
   const filtered = searchRecords(applications, search, [
     "employee_name", "employee_email", "job_title", "company_name",
   ]);
@@ -49,29 +77,9 @@ export default function AdminApplications({ applications, search, updateEntity }
                   <TableCell className="text-sm">{app.job_title || "Untitled"}</TableCell>
                   <TableCell className="text-sm">{app.company_name || "Unknown"}</TableCell>
                   <TableCell>
-                    <Select
-                      value={app.status || "submitted"}
-                      onValueChange={(value) =>
-                        updateEntity(
-                          "Application",
-                          app.id,
-                          { status: value },
-                          [queryKeys.applications],
-                          `Application ${value}`,
-                        )
-                      }
-                    >
-                      <SelectTrigger className="h-8 w-36">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {APPLICATION_STATUSES.map((s) => (
-                          <SelectItem key={s.value} value={s.value}>
-                            {s.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Badge variant="secondary" className="capitalize">
+                      {app.status || "submitted"}
+                    </Badge>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {formatDate(app.createdAt)}
@@ -82,6 +90,8 @@ export default function AdminApplications({ applications, search, updateEntity }
           </Table>
         </div>
       )}
+
+      <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} />
     </div>
   );
 }

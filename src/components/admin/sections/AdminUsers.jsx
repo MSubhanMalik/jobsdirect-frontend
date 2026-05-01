@@ -1,4 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
+import { useOutletContext } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-toastify";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -8,21 +11,27 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Plus, Pencil, CheckCircle2, MoreHorizontal, Trash2 } from "lucide-react";
+import ConfirmDialog from "@/components/ui/confirm-dialog";
 import { SectionHeader, EmptyState } from "../shared/UIComponents";
 import { searchRecords, formatDate, humanize } from "../shared/helpers";
 import { queryKeys } from "../shared/constants";
+import PaginationControls from "@/components/ui/pagination-controls";
 import adminService from "@/services/admin";
-import { toast } from "react-toastify";
 
-export default function AdminUsers({
-  users,
-  search,
-  authUser,
-  openEditor,
-  setDeleteDialog,
-  invalidate,
-}) {
+export default function AdminUsers() {
+  const { search, authUser, openEditor } = useOutletContext();
+  const queryClient = useQueryClient();
+  const [deleteDialog, setDeleteDialog] = useState(null);
+  const [page, setPage] = useState(1);
+
+  const usersQuery = useQuery({ queryKey: queryKeys.users, queryFn: () => adminService.listUsers() });
+  const users = usersQuery.data || [];
+
   const filtered = searchRecords(users, search, ["full_name", "email", "role", "id"]);
+
+  const PAGE_SIZE = 20;
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE) || 1;
+  const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   async function toggleVerification(user) {
     try {
@@ -30,11 +39,23 @@ export default function AdminUsers({
         email_verified: !user.email_verified,
       });
       toast.success(user.email_verified ? "Email unverified" : "Email verified");
-      invalidate(queryKeys.users);
+      queryClient.invalidateQueries({ queryKey: queryKeys.users });
     } catch (err) {
       toast.error("Failed to update verification");
     }
   }
+
+  const confirmDelete = async () => {
+    if (!deleteDialog) return;
+    try {
+      await adminService.deleteUser(deleteDialog.id);
+      queryClient.invalidateQueries({ queryKey: queryKeys.users });
+      toast.success(`Deleted — ${deleteDialog.label}`);
+      setDeleteDialog(null);
+    } catch (err) {
+      toast.error("Failed to delete user");
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -63,7 +84,7 @@ export default function AdminUsers({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((user) => {
+              {paged.map((user) => {
                 const isSelf = authUser?.id === user.id;
                 return (
                   <TableRow key={user.id}>
@@ -105,7 +126,7 @@ export default function AdminUsers({
                             className="text-destructive"
                             disabled={isSelf}
                             onClick={() =>
-                              setDeleteDialog({ kind: "user", id: user.id, label: user.full_name || user.email })
+                              setDeleteDialog({ id: user.id, label: user.full_name || user.email })
                             }
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
@@ -121,6 +142,18 @@ export default function AdminUsers({
           </Table>
         </div>
       )}
+
+      <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} />
+
+      <ConfirmDialog
+        open={!!deleteDialog}
+        title="Delete this record?"
+        description={deleteDialog?.label ? `"${deleteDialog.label}" will be removed from the CMS.` : "This record will be removed from the CMS."}
+        confirmLabel="Delete"
+        variant="destructive"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteDialog(null)}
+      />
     </div>
   );
 }

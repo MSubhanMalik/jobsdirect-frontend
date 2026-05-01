@@ -5,11 +5,17 @@ import authService from "@/services/auth";
 import jobService from "@/services/job";
 import employeeService from "@/services/employee";
 import applicationService from "@/services/application";
+import cvService from "@/services/cv";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { LOCATION_OPTIONS } from "@/lib/siteSettings";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "react-toastify";
 import {
@@ -33,11 +39,16 @@ export default function JobDetail() {
   const { id: jobId } = useParams();
   const navigate = useNavigate();
   const [showApply, setShowApply] = useState(false);
+  const [showGuestApply, setShowGuestApply] = useState(false);
   const [coverLetter, setCoverLetter] = useState("");
   const [applying, setApplying] = useState(false);
   const [applied, setApplied] = useState(false);
   const [user, setUser] = useState(null);
   const [employee, setEmployee] = useState(null);
+  const [consent, setConsent] = useState(false);
+  const [userCVs, setUserCVs] = useState([]);
+  const [selectedCV, setSelectedCV] = useState("");
+  const [guestForm, setGuestForm] = useState({ name: "", email: "", phone: "", county: "", message: "", consent: false });
 
   const { data: job, isLoading } = useQuery({
     queryKey: ["job", jobId],
@@ -53,6 +64,8 @@ export default function JobDetail() {
         const empData = await employeeService.list({ user_email: me.email });
         const emps = empData?.items || [];
         if (emps.length > 0) setEmployee(emps[0]);
+        // Load user CVs
+        cvService.list().then(setUserCVs).catch(() => {});
         if (jobId) {
           const appData = await applicationService.list({ job_id: jobId, employee_email: me.email });
           const apps = appData?.items || [];
@@ -186,7 +199,7 @@ export default function JobDetail() {
                   <Button
                     className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold"
                     onClick={() => {
-                      if (!user) { authService.redirectToLogin(window.location.pathname); return; }
+                      if (!user) { setShowGuestApply(true); return; }
                       setShowApply(true);
                     }}
                   >
@@ -245,19 +258,106 @@ export default function JobDetail() {
                 Applying as <span className="font-medium text-foreground">{employee.first_name} {employee.last_name}</span>
               </p>
             )}
+            {userCVs.length > 0 && (
+              <div className="space-y-1">
+                <Label>Attach CV</Label>
+                <Select value={selectedCV} onValueChange={setSelectedCV}>
+                  <SelectTrigger><SelectValue placeholder="Select a CV (optional)" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No CV attached</SelectItem>
+                    {userCVs.map((cv) => (
+                      <SelectItem key={cv.id} value={cv.id}>{cv.name}{cv.isDefault ? " (Default)" : ""}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <Textarea
               placeholder="Cover letter (optional)"
               value={coverLetter}
               onChange={(e) => setCoverLetter(e.target.value)}
               className="min-h-[120px]"
             />
+            <label className="flex items-start gap-2 cursor-pointer">
+              <Checkbox checked={consent} onCheckedChange={(v) => setConsent(Boolean(v))} className="mt-0.5" />
+              <span className="text-xs text-muted-foreground">I consent to my data being shared with the employer for recruitment purposes.</span>
+            </label>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowApply(false)}>Cancel</Button>
             <Button
               className="bg-accent hover:bg-accent/90 text-accent-foreground"
               onClick={handleApply}
-              disabled={applying}
+              disabled={applying || !consent}
+            >
+              {applying ? "Submitting..." : "Submit Application"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Guest Apply Dialog */}
+      <Dialog open={showGuestApply} onOpenChange={setShowGuestApply}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Quick Apply — {job?.title}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1">
+              <Label>Full Name *</Label>
+              <Input value={guestForm.name} onChange={(e) => setGuestForm({ ...guestForm, name: e.target.value })} placeholder="John Doe" required />
+            </div>
+            <div className="space-y-1">
+              <Label>Email *</Label>
+              <Input type="email" value={guestForm.email} onChange={(e) => setGuestForm({ ...guestForm, email: e.target.value })} placeholder="john@example.com" required />
+            </div>
+            <div className="space-y-1">
+              <Label>Phone *</Label>
+              <Input value={guestForm.phone} onChange={(e) => setGuestForm({ ...guestForm, phone: e.target.value })} placeholder="+353 87 123 4567" required />
+            </div>
+            <div className="space-y-1">
+              <Label>County</Label>
+              <Select value={guestForm.county} onValueChange={(v) => setGuestForm({ ...guestForm, county: v })}>
+                <SelectTrigger><SelectValue placeholder="Select county" /></SelectTrigger>
+                <SelectContent>
+                  {LOCATION_OPTIONS.map((l) => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label>Message (optional)</Label>
+              <Textarea value={guestForm.message} onChange={(e) => setGuestForm({ ...guestForm, message: e.target.value })} placeholder="Why are you a good fit?" className="min-h-[80px]" />
+            </div>
+            <label className="flex items-start gap-2 cursor-pointer">
+              <Checkbox checked={guestForm.consent} onCheckedChange={(v) => setGuestForm({ ...guestForm, consent: Boolean(v) })} className="mt-0.5" />
+              <span className="text-xs text-muted-foreground">I consent to my data being shared with the employer for recruitment purposes.</span>
+            </label>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowGuestApply(false)}>Cancel</Button>
+            <Button
+              className="bg-accent hover:bg-accent/90 text-accent-foreground"
+              disabled={applying || !guestForm.name || !guestForm.email || !guestForm.phone || !guestForm.consent}
+              onClick={async () => {
+                setApplying(true);
+                try {
+                  await applicationService.guestApply({
+                    job_id: job.id,
+                    name: guestForm.name,
+                    email: guestForm.email,
+                    phone: guestForm.phone,
+                    county: guestForm.county,
+                    message: guestForm.message,
+                  });
+                  setApplied(true);
+                  setShowGuestApply(false);
+                  toast.success("Application submitted! Create an account to track your application.");
+                } catch (err) {
+                  toast.error(err.message || "Could not submit application.");
+                } finally {
+                  setApplying(false);
+                }
+              }}
             >
               {applying ? "Submitting..." : "Submit Application"}
             </Button>

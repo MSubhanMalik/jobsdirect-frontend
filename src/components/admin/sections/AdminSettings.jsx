@@ -1,4 +1,6 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-toastify";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -10,15 +12,50 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, Loader2, Settings } from "lucide-react";
 import { SectionHeader, Field, FieldControlMatrix } from "../shared/UIComponents";
-import { COMPANY_FIELD_GROUPS, JOB_FIELD_GROUPS } from "@/lib/siteSettings";
+import { COMPANY_FIELD_GROUPS, JOB_FIELD_GROUPS, DEFAULT_SITE_SETTINGS, mergeSiteSettingsWithDefaults } from "@/lib/siteSettings";
+import { queryKeys } from "../shared/constants";
+import settingsService from "@/services/settings";
+import { refreshSiteSettings } from "@/hooks/useSiteSettings";
 
-export default function AdminSettings({
-  settingsForm,
-  setSettingsForm,
-  saving,
-  onSave,
-  updateSettingsFieldControl,
-}) {
+export default function AdminSettings() {
+  const queryClient = useQueryClient();
+  const [settingsForm, setSettingsForm] = useState(() => mergeSiteSettingsWithDefaults(DEFAULT_SITE_SETTINGS));
+  const [saving, setSaving] = useState(false);
+
+  const settingsQuery = useQuery({ queryKey: queryKeys.settings, queryFn: () => settingsService.getSiteSettings() });
+
+  useEffect(() => {
+    if (!settingsQuery.isLoading && settingsQuery.data) {
+      setSettingsForm(mergeSiteSettingsWithDefaults(settingsQuery.data));
+    }
+  }, [settingsQuery.isLoading, settingsQuery.dataUpdatedAt]);
+
+  const updateSettingsFieldControl = (configKey, fieldKey, updates) => {
+    setSettingsForm((c) => ({
+      ...c,
+      [configKey]: {
+        ...(c?.[configKey] || {}),
+        [fieldKey]: { ...(c?.[configKey]?.[fieldKey] || {}), ...updates, ...(updates.visible === false ? { required: false } : {}) },
+      },
+    }));
+  };
+
+  const onSave = async (event) => {
+    event.preventDefault();
+    setSaving(true);
+    try {
+      const { id, ...payload } = settingsForm;
+      await settingsService.updateSiteSettings(payload);
+      queryClient.invalidateQueries({ queryKey: queryKeys.settings });
+      await refreshSiteSettings();
+      toast.success("Site settings updated");
+    } catch (error) {
+      toast.error(`Could not update settings — ${error.message || "Please try again."}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <form onSubmit={onSave} className="space-y-6">
       <SectionHeader
@@ -90,7 +127,7 @@ export default function AdminSettings({
         </Card>
       </div>
 
-      {/* ─── Products Catalog ─── */}
+      {/* --- Products Catalog --- */}
       <Card className="rounded-lg shadow-sm">
         <CardHeader>
           <div className="flex items-center justify-between">

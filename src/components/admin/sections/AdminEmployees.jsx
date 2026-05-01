@@ -1,4 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
+import { useOutletContext } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-toastify";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -8,17 +11,45 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Plus, Pencil, Eye, MoreHorizontal, Trash2 } from "lucide-react";
+import ConfirmDialog from "@/components/ui/confirm-dialog";
 import { SectionHeader, EmptyState } from "../shared/UIComponents";
 import { searchRecords, splitList } from "../shared/helpers";
 import { queryKeys } from "../shared/constants";
+import PaginationControls from "@/components/ui/pagination-controls";
+import employeeService from "@/services/employee";
 
-export default function AdminEmployees({
-  employees,
-  search,
-  openEditor,
-  updateEntity,
-  setDeleteDialog,
-}) {
+export default function AdminEmployees() {
+  const { search, openEditor } = useOutletContext();
+  const queryClient = useQueryClient();
+  const [deleteDialog, setDeleteDialog] = useState(null);
+  const [page, setPage] = useState(1);
+
+  const employeesQuery = useQuery({ queryKey: [...queryKeys.employees, page], queryFn: () => employeeService.list({ pageSize: 20, page }) });
+  const employees = employeesQuery.data?.items || [];
+  const totalPages = employeesQuery.data?.totalPages || 1;
+
+  const updateEntity = async (id, updates, title) => {
+    try {
+      await employeeService.update(id, updates);
+      queryClient.invalidateQueries({ queryKey: queryKeys.employees });
+      toast.success(title);
+    } catch (err) {
+      toast.error("Failed to update candidate");
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteDialog) return;
+    try {
+      await employeeService.remove(deleteDialog.id);
+      queryClient.invalidateQueries({ queryKey: queryKeys.employees });
+      toast.success(`Deleted — ${deleteDialog.label}`);
+      setDeleteDialog(null);
+    } catch (err) {
+      toast.error("Failed to delete candidate");
+    }
+  };
+
   const filtered = searchRecords(employees, search, [
     "first_name", "last_name", "user_email", "title", "location",
   ]);
@@ -105,10 +136,8 @@ export default function AdminEmployees({
                           <DropdownMenuItem
                             onClick={() =>
                               updateEntity(
-                                "Employee",
                                 emp.id,
                                 { is_searchable: !emp.is_searchable },
-                                [queryKeys.employees],
                                 emp.is_searchable ? "Candidate hidden" : "Candidate visible",
                               )
                             }
@@ -120,10 +149,8 @@ export default function AdminEmployees({
                             className="text-destructive"
                             onClick={() =>
                               setDeleteDialog({
-                                entity: "Employee",
                                 id: emp.id,
                                 label: [emp.first_name, emp.last_name].filter(Boolean).join(" ") || emp.user_email,
-                                keys: [queryKeys.employees],
                               })
                             }
                           >
@@ -140,6 +167,18 @@ export default function AdminEmployees({
           </Table>
         </div>
       )}
+
+      <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} />
+
+      <ConfirmDialog
+        open={!!deleteDialog}
+        title="Delete this record?"
+        description={deleteDialog?.label ? `"${deleteDialog.label}" will be removed from the CMS.` : "This record will be removed from the CMS."}
+        confirmLabel="Delete"
+        variant="destructive"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteDialog(null)}
+      />
     </div>
   );
 }

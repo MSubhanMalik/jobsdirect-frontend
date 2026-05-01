@@ -37,13 +37,13 @@ export const statusMeta = {
 };
 
 export const navItems = [
-  { id: "overview", label: "Overview", icon: LayoutDashboard },
-  { id: "jobs", label: "Jobs CMS", icon: Briefcase },
-  { id: "employers", label: "Companies", icon: Building2 },
-  { id: "employees", label: "Candidates", icon: Users },
-  { id: "applications", label: "Applications", icon: ClipboardList },
-  { id: "messages", label: "Messages", icon: MessageSquare },
-  { id: "payments", label: "Payments", icon: CreditCard },
+  { id: "overview", label: "Overview", icon: LayoutDashboard, path: "overview" },
+  { id: "jobs", label: "Jobs CMS", icon: Briefcase, path: "jobs" },
+  { id: "companies", label: "Companies", icon: Building2, path: "companies" },
+  { id: "candidates", label: "Candidates", icon: Users, path: "candidates" },
+  { id: "applications", label: "Applications", icon: ClipboardList, path: "applications" },
+  { id: "messages", label: "Messages", icon: MessageSquare, path: "messages" },
+  { id: "payments", label: "Payments", icon: CreditCard, path: "payments" },
   { id: "users", label: "Users", icon: UserCog },
-  { id: "settings", label: "Site CMS", icon: SlidersHorizontal },
+  { id: "settings", label: "Site CMS", icon: SlidersHorizontal, path: "settings" },
 ];

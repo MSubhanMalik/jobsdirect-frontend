@@ -1,4 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
+import { useOutletContext } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-toastify";
 import { Button } from "@/components/ui/button";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -7,14 +10,51 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { CheckCircle2, FileText, MoreHorizontal, Trash2 } from "lucide-react";
+import ConfirmDialog from "@/components/ui/confirm-dialog";
 import { StatusBadge, SectionHeader, EmptyState } from "../shared/UIComponents";
 import { searchRecords, formatDate } from "../shared/helpers";
 import { queryKeys } from "../shared/constants";
+import PaginationControls from "@/components/ui/pagination-controls";
+import contactService from "@/services/contact";
 
-export default function AdminMessages({ messages, search, updateEntity, setDeleteDialog }) {
+export default function AdminMessages() {
+  const { search } = useOutletContext();
+  const queryClient = useQueryClient();
+  const [deleteDialog, setDeleteDialog] = useState(null);
+  const [page, setPage] = useState(1);
+
+  const messagesQuery = useQuery({ queryKey: queryKeys.messages, queryFn: () => contactService.list() });
+  const messages = messagesQuery.data || [];
+
+  const updateEntity = async (id, updates, title) => {
+    try {
+      await contactService.update(id, updates);
+      queryClient.invalidateQueries({ queryKey: queryKeys.messages });
+      toast.success(title);
+    } catch (err) {
+      toast.error("Failed to update message");
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteDialog) return;
+    try {
+      await contactService.remove(deleteDialog.id);
+      queryClient.invalidateQueries({ queryKey: queryKeys.messages });
+      toast.success(`Deleted — ${deleteDialog.label}`);
+      setDeleteDialog(null);
+    } catch (err) {
+      toast.error("Failed to delete message");
+    }
+  };
+
   const filtered = searchRecords(messages, search, [
     "subject", "sender_name", "sender_email", "body",
   ]);
+
+  const PAGE_SIZE = 20;
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE) || 1;
+  const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <div className="space-y-6">
@@ -35,7 +75,7 @@ export default function AdminMessages({ messages, search, updateEntity, setDelet
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((msg) => (
+              {paged.map((msg) => (
                 <TableRow key={msg.id}>
                   <TableCell>
                     <p className="font-medium">{msg.subject || "No subject"}</p>
@@ -62,29 +102,13 @@ export default function AdminMessages({ messages, search, updateEntity, setDelet
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
-                          onClick={() =>
-                            updateEntity(
-                              "Message",
-                              msg.id,
-                              { status: "read" },
-                              [queryKeys.messages],
-                              "Marked as read",
-                            )
-                          }
+                          onClick={() => updateEntity(msg.id, { status: "read" }, "Marked as read")}
                         >
                           <CheckCircle2 className="mr-2 h-4 w-4" />
                           Mark read
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() =>
-                            updateEntity(
-                              "Message",
-                              msg.id,
-                              { status: "archived" },
-                              [queryKeys.messages],
-                              "Message archived",
-                            )
-                          }
+                          onClick={() => updateEntity(msg.id, { status: "archived" }, "Message archived")}
                         >
                           <FileText className="mr-2 h-4 w-4" />
                           Archive
@@ -92,7 +116,7 @@ export default function AdminMessages({ messages, search, updateEntity, setDelet
                         <DropdownMenuItem
                           className="text-destructive"
                           onClick={() =>
-                            setDeleteDialog({ entity: "ContactMessage", id: msg.id, label: msg.subject || "Message", keys: [queryKeys.messages] })
+                            setDeleteDialog({ id: msg.id, label: msg.subject || "Message" })
                           }
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
@@ -107,6 +131,18 @@ export default function AdminMessages({ messages, search, updateEntity, setDelet
           </Table>
         </div>
       )}
+
+      <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} />
+
+      <ConfirmDialog
+        open={!!deleteDialog}
+        title="Delete this record?"
+        description={deleteDialog?.label ? `"${deleteDialog.label}" will be removed from the CMS.` : "This record will be removed from the CMS."}
+        confirmLabel="Delete"
+        variant="destructive"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteDialog(null)}
+      />
     </div>
   );
 }

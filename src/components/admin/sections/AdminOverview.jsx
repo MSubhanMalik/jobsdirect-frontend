@@ -1,12 +1,55 @@
-import React from "react";
+import React, { useMemo } from "react";
+import { useOutletContext } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-toastify";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Briefcase, CheckCircle2, ClipboardList, Gauge, Mail, Plus, ShieldCheck, BarChart3 } from "lucide-react";
 import { StatCard, SectionHeader, EmptyState } from "../shared/UIComponents";
 import { formatDate } from "../shared/helpers";
+import { queryKeys } from "../shared/constants";
+import jobService from "@/services/job";
+import employerService from "@/services/employer";
+import applicationService from "@/services/application";
+import contactService from "@/services/contact";
+import paymentService from "@/services/payment";
 
-export default function AdminOverview({ stats, jobs, employers, applications, messages, payments, openEditor, updateEntity, queryKeys }) {
+export default function AdminOverview() {
+  const { openEditor } = useOutletContext();
+  const queryClient = useQueryClient();
+
+  const jobsQuery = useQuery({ queryKey: queryKeys.jobs, queryFn: () => jobService.list({ pageSize: 100 }) });
+  const employersQuery = useQuery({ queryKey: queryKeys.employers, queryFn: () => employerService.list({ pageSize: 100 }) });
+  const applicationsQuery = useQuery({ queryKey: queryKeys.applications, queryFn: () => applicationService.list({ pageSize: 100 }) });
+  const messagesQuery = useQuery({ queryKey: queryKeys.messages, queryFn: () => contactService.list() });
+  const paymentsQuery = useQuery({ queryKey: queryKeys.payments, queryFn: () => paymentService.list() });
+
+  const jobs = jobsQuery.data?.items || [];
+  const employers = employersQuery.data?.items || [];
+  const applications = applicationsQuery.data?.items || [];
+  const messages = messagesQuery.data || [];
+  const payments = paymentsQuery.data || [];
+
+  const stats = useMemo(() => {
+    const pendingJobs = jobs.filter((j) => j.status === "pending_review").length;
+    const liveJobs = jobs.filter((j) => j.status === "approved").length;
+    const pendingEmployers = employers.filter((e) => ["pending", "submitted"].includes(e.verification_status)).length;
+    const newMessages = messages.filter((m) => m.status === "new").length;
+    return { pendingJobs, liveJobs, pendingEmployers, newMessages };
+  }, [jobs, employers, messages]);
+
+  const updateEntity = async (entity, id, updates, keys, title) => {
+    const services = { Job: jobService, Employer: employerService };
+    try {
+      await services[entity].update(id, updates);
+      keys.forEach((key) => queryClient.invalidateQueries({ queryKey: key }));
+      toast.success(title);
+    } catch (err) {
+      toast.error(`Failed to update ${entity}`);
+    }
+  };
+
   const pendingQueue = [
     ...jobs.filter((job) => job.status === "pending_review").slice(0, 4).map((job) => ({
       id: job.id,

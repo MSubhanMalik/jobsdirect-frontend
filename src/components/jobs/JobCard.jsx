@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Clock, Building2, Star } from "lucide-react";
+import { MapPin, Clock, Building2, Star, Sparkles, Bookmark } from "lucide-react";
+import { useAuthStore } from "@/stores/authStore";
+import savedJobService from "@/services/savedJob";
 
 const jobTypeLabels = {
   full_time: "Full Time",
@@ -22,9 +24,20 @@ const categoryLabels = {
 };
 
 export default function JobCard({ job }) {
+  const { isAuthenticated } = useAuthStore();
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isAuthenticated) return;
+    const result = await savedJobService.toggle(job.id);
+    setSaved(result.saved);
+  };
+
   return (
     <Link to={`/jobs/${job.id}`}>
-      <Card className="group hover:shadow-lg hover:border-accent/30 transition-all duration-300">
+      <Card className={`group hover:shadow-lg transition-all duration-300 ${job.is_highlighted ? "border-blue-300 bg-blue-50/30 shadow-sm" : "hover:border-accent/30"}`}>
         <CardContent className="p-5 sm:p-6">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
@@ -33,6 +46,12 @@ export default function JobCard({ job }) {
                   <span className="flex items-center gap-1 text-accent text-xs font-semibold">
                     <Star className="w-3 h-3 fill-accent" />
                     FEATURED
+                  </span>
+                )}
+                {job.is_highlighted && (
+                  <span className="flex items-center gap-1 text-blue-600 text-xs font-semibold">
+                    <Sparkles className="w-3 h-3" />
+                    HIGHLIGHTED
                   </span>
                 )}
               </div>
@@ -71,6 +90,15 @@ export default function JobCard({ job }) {
               <Badge variant="outline" className="text-xs">
                 {categoryLabels[job.category] || job.category}
               </Badge>
+            )}
+            {isAuthenticated && (
+              <button
+                onClick={handleSave}
+                className="ml-auto shrink-0 text-muted-foreground hover:text-accent transition-colors"
+                title={saved ? "Remove from saved" : "Save job"}
+              >
+                <Bookmark className={`w-4 h-4 ${saved ? "fill-accent text-accent" : ""}`} />
+              </button>
             )}
           </div>
         </CardContent>

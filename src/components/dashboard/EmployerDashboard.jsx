@@ -19,6 +19,7 @@ import EmployerProfile from "./EmployerProfile";
 import DashboardStats from "./employer/DashboardStats";
 import VerificationBanner from "./employer/VerificationBanner";
 import JobList from "./employer/JobList";
+import ApplicationList from "./employer/ApplicationList";
 import BillingTab from "./employer/BillingTab";
 
 function isProfileReadyForSubmission(employer, companyFormConfig = {}) {
@@ -256,28 +257,7 @@ export default function EmployerDashboard({ user, employer, setEmployer }) {
           {isApproved && (
             <TabsContent value="applications">
               <h2 className="text-lg font-semibold mb-6">Received Applications</h2>
-              <div className="space-y-3">
-                {applications.length === 0 ? (
-                  <Card>
-                    <CardContent className="p-12 text-center">
-                      <Users className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-                      <p className="text-muted-foreground">No applications received yet.</p>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  applications.map((app) => (
-                    <Card key={app.id}>
-                      <CardContent className="p-4 flex items-center justify-between">
-                        <div>
-                          <p className="font-medium text-sm">{app.employee_name}</p>
-                          <p className="text-xs text-muted-foreground">Applied for: {app.job_title}</p>
-                        </div>
-                        <Badge variant="secondary" className="text-xs">{app.status}</Badge>
-                      </CardContent>
-                    </Card>
-                  ))
-                )}
-              </div>
+              <ApplicationList applications={applications} userEmail={user.email} />
             </TabsContent>
           )}
 

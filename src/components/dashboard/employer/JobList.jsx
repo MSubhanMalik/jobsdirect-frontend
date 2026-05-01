@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "react-toastify";
-import { Briefcase, Plus, FileText, Clock, CheckCircle, XCircle, Eye, Trash2, Star, Sparkles, Send } from "lucide-react";
+import { Briefcase, Plus, FileText, Clock, CheckCircle, XCircle, Eye, Trash2, Star, Sparkles, Send, Zap } from "lucide-react";
 import ConfirmDialog from "@/components/ui/confirm-dialog";
+import { useProducts } from "@/hooks/useProducts";
+import ProductIcon from "@/components/products/ProductIcon";
 
 const statusIcons = {
   draft: <FileText className="w-4 h-4" />,
@@ -36,6 +38,43 @@ export default function JobList({ jobs, user, employer, showJobForm, editingJob,
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [submittingReview, setSubmittingReview] = useState(null);
+  const [addonConfirm, setAddonConfirm] = useState(null); // { job, addon }
+  const [activatingAddon, setActivatingAddon] = useState(false);
+  const [renewConfirm, setRenewConfirm] = useState(null);
+  const [renewing, setRenewing] = useState(false);
+
+  const handleRenew = async (jobId) => {
+    setRenewing(true);
+    try {
+      await jobService.renew(jobId);
+      queryClient.invalidateQueries({ queryKey: ["employer-jobs", user.email] });
+      toast.success("Job renewed — submitted for review.");
+    } catch (err) {
+      toast.error(`Could not renew — ${err.message}`);
+    } finally {
+      setRenewing(false);
+      setRenewConfirm(null);
+    }
+  };
+  const { addons: addonProducts } = useProducts();
+
+  // Addons that can be activated post-publish (exclude import, duplicate)
+  const purchasableAddons = addonProducts.filter((a) => a.id !== "addon_import" && a.id !== "addon_duplicate");
+
+  const handleActivateAddon = async () => {
+    if (!addonConfirm) return;
+    setActivatingAddon(true);
+    try {
+      await jobService.activateAddon(addonConfirm.job.id, addonConfirm.addon.id);
+      queryClient.invalidateQueries({ queryKey: ["employer-jobs", user.email] });
+      toast.success(`${addonConfirm.addon.name} activated! ${addonConfirm.addon.creditCost} credits deducted.`);
+    } catch (err) {
+      toast.error(`Could not activate — ${err.message}`);
+    } finally {
+      setActivatingAddon(false);
+      setAddonConfirm(null);
+    }
+  };
 
   const handleSubmitForReview = async (jobId) => {
     setSubmittingReview(jobId);
@@ -185,15 +224,43 @@ export default function JobList({ jobs, user, employer, showJobForm, editingJob,
                         {submittingReview === job.id ? "Submitting..." : "Submit for Review"}
                       </Button>
                     )}
+                    {job.is_expired && (
+                      <Button
+                        size="sm"
+                        className="bg-primary text-primary-foreground hover:bg-primary/90"
+                        onClick={() => setRenewConfirm(job)}
+                      >
+                        <Zap className="w-3.5 h-3.5 mr-1" />
+                        Renew
+                      </Button>
+                    )}
+                    {/* Addon purchase buttons — only for approved, non-expired jobs */}
+                    {job.status === "approved" && !job.is_expired && purchasableAddons
+                      .filter((addon) => !(job.active_addons || []).some((a) => a.id === addon.id))
+                      .map((addon) => (
+                        <Button
+                          key={addon.id}
+                          variant="outline"
+                          size="sm"
+                          className="text-xs"
+                          onClick={() => setAddonConfirm({ job, addon })}
+                        >
+                          <ProductIcon name={addon.icon} className="w-3 h-3 mr-1" />
+                          + {addon.name}
+                        </Button>
+                      ))
+                    }
                     <Button variant="ghost" size="sm" onClick={() => navigate(`/jobs/${job.id}`)}>View</Button>
                     <Button variant="outline" size="sm" onClick={() => { setEditingJob(job); setShowJobForm(true); }}>Edit</Button>
                     <Button variant="ghost" size="sm" onClick={() => setDuplicateConfirm(job)}>Duplicate</Button>
                     <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => setDeleteConfirm(job)}>
                       <Trash2 className="w-3.5 h-3.5" />
                     </Button>
-                    <span className="text-xs text-muted-foreground flex items-center gap-1 ml-auto">
-                      <Eye className="w-3 h-3" />{job.views_count || 0} views
-                    </span>
+                    {job.views_count > 0 && (
+                      <span className="text-xs text-muted-foreground flex items-center gap-1 ml-auto">
+                        <Eye className="w-3 h-3" />{job.views_count} views
+                      </span>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -210,6 +277,26 @@ export default function JobList({ jobs, user, employer, showJobForm, editingJob,
         onConfirm={() => handleDuplicate(duplicateConfirm.id)}
         onCancel={() => setDuplicateConfirm(null)}
         disabled={duplicating}
+      />
+
+      <ConfirmDialog
+        open={!!renewConfirm}
+        title="Renew Job Listing"
+        description={`Renew "${renewConfirm?.title}" for another 30 days? 1 credit will be deducted and the job will be re-submitted for review.`}
+        confirmLabel={renewing ? "Renewing..." : "Renew (1 credit)"}
+        onConfirm={() => handleRenew(renewConfirm.id)}
+        onCancel={() => setRenewConfirm(null)}
+        disabled={renewing}
+      />
+
+      <ConfirmDialog
+        open={!!addonConfirm}
+        title={`Activate ${addonConfirm?.addon?.name}`}
+        description={`Add "${addonConfirm?.addon?.name}" to "${addonConfirm?.job?.title}" for ${addonConfirm?.addon?.creditCost} credits. This will be deducted from your balance.`}
+        confirmLabel={activatingAddon ? "Activating..." : `Activate (${addonConfirm?.addon?.creditCost} credits)`}
+        onConfirm={handleActivateAddon}
+        onCancel={() => setAddonConfirm(null)}
+        disabled={activatingAddon}
       />
 
       <ConfirmDialog

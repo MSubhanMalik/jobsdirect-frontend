@@ -10,12 +10,14 @@ export const api = {
     VERIFY_EMAIL: "/api/auth/verify-email",
     RESEND_VERIFICATION: "/api/auth/resend-verification",
     FORGOT_PASSWORD: "/api/auth/forgot-password",
+    DELETE_ACCOUNT: "/api/auth/delete-account",
     RESET_PASSWORD: "/api/auth/reset-password",
 
     // Jobs
     JOBS: "/api/jobs",
     JOB_DETAIL: "/api/jobs/:id",
     JOB_DUPLICATE: "/api/jobs/:id/duplicate",
+    JOB_ACTIVATE_ADDON: "/api/jobs/:id/addon",
     JOB_COST_ESTIMATE: "/api/jobs/cost-estimate",
     JOB_SCRAPE_JOBSIRELAND: "/api/jobs/scrape/jobsireland",
 
@@ -29,6 +31,7 @@ export const api = {
 
     // Applications
     APPLICATIONS: "/api/applications",
+    APPLICATION_GUEST: "/api/applications/guest",
     APPLICATION_DETAIL: "/api/applications/:id",
 
     // Payments
@@ -40,6 +43,18 @@ export const api = {
     PAYMENT_PRICING: "/api/payments/pricing",
     PAYMENT_BALANCE: "/api/payments/balance",
     PAYMENT_TRANSACTIONS: "/api/payments/transactions",
+
+    // CVs
+    CVS: "/api/cvs",
+    CV_UPLOAD: "/api/cvs/upload",
+    CV_GENERATE: "/api/cvs/generate",
+    CV_DEFAULT: "/api/cvs/:id/default",
+    CV_DOWNLOAD: "/api/cvs/:id/download",
+
+    // Saved Jobs
+    SAVED_JOBS: "/api/saved-jobs",
+    SAVED_JOBS_TOGGLE: "/api/saved-jobs/toggle",
+    SAVED_JOBS_CHECK: "/api/saved-jobs/check",
 
     // Settings
     SITE_SETTINGS: "/api/settings/site",
@@ -54,6 +69,10 @@ export const api = {
     PRODUCTS: "/api/products",
     PRODUCTS_ADDONS: "/api/products/addons",
     PRODUCTS_COST_ESTIMATE: "/api/products/cost-estimate",
+
+    // Messages
+    MESSAGE_ROOMS: "/api/messages/rooms",
+    MESSAGE_DETAIL: "/api/messages/:roomId",
 
     // Contact
     CONTACT: "/api/contact",

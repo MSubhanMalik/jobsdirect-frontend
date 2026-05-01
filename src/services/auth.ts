@@ -91,6 +91,14 @@ class AuthService {
     }
   }
 
+  async deleteAccount(): Promise<void> {
+    await axiosInstance.delete(api.endpoints.DELETE_ACCOUNT);
+    setAccessToken(null);
+    if (typeof window !== "undefined") {
+      window.location.assign("/");
+    }
+  }
+
   async isAuthenticated(): Promise<boolean> {
     try {
       await this.getUserInfo();
