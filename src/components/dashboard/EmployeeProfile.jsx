@@ -212,7 +212,7 @@ function RepeaterField({ field, value = [], onChange }) {
   );
 }
 
-export default function EmployeeProfile({ employee, setEmployee }) {
+export default function EmployeeProfile({ employee, setEmployee, excludeGroups = [] }) {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(() => createFormState(employee));
 
@@ -242,18 +242,17 @@ export default function EmployeeProfile({ employee, setEmployee }) {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
+  const visibleGroups = EMPLOYEE_FIELD_GROUPS.filter((g) => !excludeGroups.includes(g.id));
+
   return (
     <div className="space-y-6">
-      {EMPLOYEE_FIELD_GROUPS.map((group) => (
-        <Card key={group.id}>
-          <CardHeader className={group.id === "work_experience" || group.id === "education" ? "flex flex-row items-center justify-between" : ""}>
-            <div>
-              <CardTitle className="text-lg">{group.title}</CardTitle>
-              {group.description && <CardDescription>{group.description}</CardDescription>}
-            </div>
-          </CardHeader>
-          <CardContent>
-            {/* Render fields based on type */}
+      {visibleGroups.map((group) => (
+        <div key={group.id} className="rounded-xl border border-border/50 bg-card overflow-hidden">
+          <div className="px-6 py-4 border-b border-border/40">
+            <h3 className="text-base font-display font-semibold text-foreground">{group.title}</h3>
+            {group.description && <p className="text-sm text-muted-foreground mt-0.5">{group.description}</p>}
+          </div>
+          <div className="px-6 py-5">
             {group.fields.length === 1 && group.fields[0].type === "tags" ? (
               <TagsField
                 value={form[group.fields[0].key]}
@@ -277,20 +276,23 @@ export default function EmployeeProfile({ employee, setEmployee }) {
                   }
                   return (
                     <div key={f.key} className={`space-y-2 ${f.span === 2 ? "sm:col-span-2" : ""}`}>
-                      <Label>{f.label}</Label>
+                      <Label className="text-sm font-medium">{f.label}</Label>
                       <FieldRenderer field={f} value={form[f.key]} onChange={(val) => updateField(f.key, val)} />
                     </div>
                   );
                 })}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       ))}
 
-      <Button onClick={handleSave} disabled={saving} className="bg-accent hover:bg-accent/90 text-accent-foreground">
-        <Save className="w-4 h-4 mr-2" />
-        {saving ? "Saving..." : "Save Profile"}
+      <Button
+        onClick={handleSave}
+        disabled={saving}
+        className="bg-accent hover:bg-accent/90 text-accent-foreground rounded-full px-8 h-11 font-medium"
+      >
+        {saving ? <><Save className="w-4 h-4 mr-2 animate-pulse" />Saving...</> : <><Save className="w-4 h-4 mr-2" />Save Profile</>}
       </Button>
     </div>
   );

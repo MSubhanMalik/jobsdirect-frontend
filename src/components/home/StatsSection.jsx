@@ -24,30 +24,34 @@ export default function StatsSection() {
   });
 
   const stats = [
-    { icon: Briefcase, label: "Active Jobs", value: jobsData?.total ?? "—", color: "text-accent" },
-    { icon: Building2, label: "Companies", value: employersData?.total ?? "—", color: "text-primary" },
-    { icon: Users, label: "Job Seekers", value: employeesData?.total ?? "—", color: "text-accent" },
-    { icon: TrendingUp, label: "Applications", value: "—", color: "text-primary" },
+    { icon: Briefcase, label: "Active Jobs", value: jobsData?.total ?? "—" },
+    { icon: Building2, label: "Companies", value: employersData?.total ?? "—" },
+    { icon: Users, label: "Job Seekers", value: employeesData?.total ?? "—" },
+    { icon: TrendingUp, label: "Applications", value: "—" },
   ];
 
   return (
-    <section className="py-16 bg-background">
+    <section className="py-24 bg-foreground text-primary-foreground">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-16">
           {stats.map((stat, i) => (
             <motion.div
               key={stat.label}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
+              transition={{ duration: 0.5, delay: i * 0.08 }}
               className="text-center"
             >
-              <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center mx-auto mb-3">
-                <stat.icon className={`w-5 h-5 ${stat.color}`} />
+              <div className="w-12 h-12 rounded-2xl bg-primary-foreground/[0.06] flex items-center justify-center mx-auto mb-5">
+                <stat.icon className="w-5 h-5 text-accent" />
               </div>
-              <p className="text-3xl font-bold text-foreground mb-1">{stat.value}</p>
-              <p className="text-sm text-muted-foreground">{stat.label}</p>
+              <p className="text-4xl sm:text-5xl font-display font-bold text-primary-foreground mb-2 tracking-tight">
+                {typeof stat.value === "number" ? stat.value.toLocaleString() : stat.value}
+              </p>
+              <p className="text-sm uppercase tracking-[0.15em] text-primary-foreground/40 font-medium">
+                {stat.label}
+              </p>
             </motion.div>
           ))}
         </div>

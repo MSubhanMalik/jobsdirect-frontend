@@ -1,64 +1,54 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Clock, ShieldAlert } from "lucide-react";
-
-function getVerificationMeta(employer) {
-  switch (employer.verification_status) {
-    case "approved":
-      return { label: "Approved", description: "Your employer account is verified. Full access is unlocked." };
-    case "pending":
-    case "submitted":
-      return { label: "Pending Review", description: "Your verification request is with the admin team. You can continue reviewing your dashboard and profile while you wait." };
-    case "rejected":
-      return { label: "Rejected", description: employer.admin_review_note || "Your submission needs updates before approval. Review the reason below, update your profile, and resubmit." };
-    default:
-      return { label: "Not Submitted", description: "Complete your company profile, then submit your account for admin verification." };
-  }
-}
+import { Clock, ShieldAlert, ShieldCheck, ArrowRight, Loader2 } from "lucide-react";
 
 export default function VerificationBanner({ employer, submitting, onSubmit }) {
-  const meta = getVerificationMeta(employer);
-  const isPending = employer.verification_status === "pending" || employer.verification_status === "submitted";
+  const status = employer.verification_status;
+  if (status === "approved") return null;
+
+  const isPending = status === "pending" || status === "submitted";
+  const isRejected = status === "rejected";
 
   return (
-    <Card className="mb-6 border-yellow-500/30 bg-yellow-500/5">
-      <CardContent className="p-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex items-start gap-3">
-          {employer.verification_status === "rejected" ? (
-            <ShieldAlert className="w-5 h-5 text-destructive mt-0.5" />
-          ) : (
-            <Clock className="w-5 h-5 text-yellow-500 mt-0.5" />
-          )}
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <p className="font-medium text-sm">Verification Status</p>
-              <Badge variant="secondary" className="capitalize">{meta.label}</Badge>
-            </div>
-            <p className="text-sm text-muted-foreground">{meta.description}</p>
-            {employer.verification_status === "rejected" && employer.admin_review_note && (
-              <p className="text-sm text-destructive">Reason: {employer.admin_review_note}</p>
-            )}
-            <p className="text-xs text-muted-foreground">
-              Limited mode allows dashboard access and profile setup only. Posting jobs and employee database access stay locked until admin approval.
-            </p>
-          </div>
+    <div className={`rounded-xl border p-5 mb-6 ${
+      isRejected ? "bg-red-50 border-red-200" : isPending ? "bg-amber-50 border-amber-200" : "bg-card border-border/50"
+    }`}>
+      <div className="flex flex-col lg:flex-row items-start gap-4">
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+          isRejected ? "bg-red-100" : isPending ? "bg-amber-100" : "bg-muted"
+        }`}>
+          {isRejected ? <ShieldAlert className="w-5 h-5 text-red-600" /> :
+           isPending ? <Clock className="w-5 h-5 text-amber-600" /> :
+           <ShieldCheck className="w-5 h-5 text-muted-foreground" />}
         </div>
-        <Button
-          className="bg-primary hover:bg-primary/90"
-          onClick={onSubmit}
-          disabled={submitting || isPending}
-        >
-          {submitting
-            ? "Submitting..."
-            : employer.verification_status === "rejected"
-              ? "Resubmit for Verification"
-              : isPending
-                ? "Pending Admin Review"
-                : "Submit for Verification"}
-        </Button>
-      </CardContent>
-    </Card>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="text-sm font-semibold text-foreground">
+              {isRejected ? "Verification Rejected" : isPending ? "Verification Pending" : "Verification Required"}
+            </h3>
+            <Badge variant="secondary" className="text-[0.6rem] capitalize">{status || "draft"}</Badge>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            {isRejected ? "Your account was not approved. Update your profile and resubmit."
+              : isPending ? "Your account is being reviewed. This usually takes 1-2 business days."
+              : "Complete your profile and submit for verification to start posting jobs."}
+          </p>
+          {isRejected && employer.admin_review_note && (
+            <p className="text-sm text-red-700 mt-2 font-medium">Reason: {employer.admin_review_note}</p>
+          )}
+        </div>
+        {!isPending && (
+          <Button
+            className="bg-accent hover:bg-accent/90 text-accent-foreground rounded-full px-5 h-9 text-sm font-medium shrink-0 group"
+            onClick={onSubmit}
+            disabled={submitting}
+          >
+            {submitting ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Submitting</> :
+              <>{isRejected ? "Resubmit" : "Submit for Review"}<ArrowRight className="w-3.5 h-3.5 ml-1.5 group-hover:translate-x-0.5 transition-transform" /></>}
+          </Button>
+        )}
+      </div>
+    </div>
   );
 }

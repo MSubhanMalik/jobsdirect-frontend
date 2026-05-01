@@ -18,9 +18,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { LOCATION_OPTIONS } from "@/lib/siteSettings";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "react-toastify";
+import { motion } from "framer-motion";
 import {
   MapPin, Clock, Building2, Euro, ArrowLeft, Share2, Star,
-  Calendar, Briefcase, Send, CheckCircle, Upload, FileText, Bookmark
+  Calendar, Briefcase, Send, CheckCircle, Upload, FileText, Bookmark,
+  ArrowUpRight, Loader2, Sparkles, AlertTriangle
 } from "lucide-react";
 import savedJobService from "@/services/savedJob";
 
@@ -67,7 +69,6 @@ export default function JobDetail() {
         const empData = await employeeService.list({ user_email: me.email });
         const emps = empData?.items || [];
         if (emps.length > 0) setEmployee(emps[0]);
-        // Load user CVs and check saved status
         cvService.list().then(setUserCVs).catch(() => {});
         if (jobId) {
           const appData = await applicationService.list({ job_id: jobId, employee_email: me.email });
@@ -110,165 +111,290 @@ export default function JobDetail() {
 
   if (isLoading) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-12">
-        <Skeleton className="h-8 w-1/2 mb-4" />
-        <Skeleton className="h-5 w-1/3 mb-8" />
-        <Skeleton className="h-40 w-full" />
+      <div className="min-h-screen bg-background">
+        <div className="bg-muted/40 border-b border-border/50 pt-8 pb-10">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <Skeleton className="h-4 w-24 mb-6" />
+            <Skeleton className="h-8 w-2/3 mb-3" />
+            <Skeleton className="h-5 w-1/3 mb-4" />
+            <div className="flex gap-2">
+              <Skeleton className="h-7 w-24 rounded-full" />
+              <Skeleton className="h-7 w-28 rounded-full" />
+            </div>
+          </div>
+        </div>
+        <div className="max-w-5xl mx-auto px-4 py-8">
+          <Skeleton className="h-64 w-full rounded-xl" />
+        </div>
       </div>
     );
   }
 
   if (!job) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-20 text-center">
-        <h2 className="text-2xl font-bold mb-4">Job Not Found</h2>
-        <Link to="/jobs"><Button>Back to Jobs</Button></Link>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-5">
+            <Briefcase className="w-7 h-7 text-muted-foreground/30" />
+          </div>
+          <h2 className="text-xl font-display font-bold mb-2">Job Not Found</h2>
+          <p className="text-muted-foreground mb-6">This listing may have been removed or expired.</p>
+          <Link to="/jobs">
+            <Button className="rounded-full px-6">Back to Jobs</Button>
+          </Link>
+        </div>
       </div>
     );
   }
 
+  const hasSalary = job.salary_min || job.salary_max;
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="bg-primary text-primary-foreground py-8 sm:py-12">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Button variant="ghost" className="text-primary-foreground/60 hover:text-primary-foreground mb-4 -ml-3" onClick={() => navigate("/jobs")}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Jobs
-          </Button>
-          <div className="flex items-start justify-between gap-4">
-            <div>
+      {/* ── Header ── */}
+      <div className="relative bg-muted/40 border-b border-border/50 pt-8 pb-10">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Back */}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <button
+              onClick={() => navigate("/jobs")}
+              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Jobs
+            </button>
+          </motion.div>
+
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+            {/* Badges row */}
+            <div className="flex items-center gap-2 mb-3">
               {job.is_featured && (
-                <span className="inline-flex items-center gap-1 text-accent text-xs font-semibold mb-2">
-                  <Star className="w-3.5 h-3.5 fill-accent" />
-                  FEATURED
+                <span className="inline-flex items-center gap-1 text-accent text-xs font-semibold uppercase tracking-wider">
+                  <Star className="w-3 h-3 fill-accent" />
+                  Featured
                 </span>
               )}
-              <h1 className="text-2xl sm:text-3xl font-display font-bold mb-2">{job.title}</h1>
-              <div className="flex items-center gap-2 text-primary-foreground/70">
-                <Building2 className="w-4 h-4" />
-                <span>{job.company_name}</span>
+              {job.is_urgent && (
+                <span className="inline-flex items-center gap-1 text-red-500 text-xs font-semibold uppercase tracking-wider">
+                  <AlertTriangle className="w-3 h-3" />
+                  Urgent
+                </span>
+              )}
+              {job.is_highlighted && (
+                <span className="inline-flex items-center gap-1 text-amber-600 text-xs font-semibold uppercase tracking-wider">
+                  <Sparkles className="w-3 h-3" />
+                  Highlighted
+                </span>
+              )}
+            </div>
+
+            {/* Title */}
+            <h1 className="text-3xl sm:text-4xl font-display font-bold text-foreground tracking-tight mb-2">
+              {job.title}
+            </h1>
+
+            {/* Company */}
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-8 h-8 rounded-lg bg-card border border-border/60 flex items-center justify-center">
+                <Building2 className="w-4 h-4 text-muted-foreground" />
+              </div>
+              <div>
+                <span className="text-sm font-medium text-foreground">{job.company_name}</span>
+                {job.employer_slug && (
+                  <Link to={`/employers/${job.employer_slug}`} className="text-xs text-accent ml-2 hover:underline">
+                    View Company
+                  </Link>
+                )}
               </div>
             </div>
-          </div>
-          <div className="flex flex-wrap gap-3 mt-4">
-            <Badge className="bg-primary-foreground/10 text-primary-foreground border-0">
-              <MapPin className="w-3 h-3 mr-1" />
-              {job.location}
-            </Badge>
-            <Badge className="bg-primary-foreground/10 text-primary-foreground border-0">
-              <Clock className="w-3 h-3 mr-1" />
-              {jobTypeLabels[job.job_type]}
-            </Badge>
-            <Badge className="bg-primary-foreground/10 text-primary-foreground border-0">
-              <Briefcase className="w-3 h-3 mr-1" />
-              {categoryLabels[job.category]}
-            </Badge>
-          </div>
+
+            {/* Meta tags */}
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="secondary" className="text-xs font-medium rounded-full px-3 py-1">
+                <MapPin className="w-3 h-3 mr-1.5" />
+                {job.location}
+              </Badge>
+              <Badge variant="secondary" className="text-xs font-medium rounded-full px-3 py-1">
+                <Clock className="w-3 h-3 mr-1.5" />
+                {jobTypeLabels[job.job_type] || job.job_type}
+              </Badge>
+              {job.category && (
+                <Badge variant="secondary" className="text-xs font-medium rounded-full px-3 py-1">
+                  <Briefcase className="w-3 h-3 mr-1.5" />
+                  {categoryLabels[job.category] || job.category}
+                </Badge>
+              )}
+              {hasSalary && (
+                <Badge className="bg-accent/10 text-accent border-0 text-xs font-semibold rounded-full px-3 py-1">
+                  <Euro className="w-3 h-3 mr-1" />
+                  €{job.salary_min?.toLocaleString()}{job.salary_max ? `–€${job.salary_max.toLocaleString()}` : "+"}
+                  {job.salary_period && <span className="font-normal ml-1">/{job.salary_period}</span>}
+                </Badge>
+              )}
+            </div>
+          </motion.div>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* ── Content ── */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
-            <Card>
-              <CardContent className="p-6">
-                <h2 className="text-lg font-semibold mb-4">Job Description</h2>
-                <div className="prose prose-sm max-w-none text-muted-foreground whitespace-pre-wrap">
-                  {job.description}
-                </div>
-              </CardContent>
-            </Card>
+          {/* Main */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="lg:col-span-2 space-y-6"
+          >
+            {/* Description */}
+            <div>
+              <h2 className="text-base font-display font-semibold text-foreground mb-4">Job Description</h2>
+              <div className="prose prose-sm max-w-none text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                {job.description}
+              </div>
+            </div>
+
             {job.benefits && (
-              <Card>
-                <CardContent className="p-6">
-                  <h2 className="text-lg font-semibold mb-4">Benefits</h2>
-                  <p className="text-muted-foreground">{job.benefits}</p>
-                </CardContent>
-              </Card>
+              <div className="pt-6 border-t border-border/40">
+                <h2 className="text-base font-display font-semibold text-foreground mb-4">Benefits</h2>
+                <p className="text-sm text-muted-foreground leading-relaxed">{job.benefits}</p>
+              </div>
             )}
-          </div>
+          </motion.div>
 
           {/* Sidebar */}
-          <div className="space-y-4">
-            <Card>
-              <CardContent className="p-6 space-y-4">
-                {applied ? (
-                  <Button className="w-full bg-accent/20 text-accent" disabled>
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    Applied
-                  </Button>
-                ) : (
-                  <Button
-                    className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold"
-                    onClick={() => {
-                      if (!user) { setShowGuestApply(true); return; }
-                      setShowApply(true);
-                    }}
-                  >
-                    <Send className="w-4 h-4 mr-2" />
-                    Apply Now
-                  </Button>
-                )}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="space-y-4"
+          >
+            {/* Action card */}
+            <div className="rounded-xl border border-border/50 bg-card p-5 space-y-3">
+              {applied ? (
+                <div className="flex items-center gap-3 p-4 rounded-xl bg-emerald-50 border border-emerald-200">
+                  <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
+                  <div>
+                    <p className="text-sm font-semibold text-emerald-800">Application Submitted</p>
+                    <p className="text-xs text-emerald-700 mt-0.5">The employer will review your application.</p>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold rounded-xl h-12 text-[0.95rem]"
+                  onClick={() => {
+                    if (!user) { setShowGuestApply(true); return; }
+                    setShowApply(true);
+                  }}
+                >
+                  <Send className="w-4 h-4 mr-2" />
+                  Apply Now
+                </Button>
+              )}
+
+              <div className="flex gap-2">
                 {user && (
                   <Button
                     variant="outline"
-                    className={`w-full ${saved ? "border-accent text-accent" : ""}`}
+                    className={`flex-1 rounded-xl h-10 ${saved ? "border-accent text-accent" : ""}`}
                     onClick={async () => {
                       const result = await savedJobService.toggle(jobId);
                       setSaved(result.saved);
-                      toast.success(result.saved ? "Job saved" : "Job removed from saved");
+                      toast.success(result.saved ? "Job saved" : "Removed from saved");
                     }}
                   >
-                    <Bookmark className={`w-4 h-4 mr-2 ${saved ? "fill-accent" : ""}`} />
-                    {saved ? "Saved" : "Save Job"}
+                    <Bookmark className={`w-4 h-4 mr-1.5 ${saved ? "fill-accent" : ""}`} />
+                    {saved ? "Saved" : "Save"}
                   </Button>
                 )}
-                <Button variant="outline" className="w-full" onClick={() => {
-                  navigator.clipboard.writeText(window.location.href);
-                  toast.success("Link Copied — Job link copied to clipboard.");
-                }}>
-                  <Share2 className="w-4 h-4 mr-2" />
-                  Share Job
+                <Button
+                  variant="outline"
+                  className={`${user ? "" : "flex-1"} rounded-xl h-10`}
+                  onClick={() => {
+                    navigator.clipboard.writeText(window.location.href);
+                    toast.success("Link copied to clipboard");
+                  }}
+                >
+                  <Share2 className="w-4 h-4 mr-1.5" />
+                  Share
                 </Button>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
-            <Card>
-              <CardContent className="p-6 space-y-3">
-                <h3 className="font-semibold text-sm">Job Details</h3>
-                {(job.salary_min || job.salary_max) && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Euro className="w-4 h-4 text-muted-foreground" />
-                    <span>€{job.salary_min?.toLocaleString()}{job.salary_max ? ` - €${job.salary_max.toLocaleString()}` : "+"} / {job.salary_period || "annual"}</span>
+            {/* Details card */}
+            <div className="rounded-xl border border-border/50 bg-card p-5">
+              <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground mb-4">Job Details</h3>
+              <div className="space-y-4">
+                {hasSalary && (
+                  <div className="flex items-start gap-3">
+                    <Euro className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">
+                        €{job.salary_min?.toLocaleString()}{job.salary_max ? ` – €${job.salary_max.toLocaleString()}` : "+"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">per {job.salary_period || "year"}</p>
+                    </div>
                   </div>
                 )}
-                <div className="flex items-center gap-2 text-sm">
-                  <MapPin className="w-4 h-4 text-muted-foreground" />
-                  <span>{job.location}</span>
+                <div className="flex items-start gap-3">
+                  <MapPin className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{job.location}</p>
+                    <p className="text-xs text-muted-foreground">Location</p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <Clock className="w-4 h-4 text-muted-foreground" />
-                  <span>{jobTypeLabels[job.job_type]}</span>
+                <div className="flex items-start gap-3">
+                  <Clock className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{jobTypeLabels[job.job_type] || job.job_type}</p>
+                    <p className="text-xs text-muted-foreground">Employment type</p>
+                  </div>
                 </div>
+                {job.category && (
+                  <div className="flex items-start gap-3">
+                    <Briefcase className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{categoryLabels[job.category] || job.category}</p>
+                      <p className="text-xs text-muted-foreground">Category</p>
+                    </div>
+                  </div>
+                )}
                 {job.expires_at && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Calendar className="w-4 h-4 text-muted-foreground" />
-                    <span>Expires: {new Date(job.expires_at).toLocaleDateString()}</span>
+                  <div className="flex items-start gap-3">
+                    <Calendar className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{new Date(job.expires_at).toLocaleDateString("en-IE", { day: "numeric", month: "short", year: "numeric" })}</p>
+                      <p className="text-xs text-muted-foreground">Closing date</p>
+                    </div>
                   </div>
                 )}
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+            </div>
+
+            {/* Company link */}
+            {job.employer_slug && (
+              <Link to={`/employers/${job.employer_slug}`}>
+                <div className="rounded-xl border border-border/50 bg-card p-5 flex items-center gap-4 hover:shadow-md hover:-translate-y-0.5 transition-all group cursor-pointer">
+                  <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                    <Building2 className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground group-hover:text-accent transition-colors">{job.company_name}</p>
+                    <p className="text-xs text-muted-foreground">View company profile</p>
+                  </div>
+                  <ArrowUpRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-accent transition-colors" />
+                </div>
+              </Link>
+            )}
+          </motion.div>
         </div>
       </div>
 
-      {/* Apply Dialog */}
+      {/* ── Apply Dialog ── */}
       <Dialog open={showApply} onOpenChange={setShowApply}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Apply to {job.title}</DialogTitle>
+            <DialogTitle className="font-display">Apply to {job.title}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             {employee && (
@@ -277,10 +403,10 @@ export default function JobDetail() {
               </p>
             )}
             {userCVs.length > 0 && (
-              <div className="space-y-1">
-                <Label>Attach CV</Label>
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium">Attach CV</Label>
                 <Select value={selectedCV} onValueChange={setSelectedCV}>
-                  <SelectTrigger><SelectValue placeholder="Select a CV (optional)" /></SelectTrigger>
+                  <SelectTrigger className="h-11"><SelectValue placeholder="Select a CV (optional)" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">No CV attached</SelectItem>
                     {userCVs.map((cv) => (
@@ -290,97 +416,98 @@ export default function JobDetail() {
                 </Select>
               </div>
             )}
-            <Textarea
-              placeholder="Cover letter (optional)"
-              value={coverLetter}
-              onChange={(e) => setCoverLetter(e.target.value)}
-              className="min-h-[120px]"
-            />
-            <label className="flex items-start gap-2 cursor-pointer">
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">Cover Letter <span className="text-muted-foreground font-normal">(optional)</span></Label>
+              <Textarea
+                placeholder="Why are you a good fit for this role?"
+                value={coverLetter}
+                onChange={(e) => setCoverLetter(e.target.value)}
+                className="min-h-[120px] resize-none"
+              />
+            </div>
+            <label className="flex items-start gap-2.5 cursor-pointer">
               <Checkbox checked={consent} onCheckedChange={(v) => setConsent(Boolean(v))} className="mt-0.5" />
-              <span className="text-xs text-muted-foreground">I consent to my data being shared with the employer for recruitment purposes.</span>
+              <span className="text-xs text-muted-foreground leading-relaxed">I consent to my data being shared with the employer for recruitment purposes.</span>
             </label>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowApply(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setShowApply(false)} className="rounded-lg">Cancel</Button>
             <Button
-              className="bg-accent hover:bg-accent/90 text-accent-foreground"
+              className="bg-accent hover:bg-accent/90 text-accent-foreground rounded-lg font-medium"
               onClick={handleApply}
               disabled={applying || !consent}
             >
-              {applying ? "Submitting..." : "Submit Application"}
+              {applying ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Submitting...</> : "Submit Application"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Guest Apply Dialog */}
+      {/* ── Guest Apply Dialog ── */}
       <Dialog open={showGuestApply} onOpenChange={setShowGuestApply}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Quick Apply — {job?.title}</DialogTitle>
+            <DialogTitle className="font-display">Quick Apply — {job?.title}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-2">
-            <div className="space-y-1">
-              <Label>Full Name *</Label>
-              <Input value={guestForm.name} onChange={(e) => setGuestForm({ ...guestForm, name: e.target.value })} placeholder="John Doe" required />
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">Full Name *</Label>
+              <Input value={guestForm.name} onChange={(e) => setGuestForm({ ...guestForm, name: e.target.value })} placeholder="John Doe" className="h-11" required />
             </div>
-            <div className="space-y-1">
-              <Label>Email *</Label>
-              <Input type="email" value={guestForm.email} onChange={(e) => setGuestForm({ ...guestForm, email: e.target.value })} placeholder="john@example.com" required />
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">Email *</Label>
+              <Input type="email" value={guestForm.email} onChange={(e) => setGuestForm({ ...guestForm, email: e.target.value })} placeholder="john@example.com" className="h-11" required />
             </div>
-            <div className="space-y-1">
-              <Label>Phone *</Label>
-              <Input value={guestForm.phone} onChange={(e) => setGuestForm({ ...guestForm, phone: e.target.value })} placeholder="+353 87 123 4567" required />
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">Phone *</Label>
+              <Input value={guestForm.phone} onChange={(e) => setGuestForm({ ...guestForm, phone: e.target.value })} placeholder="+353 87 123 4567" className="h-11" required />
             </div>
-            <div className="space-y-1">
-              <Label>County</Label>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">County</Label>
               <Select value={guestForm.county} onValueChange={(v) => setGuestForm({ ...guestForm, county: v })}>
-                <SelectTrigger><SelectValue placeholder="Select county" /></SelectTrigger>
+                <SelectTrigger className="h-11"><SelectValue placeholder="Select county" /></SelectTrigger>
                 <SelectContent>
                   {LOCATION_OPTIONS.map((l) => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1">
-              <Label>Message (optional)</Label>
-              <Textarea value={guestForm.message} onChange={(e) => setGuestForm({ ...guestForm, message: e.target.value })} placeholder="Why are you a good fit?" className="min-h-[80px]" />
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">Message <span className="text-muted-foreground font-normal">(optional)</span></Label>
+              <Textarea value={guestForm.message} onChange={(e) => setGuestForm({ ...guestForm, message: e.target.value })} placeholder="Why are you a good fit?" className="min-h-[80px] resize-none" />
             </div>
-            <div className="space-y-1">
-              <Label>Attach CV (PDF or Word) *</Label>
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full justify-start text-muted-foreground font-normal"
-                  onClick={() => document.getElementById("guest-cv-upload").click()}
-                >
-                  <Upload className="w-4 h-4 mr-2" />
-                  {guestFile ? guestFile.name : "Choose CV file..."}
-                </Button>
-                <input
-                  id="guest-cv-upload"
-                  type="file"
-                  className="hidden"
-                  accept=".pdf,.doc,.docx"
-                  onChange={(e) => setGuestFile(e.target.files[0])}
-                />
-              </div>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">Attach CV *</Label>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full justify-start text-muted-foreground font-normal h-11 rounded-lg"
+                onClick={() => document.getElementById("guest-cv-upload").click()}
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                {guestFile ? guestFile.name : "Choose CV file (PDF/Word)"}
+              </Button>
+              <input
+                id="guest-cv-upload"
+                type="file"
+                className="hidden"
+                accept=".pdf,.doc,.docx"
+                onChange={(e) => setGuestFile(e.target.files[0])}
+              />
               {guestFile && (
-                <p className="text-[10px] text-emerald-600 flex items-center gap-1">
-                  <CheckCircle className="w-3 h-3" /> File ready to upload
+                <p className="text-[0.65rem] text-emerald-600 flex items-center gap-1 font-medium">
+                  <CheckCircle className="w-3 h-3" /> File ready
                 </p>
               )}
             </div>
-            <label className="flex items-start gap-2 cursor-pointer">
+            <label className="flex items-start gap-2.5 cursor-pointer">
               <Checkbox checked={guestForm.consent} onCheckedChange={(v) => setGuestForm({ ...guestForm, consent: Boolean(v) })} className="mt-0.5" />
-              <span className="text-xs text-muted-foreground">I consent to my data being shared with the employer for recruitment purposes.</span>
+              <span className="text-xs text-muted-foreground leading-relaxed">I consent to my data being shared with the employer for recruitment purposes.</span>
             </label>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowGuestApply(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setShowGuestApply(false)} className="rounded-lg">Cancel</Button>
             <Button
-              className="bg-accent hover:bg-accent/90 text-accent-foreground"
+              className="bg-accent hover:bg-accent/90 text-accent-foreground rounded-lg font-medium"
               disabled={applying || !guestForm.name || !guestForm.email || !guestForm.phone || !guestForm.consent || !guestFile}
               onClick={async () => {
                 setApplying(true);
@@ -393,11 +520,10 @@ export default function JobDetail() {
                   formData.append("county", guestForm.county);
                   formData.append("message", guestForm.message);
                   if (guestFile) formData.append("file", guestFile);
-
                   await applicationService.guestApply(formData);
                   setApplied(true);
                   setShowGuestApply(false);
-                  toast.success("Application submitted! Create an account to track your application.");
+                  toast.success("Application submitted! Create an account to track it.");
                 } catch (err) {
                   toast.error(err.message || "Could not submit application.");
                 } finally {
@@ -405,7 +531,7 @@ export default function JobDetail() {
                 }
               }}
             >
-              {applying ? "Submitting..." : "Submit Application"}
+              {applying ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Submitting...</> : "Submit Application"}
             </Button>
           </DialogFooter>
         </DialogContent>

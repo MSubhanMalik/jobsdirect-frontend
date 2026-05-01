@@ -10,6 +10,7 @@ import paymentService from "@/services/payment";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LogOut, Home, Briefcase, User, CreditCard, FileText, Send, Settings, MessageSquare, Bookmark, File, Bell, Search } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import RoleSelector from "@/components/dashboard/RoleSelector";
 import NotificationBell from "@/components/dashboard/NotificationBell";
 
@@ -36,7 +37,6 @@ export default function DashboardLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isAuthenticated, isLoading: authLoading } = useAuthStore();
-
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -44,24 +44,18 @@ export default function DashboardLayout() {
     if (!authLoading && user?.role === "admin") navigate("/admin");
   }, [authLoading, isAuthenticated, user, navigate]);
 
-  // Handle payment redirect (success/cancelled)
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const payment = params.get("payment");
     const sessionId = params.get("session_id");
-
     if (payment === "success" && sessionId) {
       paymentService.syncCheckoutSession(sessionId).then((result) => {
         if (result.success) {
           toast.success("Payment complete — Your job listing is now pending review.");
-          // Refresh employer data and jobs list
           queryClient.invalidateQueries({ queryKey: ["my-employer", user?.email] });
           queryClient.invalidateQueries({ queryKey: ["employer-jobs", user?.email] });
         }
-      }).catch(() => {
-        toast.error("Could not verify payment. Please refresh.");
-      });
-      // Clear URL params
+      }).catch(() => toast.error("Could not verify payment. Please refresh."));
       navigate(location.pathname, { replace: true });
     } else if (payment === "cancelled") {
       toast.info("Payment cancelled — no charge was made.");
@@ -96,7 +90,6 @@ export default function DashboardLayout() {
     if (items.length > 0) setEmployee(items[0]);
   }, [employeeData]);
 
-  // Sync employer subscription/credit status from Stripe — once per session
   const syncedRef = useRef(false);
   useEffect(() => {
     if (!employer?.id || syncedRef.current) return;
@@ -114,7 +107,6 @@ export default function DashboardLayout() {
 
   const isEmployer = !!employer;
   const navItems = isEmployer ? employerNav : employeeNav;
-
   const outletContext = useMemo(
     () => ({ user, employer, employee, setEmployer, setEmployee, isEmployer }),
     [user, employer, employee, isEmployer],
@@ -124,9 +116,14 @@ export default function DashboardLayout() {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        <Skeleton className="h-8 w-48 mb-4" />
-        <Skeleton className="h-64 w-full" />
+      <div className="min-h-screen bg-muted/30">
+        <div className="max-w-7xl mx-auto px-4 py-12">
+          <Skeleton className="h-10 w-48 mb-6" />
+          <div className="flex gap-3 mb-8">
+            {[1,2,3,4].map(i => <Skeleton key={i} className="h-9 w-28 rounded-lg" />)}
+          </div>
+          <Skeleton className="h-64 w-full rounded-xl" />
+        </div>
       </div>
     );
   }
@@ -138,48 +135,96 @@ export default function DashboardLayout() {
     }} />;
   }
 
+  const initials = `${(user.firstName || "U")[0]}${(user.lastName || "")[0] || ""}`.toUpperCase();
+  const displayName = `${user.firstName || ""} ${user.lastName || ""}`.trim();
+
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className={`${isEmployer ? "bg-primary text-primary-foreground" : "bg-accent text-accent-foreground"} py-6`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-display font-bold">{isEmployer ? "Employer Dashboard" : "My Dashboard"}</h1>
-              <p className={`${isEmployer ? "text-primary-foreground/70" : "text-accent-foreground/70"} mt-1`}>
-                {user.firstName} {user.lastName}{employer?.company_name ? ` — ${employer.company_name}` : ""}
-              </p>
+    <div className="min-h-screen bg-muted/30">
+      {/* ── Hero header with background image ── */}
+      <div className="relative overflow-hidden bg-foreground">
+        {/* Background image */}
+        <div className="absolute inset-0">
+          <img
+            src="https://picsum.photos/id/1076/2400/600"
+            alt=""
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-foreground/85" />
+          <div className="absolute inset-0 bg-gradient-to-r from-foreground/95 via-foreground/80 to-foreground/60" />
+        </div>
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Top row */}
+          <div className="flex items-center justify-between h-14">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center">
+                <span className="text-xs font-display font-bold text-accent-foreground">{initials}</span>
+              </div>
+              <div className="hidden sm:block">
+                <p className="text-sm font-medium text-primary-foreground/90 leading-none">{displayName}</p>
+                <p className="text-[0.6rem] text-primary-foreground/40 mt-0.5">
+                  {isEmployer ? employer.company_name || "Employer" : "Job Seeker"}
+                </p>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button asChild variant="ghost" className={`${isEmployer ? "text-primary-foreground/60 hover:text-primary-foreground" : "text-accent-foreground/60 hover:text-accent-foreground"}`}>
-                <Link to="/"><Home className="w-4 h-4 mr-2" />Home</Link>
-              </Button>
+            <div className="flex items-center gap-1">
+              <Link to="/">
+                <Button variant="ghost" size="icon" className="w-8 h-8 text-primary-foreground/40 hover:text-primary-foreground hover:bg-primary-foreground/5 rounded-lg">
+                  <Home className="w-4 h-4" />
+                </Button>
+              </Link>
               <NotificationBell />
-              <Button variant="ghost" className={`${isEmployer ? "text-primary-foreground/60 hover:text-primary-foreground" : "text-accent-foreground/60 hover:text-accent-foreground"}`} onClick={() => authService.logout("/")}>
-                <LogOut className="w-4 h-4 mr-2" />Logout
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-primary-foreground/40 hover:text-primary-foreground hover:bg-primary-foreground/5 h-8 text-xs rounded-lg ml-1"
+                onClick={() => authService.logout("/")}
+              >
+                <LogOut className="w-3.5 h-3.5 sm:mr-1.5" />
+                <span className="hidden sm:inline">Logout</span>
               </Button>
             </div>
+          </div>
+
+          {/* Greeting */}
+          <div className="pb-6 pt-2">
+            <h1 className="text-xl sm:text-2xl font-display font-bold text-primary-foreground tracking-tight">
+              {isEmployer ? "Employer Dashboard" : "My Dashboard"}
+            </h1>
+            <p className="text-sm text-primary-foreground/35 mt-0.5">
+              {isEmployer
+                ? `Manage your listings, applications, and billing`
+                : `Track your applications and manage your profile`}
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Nav tabs */}
-      <div className="border-b bg-background sticky top-0 z-30">
+      {/* ── Navigation ── */}
+      <div className="bg-card border-b border-border/50 sticky top-[4.25rem] z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex gap-1 overflow-x-auto py-2">
+          <nav className="flex gap-0.5 overflow-x-auto py-1.5 scrollbar-none">
             {navItems.map((item) => {
               const Icon = item.icon;
-              const isActive = location.pathname === item.path || (item.path === "/dashboard" && location.pathname === "/dashboard");
+              const exactMatch = item.path === "/dashboard" && location.pathname === "/dashboard";
+              const subMatch = item.path !== "/dashboard" && location.pathname.startsWith(item.path);
+              const active = exactMatch || subMatch;
+
               return (
                 <Link
                   key={item.id}
                   to={item.path}
-                  className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-colors ${
-                    isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  className={`relative flex items-center gap-2 px-4 py-2.5 text-[0.82rem] font-medium rounded-lg whitespace-nowrap transition-all duration-200 ${
+                    active
+                      ? "text-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
+                  <Icon className={`w-4 h-4 ${active ? "text-accent" : ""}`} />
                   {item.label}
+                  {active && (
+                    <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-accent rounded-full" />
+                  )}
                 </Link>
               );
             })}
@@ -187,9 +232,16 @@ export default function DashboardLayout() {
         </div>
       </div>
 
-      {/* Content */}
+      {/* ── Content ── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Outlet context={outletContext} />
+        <motion.div
+          key={location.pathname}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, ease: "easeOut" }}
+        >
+          <Outlet context={outletContext} />
+        </motion.div>
       </div>
     </div>
   );

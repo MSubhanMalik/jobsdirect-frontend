@@ -1,14 +1,13 @@
 import React from "react";
 import { useOutletContext, useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { 
-  MapPin, Briefcase, GraduationCap, FileText, 
-  ChevronLeft, MessageSquare, Download, Lock,
-  Globe, Linkedin, Github, Award, Languages
+import {
+  MapPin, Briefcase, GraduationCap, FileText, ArrowLeft,
+  MessageSquare, Download, Lock, Globe, Linkedin, Github,
+  User, AlertCircle, ArrowRight, Clock, ExternalLink
 } from "lucide-react";
 import employeeService from "@/services/employee";
 import { toast } from "react-toastify";
@@ -16,7 +15,7 @@ import { toast } from "react-toastify";
 export default function DashboardCandidateDetail() {
   const { id } = useParams();
   const { employer } = useOutletContext();
-  
+
   const hasAccess = employer?.candidate_database_access || employer?.candidateDatabaseAccess;
   const hasPro = employer?.candidate_database_status === "cv_db_pro" || employer?.candidateDatabaseStatus === "cv_db_pro";
 
@@ -25,294 +24,273 @@ export default function DashboardCandidateDetail() {
     queryFn: () => employeeService.getById(id),
   });
 
-  if (isLoading) return <CandidateSkeleton />;
-  if (error || !candidate) return <ErrorState />;
-
   const handleDownloadCV = () => {
-    if (!hasAccess) {
-      toast.error("Upgrade to Lite or Pro plan to download CVs.");
-      return;
-    }
-    if (candidate.cv_url) {
-      window.open(candidate.cv_url, "_blank");
-    } else {
-      toast.info("No CV uploaded by this candidate.");
-    }
+    if (!hasAccess) { toast.error("Upgrade to download CVs."); return; }
+    if (candidate.cv_url) window.open(candidate.cv_url, "_blank");
+    else toast.info("No CV uploaded by this candidate.");
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-5 w-32" />
+        <div className="rounded-xl border border-border/50 bg-card p-8">
+          <div className="flex items-start gap-5">
+            <Skeleton className="w-16 h-16 rounded-xl" />
+            <div className="flex-1">
+              <Skeleton className="h-6 w-48 mb-2" />
+              <Skeleton className="h-4 w-32 mb-4" />
+              <div className="flex gap-4"><Skeleton className="h-4 w-24" /><Skeleton className="h-4 w-28" /></div>
+            </div>
+          </div>
+        </div>
+        <div className="grid lg:grid-cols-[1fr_300px] gap-6">
+          <Skeleton className="h-64 rounded-xl" />
+          <Skeleton className="h-64 rounded-xl" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !candidate) {
+    return (
+      <div className="text-center py-20">
+        <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-5">
+          <AlertCircle className="w-7 h-7 text-muted-foreground/30" />
+        </div>
+        <h3 className="text-xl font-display font-bold text-foreground mb-2">Candidate not found</h3>
+        <p className="text-sm text-muted-foreground mb-6">This profile may be private or no longer exists.</p>
+        <Link to="/dashboard/cv-search">
+          <Button variant="outline" className="rounded-full px-6">Back to Search</Button>
+        </Link>
+      </div>
+    );
+  }
+
+  const fullName = `${candidate.user?.firstName || ""} ${candidate.user?.lastName || ""}`.trim() || "Candidate";
 
   return (
     <div className="space-y-6">
-      <Button asChild variant="ghost" className="pl-0 hover:bg-transparent -ml-2">
-        <Link to="/dashboard/cv-search">
-          <ChevronLeft className="w-4 h-4 mr-1" /> Back to Search
-        </Link>
-      </Button>
+      {/* Back */}
+      <button
+        onClick={() => window.history.back()}
+        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <ArrowLeft className="w-4 h-4" /> Back to Search
+      </button>
 
-      <div className="flex flex-col lg:flex-row gap-6">
-        {/* Left Col: Main Profile */}
-        <div className="flex-1 space-y-6">
-          <Card className="overflow-hidden border-none shadow-sm">
-            <div className="h-32 bg-gradient-to-r from-primary/20 to-accent/20" />
-            <CardContent className="p-6 -mt-12">
-              <div className="flex flex-col sm:flex-row items-start gap-5">
-                <div className="w-24 h-24 rounded-2xl bg-background border-4 border-background shadow-md flex items-center justify-center shrink-0 overflow-hidden">
-                  {candidate.profile_photo_url ? (
-                    <img src={candidate.profile_photo_url} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <Briefcase className="w-10 h-10 text-primary" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0 pt-12 sm:pt-14">
-                  <div className="flex flex-wrap items-center gap-3 mb-2">
-                    <h2 className="text-2xl font-bold">{candidate.user?.firstName} {candidate.user?.lastName}</h2>
-                    {candidate.is_searchable && (
-                      <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none px-2 py-0.5">
-                        Available
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-lg text-muted-foreground mb-4">{candidate.title || "Job Seeker"}</p>
-                  
-                  <div className="flex flex-wrap gap-y-2 gap-x-6 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="w-4 h-4 text-primary/60" />
-                      {candidate.location || "Ireland"}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Briefcase className="w-4 h-4 text-primary/60" />
-                      {candidate.experience_years || 0} Years Experience
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-primary/60" />
-                      {candidate.desired_job_type || "Full-time"}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+      {/* Profile header */}
+      <div className="flex flex-wrap items-center gap-2 mb-1">
+        <h1 className="text-2xl font-display font-bold text-foreground">{fullName}</h1>
+        {candidate.is_searchable && (
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" title="Available" />
+        )}
+      </div>
+      <p className="text-base text-muted-foreground mb-3">{candidate.title || "Job Seeker"}</p>
+      <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground mb-6">
+        <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" />{candidate.location || candidate.county || "Ireland"}</span>
+        <span className="flex items-center gap-1.5"><Briefcase className="w-3.5 h-3.5" />{candidate.experience_years || 0}y experience</span>
+        <span className="flex items-center gap-1.5"><FileText className="w-3.5 h-3.5" />{candidate.desired_job_type?.replace("_", " ") || "Full time"}</span>
+      </div>
 
-          {/* About / Bio */}
-          <Card className="border-none shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Professional Summary</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
+      {/* Two column layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
+        {/* Main content */}
+        <div className="space-y-6">
+          {/* Summary */}
+          <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
+            <div className="px-6 py-4 border-b border-border/40">
+              <h2 className="text-base font-display font-semibold text-foreground">Professional Summary</h2>
+            </div>
+            <div className="px-6 py-5">
+              <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
                 {candidate.bio || "No summary provided."}
               </p>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          {/* Experience */}
-          <Card className="border-none shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Work Experience</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
+          {/* Work Experience */}
+          <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
+            <div className="px-6 py-4 border-b border-border/40">
+              <h2 className="text-base font-display font-semibold text-foreground">Work Experience</h2>
+            </div>
+            <div className="px-6 py-5">
               {candidate.work_experience?.length > 0 ? (
-                candidate.work_experience.map((work, i) => (
-                  <div key={i} className="relative pl-6 border-l-2 border-muted pb-2 last:pb-0">
-                    <div className="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-background border-2 border-primary" />
-                    <h4 className="font-bold text-base">{work.position}</h4>
-                    <p className="text-sm font-medium text-primary mb-1">{work.company}</p>
-                    <p className="text-xs text-muted-foreground mb-3">{work.startDate} — {work.current ? "Present" : work.endDate}</p>
-                    <p className="text-sm text-muted-foreground">{work.description}</p>
-                  </div>
-                ))
+                <div className="space-y-0">
+                  {candidate.work_experience.map((work, i) => (
+                    <div key={i} className="flex gap-4 pb-6 last:pb-0">
+                      <div className="flex flex-col items-center">
+                        <div className="w-8 h-8 rounded-lg bg-accent/[0.08] flex items-center justify-center shrink-0">
+                          <Briefcase className="w-3.5 h-3.5 text-accent" />
+                        </div>
+                        {i < candidate.work_experience.length - 1 && (
+                          <div className="w-px flex-1 bg-border/60 mt-2" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm font-semibold text-foreground">{work.job_title || work.position}</h4>
+                        <p className="text-sm text-accent font-medium">{work.company}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {work.start_date || work.startDate} — {work.current ? "Present" : (work.end_date || work.endDate || "N/A")}
+                        </p>
+                        {(work.responsibilities || work.description) && (
+                          <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{work.responsibilities || work.description}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               ) : (
-                <p className="text-sm text-muted-foreground italic">No work experience listed.</p>
+                <p className="text-sm text-muted-foreground">No work experience listed.</p>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Education */}
-          <Card className="border-none shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Education</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
+          <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
+            <div className="px-6 py-4 border-b border-border/40">
+              <h2 className="text-base font-display font-semibold text-foreground">Education</h2>
+            </div>
+            <div className="px-6 py-5">
               {candidate.education?.length > 0 ? (
-                candidate.education.map((edu, i) => (
-                  <div key={i} className="flex gap-4">
-                    <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
-                      <GraduationCap className="w-5 h-5 text-accent" />
+                <div className="space-y-4">
+                  {candidate.education.map((edu, i) => (
+                    <div key={i} className="flex items-start gap-4">
+                      <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                        <GraduationCap className="w-3.5 h-3.5 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-semibold text-foreground">{edu.degree}</h4>
+                        <p className="text-sm text-muted-foreground">{edu.institution}</p>
+                        {(edu.field_of_study || edu.year) && (
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {edu.field_of_study}{edu.year ? ` — ${edu.year}` : ""}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="font-bold text-sm">{edu.degree}</h4>
-                      <p className="text-xs font-medium text-muted-foreground">{edu.institution}</p>
-                      <p className="text-[11px] text-muted-foreground mt-1">{edu.year}</p>
-                    </div>
-                  </div>
-                ))
+                  ))}
+                </div>
               ) : (
-                <p className="text-sm text-muted-foreground italic">No education listed.</p>
+                <p className="text-sm text-muted-foreground">No education listed.</p>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
 
-        {/* Right Col: Sidebar Info & Actions */}
-        <div className="w-full lg:w-80 space-y-6">
-          <Card className="border-none shadow-sm">
-            <CardContent className="p-6 space-y-4">
-              <Button className="w-full" onClick={handleDownloadCV}>
-                <Download className="w-4 h-4 mr-2" />
-                Download CV
-                {!hasAccess && <Lock className="w-3.5 h-3.5 ml-2 opacity-60" />}
+        {/* Sidebar */}
+        <div className="space-y-4">
+          {/* Actions */}
+          <div className="rounded-xl border border-border/50 bg-card p-5 space-y-3">
+            <Button
+              className="w-full bg-accent hover:bg-accent/90 text-accent-foreground rounded-xl h-11 font-medium"
+              onClick={handleDownloadCV}
+            >
+              <Download className="w-4 h-4 mr-2" /> Download CV
+              {!hasAccess && <Lock className="w-3 h-3 ml-auto opacity-50" />}
+            </Button>
+            {hasPro ? (
+              <Button asChild variant="outline" className="w-full rounded-xl h-11">
+                <Link to={`/dashboard/messages?candidateId=${candidate.userId}`}>
+                  <MessageSquare className="w-4 h-4 mr-2" /> Message Candidate
+                </Link>
               </Button>
-              {hasPro ? (
-                <Button asChild variant="outline" className="w-full">
-                  <Link to={`/dashboard/messages?candidateId=${candidate.userId}`}>
-                    <MessageSquare className="w-4 h-4 mr-2" />
-                    Message Candidate
-                  </Link>
-                </Button>
-              ) : (
-                <Button variant="outline" className="w-full text-muted-foreground" disabled>
-                  <MessageSquare className="w-4 h-4 mr-2" />
-                  Message
-                  <Lock className="w-3.5 h-3.5 ml-2 opacity-60" />
-                </Button>
-              )}
-              
-              {!hasAccess && (
-                <div className="pt-4 mt-4 border-t border-dashed">
-                  <p className="text-[11px] text-center text-muted-foreground mb-3">
-                    Upgrade your plan to unlock contact details and messaging.
-                  </p>
-                  <Button asChild size="sm" variant="secondary" className="w-full text-[11px] h-8">
-                    <Link to="/dashboard/billing">View Subscription Plans</Link>
+            ) : (
+              <Button variant="outline" className="w-full rounded-xl h-11 text-muted-foreground" disabled>
+                <MessageSquare className="w-4 h-4 mr-2" /> Message
+                <Lock className="w-3 h-3 ml-auto opacity-50" />
+              </Button>
+            )}
+            {!hasAccess && (
+              <div className="pt-3 border-t border-border/40 text-center">
+                <p className="text-[0.65rem] text-muted-foreground mb-2">Upgrade to unlock full access.</p>
+                <Link to="/dashboard/billing">
+                  <Button variant="secondary" size="sm" className="w-full rounded-lg h-8 text-xs font-medium">
+                    View Plans
                   </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                </Link>
+              </div>
+            )}
+          </div>
 
-          <Card className="border-none shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Skills</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-wrap gap-2">
+          {/* Skills */}
+          <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
+            <div className="px-5 py-3.5 border-b border-border/40">
+              <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Skills</h3>
+            </div>
+            <div className="px-5 py-4 flex flex-wrap gap-1.5">
               {candidate.skills?.length > 0 ? (
                 candidate.skills.map((skill, i) => (
-                  <Badge key={i} variant="secondary" className="font-normal px-2.5 py-1">
+                  <Badge key={i} variant="secondary" className="text-[0.65rem] font-medium rounded-md px-2.5 py-1 bg-muted/70">
                     {skill}
                   </Badge>
                 ))
               ) : (
-                <p className="text-xs text-muted-foreground italic">No skills listed.</p>
+                <p className="text-xs text-muted-foreground">No skills listed.</p>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          <Card className="border-none shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Availability</span>
-                <span className="font-medium">{candidate.availability || "Immediate"}</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Min. Salary</span>
-                <span className="font-medium">{candidate.expectedSalary ? `${candidate.expectedSalary} / ${candidate.salaryPeriod}` : "Negotiable"}</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Languages</span>
-                <span className="font-medium text-right ml-4">{candidate.languages || "English"}</span>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Info */}
+          <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
+            <div className="px-5 py-3.5 border-b border-border/40">
+              <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Information</h3>
+            </div>
+            <div className="px-5 py-4 space-y-3">
+              {[
+                { label: "Availability", value: candidate.availability || "Negotiable" },
+                { label: "Expected Salary", value: candidate.expected_salary ? `€${Number(candidate.expected_salary).toLocaleString()} / ${candidate.salary_period || "year"}` : "Negotiable" },
+                { label: "Languages", value: candidate.languages || "English" },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">{item.label}</span>
+                  <span className="font-medium text-foreground text-right ml-4">{item.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
 
-          <Card className="border-none shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Professional Links</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
+          {/* Links */}
+          <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
+            <div className="px-5 py-3.5 border-b border-border/40">
+              <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Professional Links</h3>
+            </div>
+            <div className="px-5 py-4">
               {hasAccess ? (
-                <>
+                <div className="space-y-2.5">
                   {candidate.linkedin && (
-                    <a href={candidate.linkedin} target="_blank" rel="noreferrer" className="flex items-center gap-3 text-sm text-muted-foreground hover:text-primary">
-                      <Linkedin className="w-4 h-4 text-[#0A66C2]" /> LinkedIn Profile
+                    <a href={candidate.linkedin} target="_blank" rel="noreferrer" className="flex items-center gap-3 text-sm text-muted-foreground hover:text-accent transition-colors group">
+                      <Linkedin className="w-4 h-4" /> LinkedIn
+                      <ExternalLink className="w-3 h-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
                     </a>
                   )}
                   {candidate.github && (
-                    <a href={candidate.github} target="_blank" rel="noreferrer" className="flex items-center gap-3 text-sm text-muted-foreground hover:text-primary">
-                      <Github className="w-4 h-4 text-black" /> GitHub Repository
+                    <a href={candidate.github} target="_blank" rel="noreferrer" className="flex items-center gap-3 text-sm text-muted-foreground hover:text-accent transition-colors group">
+                      <Github className="w-4 h-4" /> GitHub
+                      <ExternalLink className="w-3 h-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
                     </a>
                   )}
                   {candidate.portfolio_url && (
-                    <a href={candidate.portfolio_url} target="_blank" rel="noreferrer" className="flex items-center gap-3 text-sm text-muted-foreground hover:text-primary">
-                      <Globe className="w-4 h-4 text-blue-500" /> Personal Portfolio
+                    <a href={candidate.portfolio_url} target="_blank" rel="noreferrer" className="flex items-center gap-3 text-sm text-muted-foreground hover:text-accent transition-colors group">
+                      <Globe className="w-4 h-4" /> Portfolio
+                      <ExternalLink className="w-3 h-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
                     </a>
                   )}
                   {!candidate.linkedin && !candidate.github && !candidate.portfolio_url && (
-                    <p className="text-xs text-muted-foreground italic">No links provided.</p>
+                    <p className="text-xs text-muted-foreground">No links provided.</p>
                   )}
-                </>
+                </div>
               ) : (
-                <div className="flex flex-col items-center py-4 bg-muted/30 rounded-lg text-center px-4">
-                  <Lock className="w-5 h-5 text-muted-foreground mb-2" />
-                  <p className="text-[10px] text-muted-foreground leading-tight">
-                    Links are hidden for non-subscribers.
-                  </p>
+                <div className="flex items-center gap-3 p-3 bg-muted/40 rounded-lg">
+                  <Lock className="w-4 h-4 text-muted-foreground/40 shrink-0" />
+                  <p className="text-xs text-muted-foreground">Links hidden for non-subscribers.</p>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  );
-}
-
-function CandidateSkeleton() {
-  return (
-    <div className="space-y-6 animate-pulse">
-      <Skeleton className="h-8 w-32" />
-      <Skeleton className="h-64 w-full" />
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
-        <Skeleton className="h-96" />
-        <Skeleton className="h-96" />
-      </div>
-    </div>
-  );
-}
-
-function ErrorState() {
-  return (
-    <div className="flex flex-col items-center justify-center py-20 text-center">
-      <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mb-4">
-        <AlertTriangle className="w-8 h-8 text-red-500" />
-      </div>
-      <h3 className="text-lg font-bold">Candidate not found</h3>
-      <p className="text-sm text-muted-foreground mb-6">This profile might be private or no longer exists.</p>
-      <Button asChild variant="outline">
-        <Link to="/dashboard/cv-search">Back to Search</Link>
-      </Button>
-    </div>
-  );
-}
-
-function AlertTriangle(props) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
-      <path d="M12 9v4" />
-      <path d="M12 17h.01" />
-    </svg>
   );
 }

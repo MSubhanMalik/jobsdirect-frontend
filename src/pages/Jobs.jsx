@@ -4,11 +4,12 @@ import { useQuery } from "@tanstack/react-query";
 import jobService from "@/services/job";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Briefcase, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronDown, Search, Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
 import JobCard from "../components/jobs/JobCard";
 import JobFilters from "../components/jobs/JobFilters";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 
 export default function Jobs() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -20,11 +21,12 @@ export default function Jobs() {
     category: searchParams.get("category") || "",
   });
   const [page, setPage] = useState(1);
+  const [allJobs, setAllJobs] = useState([]);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isFetching } = useQuery({
     queryKey: ["jobs", filters.keyword, filters.location, filters.type, filters.category, page],
-    queryFn: () =>
-      jobService.list({
+    queryFn: async () => {
+      const result = await jobService.list({
         status: "approved",
         keyword: filters.keyword || undefined,
         locationSearch: filters.location || undefined,
@@ -32,18 +34,28 @@ export default function Jobs() {
         category: filters.category || undefined,
         page,
         pageSize: PAGE_SIZE,
-      }),
+      });
+
+      // Append new page results to accumulated list
+      setAllJobs((prev) => {
+        if (page === 1) return result.items || [];
+        const existingIds = new Set(prev.map((j) => j.id));
+        const newItems = (result.items || []).filter((j) => !existingIds.has(j.id));
+        return [...prev, ...newItems];
+      });
+
+      return result;
+    },
   });
 
-  const jobs = data?.items || [];
   const total = data?.total || 0;
-  const totalPages = data?.totalPages || 1;
+  const hasMore = allJobs.length < total;
 
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters);
     setPage(1);
+    setAllJobs([]);
 
-    // Sync URL params
     const params = new URLSearchParams();
     if (newFilters.keyword) params.set("keyword", newFilters.keyword);
     if (newFilters.location) params.set("location", newFilters.location);
@@ -55,102 +67,146 @@ export default function Jobs() {
   const handleClear = () => {
     setFilters({ keyword: "", location: "", type: "", category: "" });
     setPage(1);
+    setAllJobs([]);
     setSearchParams({}, { replace: true });
+  };
+
+  const handleLoadMore = () => {
+    setPage((prev) => prev + 1);
   };
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="bg-primary text-primary-foreground py-12 sm:py-16">
+      {/* Page header — light, editorial */}
+      <div className="relative bg-muted/40 border-b border-border/50 pt-12 sm:pt-16 pb-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-3xl sm:text-4xl font-display font-bold mb-2">Browse Jobs</h1>
-          <p className="text-primary-foreground/70">
-            {total > 0 ? `${total} active opportunit${total === 1 ? "y" : "ies"}` : "Search for jobs"}
-          </p>
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="max-w-2xl"
+          >
+            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-accent mb-4 block">
+              Opportunities
+            </span>
+            <h1 className="text-4xl sm:text-5xl font-display font-bold tracking-tight text-foreground mb-3">
+              Browse Jobs
+            </h1>
+            <p className="text-muted-foreground text-lg">
+              {total > 0
+                ? `${total.toLocaleString()} active opportunit${total === 1 ? "y" : "ies"} across Ireland`
+                : "Search for your next opportunity"}
+            </p>
+          </motion.div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6">
-        <JobFilters filters={filters} onChange={handleFilterChange} onClear={handleClear} />
+      {/* Filter bar — overlapping the header */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-9 relative z-10">
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+        >
+          <JobFilters filters={filters} onChange={handleFilterChange} onClear={handleClear} />
+        </motion.div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {isLoading ? (
-          <div className="space-y-4">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="bg-card rounded-xl border p-6">
-                <Skeleton className="h-5 w-1/3 mb-2" />
-                <Skeleton className="h-4 w-1/4 mb-4" />
-                <Skeleton className="h-3 w-full mb-2" />
-                <Skeleton className="h-3 w-3/4" />
+      {/* Results */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        {isLoading && page === 1 ? (
+          <div className="space-y-3">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="bg-card rounded-xl border border-border/60 p-6">
+                <div className="flex items-center gap-4 mb-4">
+                  <Skeleton className="w-11 h-11 rounded-xl" />
+                  <div className="flex-1">
+                    <Skeleton className="h-4 w-32 mb-2" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                  <Skeleton className="h-5 w-24" />
+                </div>
+                <Skeleton className="h-5 w-2/3 mb-2" />
+                <Skeleton className="h-4 w-full mb-1" />
+                <Skeleton className="h-4 w-4/5" />
+                <div className="flex gap-2 mt-4 pt-4 border-t border-border/40">
+                  <Skeleton className="h-7 w-28 rounded-md" />
+                  <Skeleton className="h-7 w-24 rounded-md" />
+                </div>
               </div>
             ))}
           </div>
-        ) : jobs.length > 0 ? (
+        ) : allJobs.length > 0 ? (
           <>
-            <p className="text-sm text-muted-foreground mb-4">
-              Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, total)} of {total} job{total !== 1 ? "s" : ""}
-            </p>
-            <div className="space-y-4">
-              {jobs.map((job) => (
-                <JobCard key={job.id} job={job} />
+            {/* Results count */}
+            <div className="flex items-center justify-between mb-6">
+              <p className="text-sm text-muted-foreground">
+                Showing <span className="font-medium text-foreground">{allJobs.length}</span> of {total} job{total !== 1 ? "s" : ""}
+              </p>
+            </div>
+
+            {/* Job list */}
+            <div className="space-y-3">
+              {allJobs.map((job, index) => (
+                <motion.div
+                  key={job.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: (index % PAGE_SIZE) * 0.03 }}
+                >
+                  <JobCard job={job} />
+                </motion.div>
               ))}
             </div>
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 mt-8">
+            {/* Load More */}
+            {hasMore && (
+              <div className="text-center mt-12">
                 <Button
                   variant="outline"
-                  size="sm"
-                  disabled={page <= 1}
-                  onClick={() => setPage(page - 1)}
+                  onClick={handleLoadMore}
+                  disabled={isFetching}
+                  className="rounded-full px-8 h-12 font-medium text-[0.95rem] gap-2"
                 >
-                  <ChevronLeft className="w-4 h-4" />
-                  Previous
+                  {isFetching ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="w-4 h-4" />
+                      Load More Jobs
+                    </>
+                  )}
                 </Button>
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
-                    let pageNum;
-                    if (totalPages <= 7) {
-                      pageNum = i + 1;
-                    } else if (page <= 4) {
-                      pageNum = i + 1;
-                    } else if (page >= totalPages - 3) {
-                      pageNum = totalPages - 6 + i;
-                    } else {
-                      pageNum = page - 3 + i;
-                    }
-                    return (
-                      <Button
-                        key={pageNum}
-                        variant={page === pageNum ? "default" : "outline"}
-                        size="sm"
-                        className="w-9"
-                        onClick={() => setPage(pageNum)}
-                      >
-                        {pageNum}
-                      </Button>
-                    );
-                  })}
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page >= totalPages}
-                  onClick={() => setPage(page + 1)}
-                >
-                  Next
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
+                <p className="text-xs text-muted-foreground mt-3">
+                  {total - allJobs.length} more job{total - allJobs.length !== 1 ? "s" : ""} available
+                </p>
               </div>
             )}
           </>
         ) : (
-          <div className="text-center py-20">
-            <Briefcase className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">No jobs found</h3>
-            <p className="text-muted-foreground">Try adjusting your search filters</p>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-24"
+          >
+            <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-6">
+              <Search className="w-8 h-8 text-muted-foreground/30" />
+            </div>
+            <h3 className="text-xl font-display font-bold text-foreground mb-2">No jobs found</h3>
+            <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+              Try adjusting your search filters or browse all available positions.
+            </p>
+            <Button
+              variant="outline"
+              onClick={handleClear}
+              className="rounded-full px-6 h-10 font-medium"
+            >
+              Clear Filters
+            </Button>
+          </motion.div>
         )}
       </div>
     </div>

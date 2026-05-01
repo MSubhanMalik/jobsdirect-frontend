@@ -12,36 +12,41 @@ export default function CTASection() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary to-primary/80 p-12 sm:p-16 text-center"
+          transition={{ duration: 0.6 }}
+          className="relative overflow-hidden rounded-[2rem] bg-accent p-14 sm:p-20 text-center"
         >
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute top-10 left-10 w-40 h-40 bg-accent rounded-full blur-3xl" />
-            <div className="absolute bottom-10 right-10 w-60 h-60 bg-accent rounded-full blur-3xl" />
-          </div>
+          {/* Subtle decorative rings */}
+          <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full border border-accent-foreground/[0.08]" />
+          <div className="absolute -bottom-16 -left-16 w-48 h-48 rounded-full border border-accent-foreground/[0.08]" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[40rem] h-[40rem] rounded-full border border-accent-foreground/[0.04]" />
+
           <div className="relative">
-            <h2 className="text-3xl sm:text-4xl font-display font-bold text-primary-foreground mb-4">
-              Ready to Get Started?
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-accent-foreground mb-5 leading-tight">
+              Ready to get started?
             </h2>
-            <p className="text-primary-foreground/70 max-w-xl mx-auto mb-10">
-              Join thousands of employers and job seekers already using JobsDirect.ie to connect and grow.
+            <p className="text-accent-foreground/70 max-w-lg mx-auto mb-10 text-lg">
+              Join thousands of employers and job seekers already connecting on Ireland's premier job platform.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link to="/employers">
-                <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold group">
+                <Button
+                  size="lg"
+                  className="bg-accent-foreground text-accent hover:bg-accent-foreground/90 font-semibold rounded-full px-8 h-12 group"
+                >
                   <Building2 className="w-4 h-4 mr-2" />
                   Register as Employer
-                  <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-0.5 transition-transform" />
+                  <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
                 </Button>
               </Link>
               <Link to="/employees">
                 <Button
                   size="lg"
                   variant="outline"
-                  className="border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10 font-semibold group"
+                  className="border-accent-foreground/25 text-accent-foreground hover:bg-accent-foreground/10 font-semibold rounded-full px-8 h-12 group"
                 >
                   <User className="w-4 h-4 mr-2" />
                   Register as Employee
-                  <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-0.5 transition-transform" />
+                  <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
                 </Button>
               </Link>
             </div>

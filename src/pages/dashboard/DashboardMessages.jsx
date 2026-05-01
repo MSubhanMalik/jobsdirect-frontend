@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useOutletContext, useParams, useNavigate, Link } from "react-router-dom";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Briefcase, Lock } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { MessageSquare, Briefcase, Lock, ArrowRight, ChevronRight } from "lucide-react";
 import messageApiService from "@/services/message";
 import ChatWindow from "@/components/messaging/ChatWindow";
 
@@ -17,10 +17,7 @@ export default function DashboardMessages() {
   const hasProPlan = !isEmployer || employer?.candidate_database_status === "cv_db_pro";
 
   useEffect(() => {
-    if (!hasProPlan) {
-      setLoading(false);
-      return;
-    }
+    if (!hasProPlan) { setLoading(false); return; }
 
     const params = new URLSearchParams(window.location.search);
     const candidateId = params.get("candidateId");
@@ -28,30 +25,23 @@ export default function DashboardMessages() {
     const fetchRooms = async () => {
       try {
         let data = await messageApiService.getRooms();
-        
-        // If we have a candidateId, ensure a room exists
         if (candidateId) {
           const existing = data.find(r => r.candidateId === candidateId && !r.applicationId);
           if (existing) {
             navigate(`/dashboard/messages/${existing.id}`, { replace: true });
           } else {
-            // Create new room
             const newRoom = await messageApiService.createRoom({ candidateId });
             data = [newRoom, ...data];
             navigate(`/dashboard/messages/${newRoom.id}`, { replace: true });
           }
         }
-
         setRooms(data);
         if (roomId && data.length > 0) {
           const room = data.find(r => r.id === roomId);
           if (room) setSelectedRoom(room);
         }
-      } catch (err) {
-        setRooms([]);
-      } finally {
-        setLoading(false);
-      }
+      } catch { setRooms([]); }
+      finally { setLoading(false); }
     };
 
     fetchRooms();
@@ -65,80 +55,113 @@ export default function DashboardMessages() {
   if (!hasProPlan) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
-        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-6">
-          <Lock className="w-8 h-8 text-muted-foreground" />
+        <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-6">
+          <Lock className="w-7 h-7 text-muted-foreground/30" />
         </div>
-        <h2 className="text-xl font-bold mb-2">Pro Plan Required</h2>
+        <h2 className="text-xl font-display font-bold text-foreground mb-2">Pro Plan Required</h2>
         <p className="text-sm text-muted-foreground mb-6 max-w-md">
-          In-platform messaging with candidates is available on the CV Database Pro plan. Upgrade to start conversations directly with applicants.
+          In-platform messaging with candidates is available on the CV Database Pro plan. Upgrade to start conversations directly.
         </p>
-        <Button asChild>
-          <Link to="/dashboard/billing">Upgrade to Pro</Link>
-        </Button>
+        <Link to="/dashboard/billing">
+          <Button className="bg-accent hover:bg-accent/90 text-accent-foreground rounded-full px-6 h-10 font-medium group">
+            Upgrade to Pro
+            <ArrowRight className="w-3.5 h-3.5 ml-1.5 group-hover:translate-x-0.5 transition-transform" />
+          </Button>
+        </Link>
       </div>
     );
   }
 
   if (loading) {
-    return <p className="text-sm text-muted-foreground">Loading conversations...</p>;
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4 min-h-[60vh]">
+        <div className="rounded-xl border border-border/50 bg-card p-4 space-y-3">
+          <Skeleton className="h-5 w-24 mb-4" />
+          {[1,2,3].map(i => <Skeleton key={i} className="h-16 w-full rounded-lg" />)}
+        </div>
+        <div className="rounded-xl border border-border/50 bg-card">
+          <Skeleton className="h-full min-h-[400px] rounded-xl" />
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4 min-h-[60vh]">
-      {/* Room list */}
-      <Card className="overflow-hidden">
-        <CardContent className="p-0">
-          <div className="p-4 border-b">
-            <h2 className="text-sm font-semibold flex items-center gap-2">
-              <MessageSquare className="w-4 h-4" /> Messages
-            </h2>
+    <div>
+      <div className="mb-6">
+        <h2 className="text-lg font-display font-semibold text-foreground">Messages</h2>
+        <p className="text-sm text-muted-foreground mt-0.5">{rooms.length} conversation{rooms.length !== 1 ? "s" : ""}</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4 min-h-[60vh]">
+        {/* Room list */}
+        <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
+          <div className="p-4 border-b border-border/40">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground flex items-center gap-2">
+              <MessageSquare className="w-3.5 h-3.5" /> Conversations
+            </p>
           </div>
-          <div className="divide-y max-h-[60vh] overflow-y-auto">
+          <div className="divide-y divide-border/30 max-h-[60vh] overflow-y-auto">
             {rooms.length === 0 ? (
-              <p className="p-4 text-sm text-muted-foreground">No conversations yet.</p>
+              <div className="p-8 text-center">
+                <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center mx-auto mb-3">
+                  <MessageSquare className="w-5 h-5 text-muted-foreground/30" />
+                </div>
+                <p className="text-sm text-muted-foreground">No conversations yet.</p>
+              </div>
             ) : (
               rooms.map((room) => {
                 const jobTitle = room.application?.job?.title || "Direct Outreach";
                 const otherParty = isEmployer
-                  ? (room.application 
+                  ? (room.application
                       ? `${room.application.user?.firstName || "Candidate"} ${room.application.user?.lastName || ""}`.trim()
                       : `${room.candidate?.firstName || "Candidate"} ${room.candidate?.lastName || ""}`.trim())
                   : (room.application?.job?.companyName || "Employer");
+                const isActive = selectedRoom?.id === room.id;
 
                 return (
                   <button
                     key={room.id}
-                    className={`w-full text-left p-3 hover:bg-muted transition-colors ${selectedRoom?.id === room.id ? "bg-muted border-l-4 border-l-primary" : "border-l-4 border-l-transparent"}`}
+                    className={`w-full text-left px-4 py-3.5 transition-colors group ${
+                      isActive ? "bg-accent/[0.06]" : "hover:bg-muted/40"
+                    }`}
                     onClick={() => handleRoomSelect(room)}
                   >
-                    <div className="flex items-start gap-2.5">
-                      <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                        <Briefcase className="w-4 h-4 text-primary" />
+                    <div className="flex items-start gap-3">
+                      <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
+                        isActive ? "bg-accent/10" : "bg-muted"
+                      }`}>
+                        <span className="text-xs font-display font-bold text-muted-foreground">
+                          {(otherParty || "U")[0].toUpperCase()}
+                        </span>
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex justify-between items-start">
-                          <p className="text-sm font-bold truncate pr-2">{jobTitle}</p>
-                          <span className="text-[10px] text-muted-foreground shrink-0">
-                            {new Date(room.updatedAt).toLocaleDateString()}
+                          <p className={`text-sm font-medium truncate pr-2 ${isActive ? "text-accent" : "text-foreground"}`}>
+                            {jobTitle}
+                          </p>
+                          <span className="text-[0.6rem] text-muted-foreground shrink-0">
+                            {new Date(room.updatedAt).toLocaleDateString("en-IE", { day: "numeric", month: "short" })}
                           </span>
                         </div>
-                        <p className="text-xs text-muted-foreground truncate">{otherParty}</p>
+                        <p className="text-xs text-muted-foreground truncate mt-0.5">{otherParty}</p>
                       </div>
                     </div>
+                    {isActive && (
+                      <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-accent rounded-r-full" />
+                    )}
                   </button>
                 );
               })
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Chat window */}
-      <Card className="overflow-hidden">
-        <CardContent className="p-0 h-full">
+        {/* Chat window */}
+        <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
           <ChatWindow room={selectedRoom} currentUserId={user.id} isEmployer={isEmployer} />
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

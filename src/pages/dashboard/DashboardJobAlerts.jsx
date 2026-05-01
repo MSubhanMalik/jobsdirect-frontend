@@ -3,14 +3,14 @@ import { useOutletContext, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import jobAlertService from "@/services/jobAlert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "react-toastify";
-import { Bell, Plus, Trash2, Pause, Play, MapPin, Search, Briefcase } from "lucide-react";
+import { Bell, Plus, Trash2, Pause, Play, MapPin, Search, Briefcase, ArrowRight, Loader2 } from "lucide-react";
 import { LOCATION_OPTIONS } from "@/lib/siteSettings";
 
 const categoryOptions = [
@@ -60,10 +60,7 @@ export default function DashboardJobAlerts() {
 
   const deleteMutation = useMutation({
     mutationFn: (id) => jobAlertService.remove(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["job-alerts"] });
-      toast.success("Alert deleted");
-    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["job-alerts"] }); toast.success("Alert deleted"); },
   });
 
   const handleCreate = () => {
@@ -80,95 +77,99 @@ export default function DashboardJobAlerts() {
     createMutation.mutate(payload);
   };
 
-  if (isLoading) return <p className="text-sm text-muted-foreground">Loading alerts...</p>;
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        <Skeleton className="h-6 w-32 mb-6" />
+        {[1, 2].map(i => <Skeleton key={i} className="h-20 w-full rounded-xl" />)}
+      </div>
+    );
+  }
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-semibold">Job Alerts</h2>
-        <Button onClick={() => setShowCreate(true)}>
-          <Plus className="w-4 h-4 mr-2" /> Create Alert
+        <div>
+          <h2 className="text-lg font-display font-semibold text-foreground">Job Alerts</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">{alerts.length} active alert{alerts.length !== 1 ? "s" : ""}</p>
+        </div>
+        <Button onClick={() => setShowCreate(true)} className="bg-accent hover:bg-accent/90 text-accent-foreground rounded-full px-5 h-9 text-sm font-medium">
+          <Plus className="w-4 h-4 mr-1.5" /> Create Alert
         </Button>
       </div>
 
       {alerts.length === 0 ? (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <Bell className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-            <p className="text-muted-foreground mb-4">No job alerts yet. Create one to get notified when matching jobs are posted.</p>
-            <Button onClick={() => setShowCreate(true)}>
-              <Plus className="w-4 h-4 mr-2" /> Create Your First Alert
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="rounded-xl border border-border/50 bg-card p-16 text-center">
+          <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
+            <Bell className="w-6 h-6 text-muted-foreground/25" />
+          </div>
+          <h3 className="font-display font-semibold text-foreground mb-1">No alerts yet</h3>
+          <p className="text-sm text-muted-foreground mb-5 max-w-xs mx-auto">Create an alert and we'll notify you when matching jobs are posted.</p>
+          <Button onClick={() => setShowCreate(true)} className="bg-accent hover:bg-accent/90 text-accent-foreground rounded-full px-6 h-10 font-medium">
+            <Plus className="w-4 h-4 mr-1.5" /> Create Your First Alert
+          </Button>
+        </div>
       ) : (
-        <div className="space-y-3">
+        <div className="rounded-xl border border-border/50 bg-card overflow-hidden divide-y divide-border/30">
           {alerts.map((alert) => (
-            <Card key={alert.id} className={!alert.isActive ? "opacity-60" : ""}>
-              <CardContent className="p-4 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3 flex-wrap min-w-0">
-                  <Bell className={`w-5 h-5 shrink-0 ${alert.isActive ? "text-primary" : "text-muted-foreground"}`} />
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {alert.keyword && (
-                      <Badge variant="secondary" className="text-xs gap-1">
-                        <Search className="w-3 h-3" /> {alert.keyword}
-                      </Badge>
-                    )}
-                    {alert.location && (
-                      <Badge variant="secondary" className="text-xs gap-1">
-                        <MapPin className="w-3 h-3" /> {alert.location}
-                      </Badge>
-                    )}
-                    {alert.category && (
-                      <Badge variant="outline" className="text-xs">
-                        {categoryOptions.find((c) => c.value === alert.category)?.label || alert.category}
-                      </Badge>
-                    )}
-                    {alert.jobType && (
-                      <Badge variant="outline" className="text-xs gap-1">
-                        <Briefcase className="w-3 h-3" />
-                        {jobTypeOptions.find((j) => j.value === alert.jobType)?.label || alert.jobType}
-                      </Badge>
-                    )}
-                    <span className="text-[10px] text-muted-foreground capitalize">{alert.frequency}</span>
-                  </div>
+            <div key={alert.id} className={`flex items-center justify-between gap-4 px-5 py-4 ${!alert.isActive ? "opacity-50" : ""}`}>
+              <div className="flex items-center gap-3 flex-wrap min-w-0">
+                <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${alert.isActive ? "bg-accent/[0.08]" : "bg-muted"}`}>
+                  <Bell className={`w-4 h-4 ${alert.isActive ? "text-accent" : "text-muted-foreground"}`} />
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => toggleMutation.mutate(alert.id)}
-                    title={alert.isActive ? "Pause" : "Resume"}
-                  >
-                    {alert.isActive ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 text-xs px-3"
-                    onClick={() => {
-                      const params = new URLSearchParams();
-                      if (alert.keyword) params.set("keyword", alert.keyword);
-                      if (alert.location) params.set("location", alert.location);
-                      if (alert.category) params.set("category", alert.category);
-                      if (alert.jobType) params.set("type", alert.jobType);
-                      navigate(`/jobs?${params.toString()}`);
-                    }}
-                  >
-                    View Jobs
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-destructive hover:text-destructive"
-                    onClick={() => deleteMutation.mutate(alert.id)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {alert.keyword && (
+                    <Badge variant="secondary" className="text-[0.7rem] font-medium rounded-md px-2.5 py-1">
+                      <Search className="w-3 h-3 mr-1" /> {alert.keyword}
+                    </Badge>
+                  )}
+                  {alert.location && (
+                    <Badge variant="secondary" className="text-[0.7rem] font-medium rounded-md px-2.5 py-1">
+                      <MapPin className="w-3 h-3 mr-1" /> {alert.location}
+                    </Badge>
+                  )}
+                  {alert.category && (
+                    <Badge variant="outline" className="text-[0.7rem] rounded-md px-2.5 py-1">
+                      {categoryOptions.find((c) => c.value === alert.category)?.label || alert.category}
+                    </Badge>
+                  )}
+                  {alert.jobType && (
+                    <Badge variant="outline" className="text-[0.7rem] rounded-md px-2.5 py-1">
+                      {jobTypeOptions.find((j) => j.value === alert.jobType)?.label || alert.jobType}
+                    </Badge>
+                  )}
+                  <span className="text-[0.65rem] text-muted-foreground capitalize font-medium">{alert.frequency}</span>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
+                <Button
+                  variant="ghost" size="icon" className="h-8 w-8 rounded-lg"
+                  onClick={() => toggleMutation.mutate(alert.id)}
+                  title={alert.isActive ? "Pause" : "Resume"}
+                >
+                  {alert.isActive ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                </Button>
+                <Button
+                  variant="outline" size="sm" className="h-8 text-xs px-3 rounded-lg font-medium"
+                  onClick={() => {
+                    const params = new URLSearchParams();
+                    if (alert.keyword) params.set("keyword", alert.keyword);
+                    if (alert.location) params.set("location", alert.location);
+                    if (alert.category) params.set("category", alert.category);
+                    if (alert.jobType) params.set("type", alert.jobType);
+                    navigate(`/jobs?${params.toString()}`);
+                  }}
+                >
+                  View Jobs
+                </Button>
+                <Button
+                  variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-destructive hover:text-destructive"
+                  onClick={() => deleteMutation.mutate(alert.id)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
           ))}
         </div>
       )}
@@ -176,60 +177,50 @@ export default function DashboardJobAlerts() {
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create Job Alert</DialogTitle>
-            <p className="text-xs text-muted-foreground mt-1">
-              We'll notify you when new jobs match your criteria. Our matching is flexible, so we'll look for keywords across titles, descriptions, and locations.
-            </p>
+            <DialogTitle className="font-display">Create Job Alert</DialogTitle>
+            <p className="text-xs text-muted-foreground mt-1">Get notified when new jobs match your criteria.</p>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="space-y-1">
-              <Label>Keyword</Label>
-              <Input
-                value={form.keyword}
-                onChange={(e) => setForm({ ...form, keyword: e.target.value })}
-                placeholder="e.g. Software Engineer, Marketing"
-              />
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">Keyword</Label>
+              <Input value={form.keyword} onChange={(e) => setForm({ ...form, keyword: e.target.value })} placeholder="e.g. Software Engineer, Marketing" className="h-11" />
             </div>
-            <div className="space-y-1">
-              <Label>Location</Label>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">Location</Label>
               <Select value={form.location} onValueChange={(v) => setForm({ ...form, location: v })}>
-                <SelectTrigger><SelectValue placeholder="Any location" /></SelectTrigger>
+                <SelectTrigger className="h-11"><SelectValue placeholder="Any location" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="any">Any location</SelectItem>
-                  {LOCATION_OPTIONS.map((l) => (
-                    <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
-                  ))}
+                  {LOCATION_OPTIONS.map((l) => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1">
-              <Label>Category</Label>
-              <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
-                <SelectTrigger><SelectValue placeholder="Any category" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="any">Any category</SelectItem>
-                  {categoryOptions.map((c) => (
-                    <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium">Category</Label>
+                <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
+                  <SelectTrigger className="h-11"><SelectValue placeholder="Any" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="any">Any category</SelectItem>
+                    {categoryOptions.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium">Job Type</Label>
+                <Select value={form.jobType} onValueChange={(v) => setForm({ ...form, jobType: v })}>
+                  <SelectTrigger className="h-11"><SelectValue placeholder="Any" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="any">Any type</SelectItem>
+                    {jobTypeOptions.map((j) => <SelectItem key={j.value} value={j.value}>{j.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div className="space-y-1">
-              <Label>Job Type</Label>
-              <Select value={form.jobType} onValueChange={(v) => setForm({ ...form, jobType: v })}>
-                <SelectTrigger><SelectValue placeholder="Any type" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="any">Any type</SelectItem>
-                  {jobTypeOptions.map((j) => (
-                    <SelectItem key={j.value} value={j.value}>{j.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
-              <Label>Frequency</Label>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">Frequency</Label>
               <Select value={form.frequency} onValueChange={(v) => setForm({ ...form, frequency: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="daily">Daily</SelectItem>
                   <SelectItem value="weekly">Weekly</SelectItem>
@@ -238,9 +229,9 @@ export default function DashboardJobAlerts() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
-            <Button onClick={handleCreate} disabled={createMutation.isPending}>
-              {createMutation.isPending ? "Creating..." : "Create Alert"}
+            <Button variant="outline" onClick={() => setShowCreate(false)} className="rounded-lg">Cancel</Button>
+            <Button onClick={handleCreate} disabled={createMutation.isPending} className="bg-accent hover:bg-accent/90 text-accent-foreground rounded-lg font-medium">
+              {createMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creating...</> : "Create Alert"}
             </Button>
           </DialogFooter>
         </DialogContent>

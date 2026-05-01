@@ -1,18 +1,20 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useOutletContext, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, MapPin, Briefcase, GraduationCap, FileText, Lock, Crown, Filter, ChevronRight, MessageSquare, Download } from "lucide-react";
+import {
+  Search, MapPin, Briefcase, GraduationCap, FileText, Lock, Crown,
+  X, ChevronRight, MessageSquare, Download, ArrowRight, ChevronLeft, User, AlertCircle
+} from "lucide-react";
 import employeeService from "@/services/employee";
 import { toast } from "react-toastify";
 
 export default function DashboardCVSearch() {
-  const { user, employer, isEmployer } = useOutletContext();
+  const { user, employer } = useOutletContext();
   const [search, setSearch] = useState("");
   const [location, setLocation] = useState("");
   const [experience, setExperience] = useState("");
@@ -23,18 +25,20 @@ export default function DashboardCVSearch() {
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["candidate-search", search, location, experience, page],
-    queryFn: () => employeeService.list({ 
-      q: search, 
-      location, 
-      experience_years: experience, 
+    queryFn: () => employeeService.list({
+      q: search,
+      location,
+      experience_years: experience,
       page,
-      pageSize: 10 
+      pageSize: 10,
     }),
     keepPreviousData: true,
   });
 
   const candidates = data?.items || [];
   const totalPages = data?.totalPages || 1;
+  const total = data?.total || 0;
+  const hasFilters = search || location || (experience && experience !== "0");
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -42,7 +46,7 @@ export default function DashboardCVSearch() {
     refetch();
   };
 
-  const handleClearFilters = () => {
+  const handleClear = () => {
     setSearch("");
     setLocation("");
     setExperience("");
@@ -50,263 +54,258 @@ export default function DashboardCVSearch() {
   };
 
   const handleDownloadCV = (candidate) => {
-    if (!hasAccess) {
-      toast.error("Upgrade to Lite or Pro plan to download CVs.");
-      return;
-    }
-    if (candidate.cv_url) {
-      window.open(candidate.cv_url, "_blank");
-    } else {
-      toast.info("No CV uploaded by this candidate.");
-    }
+    if (!hasAccess) { toast.error("Upgrade to access CVs."); return; }
+    if (candidate.cv_url) window.open(candidate.cv_url, "_blank");
+    else toast.info("No CV uploaded by this candidate.");
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-display font-bold">CV Database</h2>
-          <p className="text-muted-foreground text-sm">Find and reach out to top talent across Ireland.</p>
+          <h2 className="text-lg font-display font-semibold text-foreground">CV Database</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">Find and reach out to top talent across Ireland.</p>
         </div>
         {!hasAccess && (
-          <Button asChild className="bg-amber-500 hover:bg-amber-600 border-none">
-            <Link to="/dashboard/billing">
-              <Crown className="w-4 h-4 mr-2" /> Upgrade to Access
-            </Link>
-          </Button>
+          <Link to="/dashboard/billing">
+            <Button className="bg-accent hover:bg-accent/90 text-accent-foreground rounded-full px-5 h-9 text-sm font-medium group">
+              <Crown className="w-4 h-4 mr-1.5" /> Upgrade to Access
+              <ArrowRight className="w-3.5 h-3.5 ml-1.5 group-hover:translate-x-0.5 transition-transform" />
+            </Button>
+          </Link>
         )}
       </div>
 
-      {/* Filters */}
-      <Card className="border-none shadow-sm bg-muted/30">
-        <CardContent className="p-4 space-y-4">
-          <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-4 gap-3">
-            <div className="relative md:col-span-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input 
-                placeholder="Skills, title, or name..." 
-                className="pl-9 bg-background"
+      {/* Search bar */}
+      <form onSubmit={handleSearch}>
+        <div className="rounded-2xl border border-border/60 bg-card p-3 shadow-[0_2px_16px_rgba(0,0,0,0.04)]">
+          <div className="flex flex-col sm:flex-row items-stretch gap-0">
+            <div className="relative flex-1 flex items-center">
+              <Search className="absolute left-4 w-[1.1rem] h-[1.1rem] text-muted-foreground/50" />
+              <Input
+                placeholder="Skills, title, or name..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                className="border-0 bg-transparent shadow-none focus-visible:ring-0 h-12 pl-11 text-[0.95rem] placeholder:text-muted-foreground/50"
               />
             </div>
-            <div className="relative md:col-span-1">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input 
-                placeholder="Location..." 
-                className="pl-9 bg-background"
+            <div className="hidden sm:flex items-center"><div className="w-px h-7 bg-border" /></div>
+            <div className="relative flex-1 flex items-center">
+              <MapPin className="absolute left-4 w-[1.1rem] h-[1.1rem] text-muted-foreground/50 z-10" />
+              <Input
+                placeholder="Location..."
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
+                className="border-0 bg-transparent shadow-none focus-visible:ring-0 h-12 pl-11 text-[0.95rem] placeholder:text-muted-foreground/50"
               />
             </div>
-            <Select value={experience} onValueChange={setExperience}>
-              <SelectTrigger className="bg-background">
-                <SelectValue placeholder="Min Experience" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="0">Any Experience</SelectItem>
-                <SelectItem value="1">1+ Year</SelectItem>
-                <SelectItem value="3">3+ Years</SelectItem>
-                <SelectItem value="5">5+ Years</SelectItem>
-                <SelectItem value="10">10+ Years</SelectItem>
-              </SelectContent>
-            </Select>
-            <div className="flex gap-2">
-              <Button type="submit" className="flex-1">Search</Button>
-              {(search || location || experience !== "" && experience !== "0") && (
-                <Button type="button" variant="ghost" size="icon" onClick={handleClearFilters} title="Clear Filters">
-                  <Filter className="w-4 h-4" />
+            <div className="hidden sm:flex items-center"><div className="w-px h-7 bg-border" /></div>
+            <div className="hidden sm:block">
+              <Select value={experience} onValueChange={setExperience}>
+                <SelectTrigger className="border-0 bg-transparent shadow-none focus:ring-0 h-12 w-40 text-[0.95rem] text-muted-foreground/70">
+                  <SelectValue placeholder="Experience" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">Any Experience</SelectItem>
+                  <SelectItem value="1">1+ Year</SelectItem>
+                  <SelectItem value="3">3+ Years</SelectItem>
+                  <SelectItem value="5">5+ Years</SelectItem>
+                  <SelectItem value="10">10+ Years</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2 pl-1">
+              {hasFilters && (
+                <Button type="button" variant="ghost" size="icon" onClick={handleClear} className="h-10 w-10 rounded-xl text-muted-foreground shrink-0">
+                  <X className="w-4 h-4" />
                 </Button>
               )}
+              <Button type="submit" className="bg-accent hover:bg-accent/90 text-accent-foreground h-12 px-6 rounded-xl font-semibold text-[0.95rem] shrink-0">
+                <Search className="w-4 h-4 mr-2" /> Search
+              </Button>
             </div>
-          </form>
-        </CardContent>
-      </Card>
+          </div>
+        </div>
+      </form>
 
       {/* Results */}
-      <div className="space-y-4">
-        {isLoading ? (
-          Array(3).fill(0).map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="p-6 h-32" />
-            </Card>
-          ))
-        ) : isError ? (
-          <Card className="border-red-200 bg-red-50">
-            <CardContent className="flex flex-col items-center justify-center py-10 text-center">
-              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-4">
-                <Lock className="w-6 h-6 text-red-600" />
+      {isLoading ? (
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="rounded-xl border border-border/50 bg-card p-6">
+              <div className="flex items-start gap-4">
+                <Skeleton className="w-14 h-14 rounded-xl" />
+                <div className="flex-1">
+                  <Skeleton className="h-5 w-40 mb-2" />
+                  <Skeleton className="h-4 w-28 mb-3" />
+                  <div className="flex gap-2">
+                    <Skeleton className="h-5 w-20 rounded-full" />
+                    <Skeleton className="h-5 w-24 rounded-full" />
+                    <Skeleton className="h-5 w-16 rounded-full" />
+                  </div>
+                </div>
               </div>
-              <p className="text-lg font-medium text-red-900">Unable to load candidates</p>
-              <p className="text-sm text-red-700 max-w-xs mb-4">
-                {error?.message || "There was an error connecting to the server. Please try refreshing the page."}
-              </p>
-              <Button onClick={() => refetch()} variant="outline" className="border-red-200 hover:bg-red-100">
-                Retry Connection
-              </Button>
-            </CardContent>
-          </Card>
-        ) : candidates.length === 0 ? (
-          <Card className="border-dashed py-12">
-            <CardContent className="flex flex-col items-center justify-center text-center">
-              <Search className="w-12 h-12 text-muted-foreground/30 mb-4" />
-              <p className="text-lg font-medium text-muted-foreground">No candidates found</p>
-              <p className="text-sm text-muted-foreground max-w-xs">Try broadening your search criteria or removing filters.</p>
-            </CardContent>
-          </Card>
-        ) : (
-          candidates.map((candidate) => (
-            <Card key={candidate.id} className="group hover:border-primary/50 transition-all shadow-sm">
-              <CardContent className="p-6">
-                <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
-                  <div className="flex items-start gap-4">
-                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                      {candidate.profile_photo_url ? (
-                        <img src={candidate.profile_photo_url} alt="" className="w-full h-full rounded-full object-cover" />
-                      ) : (
-                        <Briefcase className="w-7 h-7 text-primary" />
+            </div>
+          ))}
+        </div>
+      ) : isError ? (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-12 text-center">
+          <div className="w-14 h-14 rounded-2xl bg-red-100 flex items-center justify-center mx-auto mb-4">
+            <AlertCircle className="w-6 h-6 text-red-600" />
+          </div>
+          <h3 className="font-display font-semibold text-red-900 mb-1">Unable to load candidates</h3>
+          <p className="text-sm text-red-700 mb-5 max-w-sm mx-auto">{error?.message || "Please try again."}</p>
+          <Button onClick={() => refetch()} variant="outline" className="rounded-full px-6 border-red-200 hover:bg-red-100">
+            Retry
+          </Button>
+        </div>
+      ) : candidates.length === 0 ? (
+        <div className="rounded-xl border border-border/50 bg-card p-16 text-center">
+          <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
+            <Search className="w-6 h-6 text-muted-foreground/25" />
+          </div>
+          <h3 className="font-display font-semibold text-foreground mb-1">No candidates found</h3>
+          <p className="text-sm text-muted-foreground max-w-xs mx-auto">Try broadening your search or removing filters.</p>
+        </div>
+      ) : (
+        <>
+          <p className="text-sm text-muted-foreground">
+            Showing <span className="font-medium text-foreground">{candidates.length}</span> of {total} candidate{total !== 1 ? "s" : ""}
+          </p>
+
+          <div className="rounded-xl border border-border/50 bg-card overflow-hidden divide-y divide-border/30">
+            {candidates.map((candidate) => (
+              <div key={candidate.id} className="px-5 py-5 hover:bg-muted/20 transition-colors group">
+                <div className="flex items-start gap-4">
+                  {/* Avatar */}
+                  <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center shrink-0 overflow-hidden">
+                    {candidate.profile_photo_url ? (
+                      <img src={candidate.profile_photo_url} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <User className="w-5 h-5 text-muted-foreground/50" />
+                    )}
+                  </div>
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <Link
+                        to={`/dashboard/cv-search/${candidate.id}`}
+                        className="text-[0.95rem] font-display font-semibold text-foreground hover:text-accent transition-colors truncate"
+                      >
+                        {candidate.user?.firstName} {candidate.user?.lastName}
+                      </Link>
+                      {candidate.is_searchable && (
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" title="Available" />
                       )}
                     </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-bold text-lg leading-tight truncate hover:text-primary transition-colors">
-                          <Link to={`/dashboard/cv-search/${candidate.id}`}>
-                            {candidate.user?.firstName} {candidate.user?.lastName}
-                          </Link>
-                        </h3>
-                        {candidate.is_searchable && (
-                          <Badge variant="outline" className="text-[10px] py-0 h-5 bg-green-50 text-green-700 border-green-200">
-                            Available
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-sm font-medium text-foreground mb-2">{candidate.title || "Job Seeker"}</p>
-                      
-                      <div className="flex flex-wrap gap-4 text-xs text-muted-foreground mb-4">
-                        <div className="flex items-center gap-1.5">
-                          <MapPin className="w-3.5 h-3.5" />
-                          {candidate.location || "Ireland"}
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <Briefcase className="w-3.5 h-3.5" />
-                          {candidate.experience_years || 0} years experience
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <GraduationCap className="w-3.5 h-3.5" />
-                          {candidate.education?.[0]?.degree || "Higher Education"}
-                        </div>
-                      </div>
+                    <p className="text-sm text-muted-foreground mb-2">{candidate.title || "Job Seeker"}</p>
 
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground mb-3">
+                      {candidate.location && (
+                        <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{candidate.location}</span>
+                      )}
+                      <span className="flex items-center gap-1">
+                        <Briefcase className="w-3 h-3" />{candidate.experience_years || 0}y experience
+                      </span>
+                      {candidate.education?.[0]?.degree && (
+                        <span className="flex items-center gap-1">
+                          <GraduationCap className="w-3 h-3" />{candidate.education[0].degree}
+                        </span>
+                      )}
+                    </div>
+
+                    {candidate.skills?.length > 0 && (
                       <div className="flex flex-wrap gap-1.5">
-                        {candidate.skills?.slice(0, 5).map((skill, i) => (
-                          <Badge key={i} variant="secondary" className="text-[10px] font-normal px-2 py-0 h-5">
+                        {candidate.skills.slice(0, 5).map((skill, i) => (
+                          <Badge key={i} variant="secondary" className="text-[0.6rem] font-medium rounded-md px-2 py-0.5 bg-muted/70">
                             {skill}
                           </Badge>
                         ))}
-                        {candidate.skills?.length > 5 && (
-                          <span className="text-[10px] text-muted-foreground ml-1">+{candidate.skills.length - 5} more</span>
+                        {candidate.skills.length > 5 && (
+                          <span className="text-[0.6rem] text-muted-foreground self-center">+{candidate.skills.length - 5}</span>
                         )}
                       </div>
-                    </div>
+                    )}
                   </div>
 
-                  <div className="flex flex-row lg:flex-col gap-2 shrink-0">
-                    <Button asChild variant="outline" size="sm" className="w-full lg:w-32">
+                  {/* Actions */}
+                  <div className="flex flex-col gap-1.5 shrink-0">
+                    <Button asChild variant="outline" size="sm" className="h-8 text-xs rounded-lg w-28 justify-start">
                       <Link to={`/dashboard/cv-search/${candidate.id}`}>
-                        <FileText className="w-3.5 h-3.5 mr-2" />
-                        Profile
+                        <FileText className="w-3.5 h-3.5 mr-1.5" /> Profile
                       </Link>
                     </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="w-full lg:w-32 justify-between"
+                    <Button
+                      variant="outline" size="sm" className="h-8 text-xs rounded-lg w-28 justify-start"
                       onClick={() => handleDownloadCV(candidate)}
                     >
-                      <Download className="w-3.5 h-3.5 mr-2" />
-                      CV
-                      {!hasAccess && <Lock className="w-3 h-3 ml-2 text-muted-foreground" />}
+                      <Download className="w-3.5 h-3.5 mr-1.5" /> CV
+                      {!hasAccess && <Lock className="w-3 h-3 ml-auto text-muted-foreground/50" />}
                     </Button>
                     {hasPro ? (
-                      <Button asChild size="sm" className="w-full lg:w-32">
+                      <Button asChild size="sm" className="h-8 text-xs rounded-lg w-28 justify-start bg-accent hover:bg-accent/90 text-accent-foreground">
                         <Link to={`/dashboard/messages?candidateId=${candidate.userId}`}>
-                          <MessageSquare className="w-3.5 h-3.5 mr-2" />
-                          Message
+                          <MessageSquare className="w-3.5 h-3.5 mr-1.5" /> Message
                         </Link>
                       </Button>
                     ) : (
-                      <Button variant="ghost" size="sm" className="w-full lg:w-32 text-muted-foreground" disabled>
-                        <MessageSquare className="w-3.5 h-3.5 mr-2" />
-                        Message
-                        <Lock className="w-3 h-3 ml-2" />
+                      <Button variant="ghost" size="sm" className="h-8 text-xs rounded-lg w-28 justify-start text-muted-foreground" disabled>
+                        <MessageSquare className="w-3.5 h-3.5 mr-1.5" /> Message
+                        <Lock className="w-3 h-3 ml-auto" />
                       </Button>
                     )}
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
+              </div>
+            ))}
+          </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 pt-4">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            disabled={page === 1}
-            onClick={() => setPage(prev => prev - 1)}
-          >
-            Previous
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            Page {page} of {totalPages}
-          </span>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            disabled={page === totalPages}
-            onClick={() => setPage(prev => prev + 1)}
-          >
-            Next
-          </Button>
-        </div>
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-1.5 pt-4">
+              <Button variant="ghost" size="sm" disabled={page === 1} onClick={() => setPage((p) => p - 1)} className="h-10 px-4 rounded-xl font-medium">
+                <ChevronLeft className="w-4 h-4 mr-1" /> Prev
+              </Button>
+              <span className="text-sm text-muted-foreground px-4">Page {page} of {totalPages}</span>
+              <Button variant="ghost" size="sm" disabled={page === totalPages} onClick={() => setPage((p) => p + 1)} className="h-10 px-4 rounded-xl font-medium">
+                Next <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+            </div>
+          )}
+        </>
       )}
 
-      {/* Access Modal/Promo */}
+      {/* Upgrade promo */}
       {!hasAccess && (
-        <Card className="bg-primary/5 border-primary/20 mt-8">
-          <CardContent className="p-6">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
-                <Crown className="w-6 h-6 text-primary" />
-              </div>
-              <div>
-                <h4 className="font-bold mb-1">Upgrade to CV Database Lite or Pro</h4>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Unlock full candidate profiles, contact details, and downloadable CVs. Hire faster by reaching out to talent directly.
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="p-4 bg-background rounded-lg border">
-                    <p className="font-bold text-lg mb-1">Lite Plan</p>
-                    <p className="text-xs text-muted-foreground mb-2">View profiles & download CVs</p>
-                    <p className="text-xl font-bold">€10<span className="text-xs font-normal text-muted-foreground"> /mo</span></p>
-                  </div>
-                  <div className="p-4 bg-background rounded-lg border border-primary/50 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[10px] px-2 py-0.5 font-bold uppercase">Popular</div>
-                    <p className="font-bold text-lg mb-1">Pro Plan</p>
-                    <p className="text-xs text-muted-foreground mb-2">Lite + In-platform Messaging</p>
-                    <p className="text-xl font-bold">€15<span className="text-xs font-normal text-muted-foreground"> /mo</span></p>
-                  </div>
-                </div>
-                <Button asChild className="mt-6 w-full sm:w-auto">
-                  <Link to="/dashboard/billing text-primary">Upgrade Now</Link>
-                </Button>
-              </div>
+        <div className="rounded-xl border border-accent/20 bg-accent/[0.03] p-6">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-xl bg-accent/[0.08] flex items-center justify-center shrink-0">
+              <Crown className="w-5 h-5 text-accent" />
             </div>
-          </CardContent>
-        </Card>
+            <div className="flex-1">
+              <h3 className="font-display font-semibold text-foreground mb-1">Unlock the CV Database</h3>
+              <p className="text-sm text-muted-foreground mb-4">Full candidate profiles, downloadable CVs, and direct messaging.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+                <div className="rounded-lg border border-border/50 bg-card p-4">
+                  <p className="text-sm font-display font-bold text-foreground">Lite Plan</p>
+                  <p className="text-xs text-muted-foreground mt-1">View profiles & download CVs</p>
+                </div>
+                <div className="rounded-lg border border-accent/30 bg-card p-4 relative">
+                  <span className="absolute top-2 right-2 text-[0.55rem] font-bold uppercase tracking-wider text-accent">Popular</span>
+                  <p className="text-sm font-display font-bold text-foreground">Pro Plan</p>
+                  <p className="text-xs text-muted-foreground mt-1">Lite + in-platform messaging</p>
+                </div>
+              </div>
+              <Link to="/dashboard/billing">
+                <Button className="bg-accent hover:bg-accent/90 text-accent-foreground rounded-full px-6 h-10 font-medium group">
+                  Upgrade Now <ArrowRight className="w-3.5 h-3.5 ml-1.5 group-hover:translate-x-0.5 transition-transform" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
