@@ -91,6 +91,8 @@ export default function EmployerProfile({ employer, setEmployer }) {
       const updated = await employerService.update(employer.id, form);
       setEmployer({ ...employer, ...updated });
       toast.success("Profile Updated — Your employer profile has been saved.");
+    } catch (err) {
+      toast.error(err.message || "Failed to update profile");
     } finally {
       setSaving(false);
     }
@@ -102,9 +104,9 @@ export default function EmployerProfile({ employer, setEmployer }) {
 
     setUploading(true);
     try {
-      const { verificationDocUrl } = await employerService.uploadVerificationDoc(employer.id, file);
-      setEmployer({ ...employer, verificationDocUrl, verificationStatus: "under_review" });
-      toast.success("Document uploaded successfully. Your profile is now under review.");
+      const { verification_doc_url } = await employerService.uploadVerificationDoc(employer.id, file);
+      setEmployer({ ...employer, verification_doc_url });
+      toast.success("Document uploaded successfully. You can now submit your profile for verification.");
     } catch (err) {
       toast.error(err.message || "Failed to upload document");
     } finally {
@@ -112,7 +114,25 @@ export default function EmployerProfile({ employer, setEmployer }) {
     }
   };
 
-  const status = VERIFICATION_STATUSES[employer.verificationStatus] || VERIFICATION_STATUSES.draft;
+  const handleSubmitForVerification = async () => {
+    if (!employer.verification_doc_url) {
+      toast.error("Document Required — Please upload a verification document first.");
+      return;
+    }
+    
+    setSaving(true);
+    try {
+      const updated = await employerService.submitForVerification(employer.id);
+      setEmployer({ ...employer, ...updated });
+      toast.success("Verification Submitted — Your profile is now under review.");
+    } catch (err) {
+      toast.error(err.message || "Failed to submit for verification");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const status = VERIFICATION_STATUSES[employer.verification_status] || VERIFICATION_STATUSES.draft;
   const StatusIcon = status.icon;
 
   return (
@@ -125,7 +145,7 @@ export default function EmployerProfile({ employer, setEmployer }) {
         </Badge>
       </CardHeader>
       <CardContent className="space-y-6">
-        {employer.verificationStatus === "draft" && (
+        {employer.verification_status === "draft" && (
           <Alert className="bg-amber-50 border-amber-200">
             <ShieldAlert className="h-4 w-4 text-amber-600" />
             <AlertTitle className="text-amber-800">Verification Required</AlertTitle>
@@ -135,12 +155,12 @@ export default function EmployerProfile({ employer, setEmployer }) {
           </Alert>
         )}
 
-        {employer.adminReviewNote && (
+        {employer.admin_review_note && (
           <Alert variant="destructive" className="bg-red-50 border-red-200">
             <ShieldAlert className="h-4 w-4" />
             <AlertTitle>Admin Review Note</AlertTitle>
             <AlertDescription className="text-xs">
-              {employer.adminReviewNote}
+              {employer.admin_review_note}
             </AlertDescription>
           </Alert>
         )}
@@ -152,9 +172,9 @@ export default function EmployerProfile({ employer, setEmployer }) {
               <p className="text-xs text-muted-foreground">Upload your Employer Registration No. document (PDF, JPG, PNG)</p>
             </div>
             <div className="flex items-center gap-3">
-              {employer.verificationDocUrl && (
+              {employer.verification_doc_url && (
                 <Button variant="outline" size="sm" asChild>
-                  <a href={employer.verificationDocUrl} target="_blank" rel="noreferrer">View Current</a>
+                  <a href={employer.verification_doc_url} target="_blank" rel="noreferrer">View Current</a>
                 </Button>
               )}
               <div className="relative">
@@ -164,26 +184,39 @@ export default function EmployerProfile({ employer, setEmployer }) {
                   className="hidden"
                   onChange={handleFileUpload}
                   accept=".pdf,image/*"
-                  disabled={uploading || employer.verificationStatus === "approved"}
+                  disabled={uploading || employer.verification_status === "approved"}
                 />
-                <Button 
-                  variant="secondary" 
-                  size="sm" 
-                  asChild
-                  disabled={uploading || employer.verificationStatus === "approved" || isRecruiter}
-                >
-                  <label htmlFor="verification-doc" className={`${uploading || employer.verificationStatus === "approved" || isRecruiter ? 'cursor-not-allowed' : 'cursor-pointer'} flex items-center gap-2`}>
-                    <FileUp className="w-4 h-4" />
-                    {uploading ? "Uploading..." : "Upload New"}
-                  </label>
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button 
+                    variant="secondary" 
+                    size="sm" 
+                    asChild
+                    disabled={uploading || employer.verification_status === "approved" || isRecruiter}
+                  >
+                    <label htmlFor="verification-doc" className={`${uploading || employer.verification_status === "approved" || isRecruiter ? 'cursor-not-allowed' : 'cursor-pointer'} flex items-center gap-2`}>
+                      <FileUp className="w-4 h-4" />
+                      {uploading ? "Uploading..." : "Upload New"}
+                    </label>
+                  </Button>
+                  {employer.verification_status === "draft" && employer.verification_doc_url && (
+                    <Button 
+                      onClick={handleSubmitForVerification} 
+                      disabled={saving || uploading}
+                      size="sm"
+                      className="bg-accent hover:bg-accent/90 text-accent-foreground"
+                    >
+                      <ShieldCheck className="w-4 h-4 mr-1.5" />
+                      Submit for Verification
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
           {isRecruiter && (
             <p className="text-[10px] text-muted-foreground mt-1 italic">Only owners and admins can upload verification documents.</p>
           )}
-          {employer.verificationStatus === "under_review" && (
+          {employer.verification_status === "under_review" && (
             <div className="flex items-center gap-2 text-xs text-amber-700 bg-amber-50 p-2 rounded border border-amber-100">
               <Clock className="w-3.5 h-3.5" />
               Your document is currently being reviewed by our team.

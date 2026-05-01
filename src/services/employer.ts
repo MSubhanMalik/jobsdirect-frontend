@@ -49,6 +49,12 @@ class EmployerService {
     const res = await axiosInstance.post<{ verificationDocUrl: string }>(url, formData);
     return res.data;
   }
+
+  async submitForVerification(id: string): Promise<Employer> {
+    const url = `${api.endpoints.EMPLOYERS}/${id}/submit-for-verification`;
+    const res = await axiosInstance.post<Employer>(url);
+    return res.data;
+  }
 }
 
 export default new EmployerService();

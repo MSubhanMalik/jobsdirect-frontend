@@ -6,6 +6,7 @@ import { queryClientInstance } from '@/lib/query-client'
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import AuthInitializer from '@/components/layout/AuthInitializer';
+import ProtectedRoute from '@/components/layout/ProtectedRoute';
 
 // Layout (always loaded)
 import AppLayout from './components/layout/AppLayout';
@@ -85,36 +86,40 @@ function App() {
               </Route>
 
               {/* Dashboard (employer/employee) */}
-              <Route path="/dashboard" element={<DashboardLayout />}>
-                <Route index element={<DashboardOverview />} />
-                <Route path="profile" element={<DashboardProfile />} />
-                <Route path="jobs" element={<DashboardJobs />} />
-                <Route path="applications" element={<DashboardApplications />} />
-                <Route path="applications/:id" element={<DashboardApplicationDetail />} />
-                <Route path="billing" element={<DashboardBilling />} />
-                <Route path="messages" element={<DashboardMessages />} />
-                <Route path="messages/:roomId" element={<DashboardMessages />} />
-                <Route path="saved" element={<DashboardSavedJobs />} />
-                <Route path="cvs" element={<DashboardCVs />} />
-                <Route path="cv-search" element={<DashboardCVSearch />} />
-                <Route path="cv-search/:id" element={<DashboardCandidateDetail />} />
-                <Route path="alerts" element={<DashboardJobAlerts />} />
-                <Route path="notifications" element={<DashboardNotifications />} />
+              <Route element={<ProtectedRoute />}>
+                <Route path="/dashboard" element={<DashboardLayout />}>
+                  <Route index element={<DashboardOverview />} />
+                  <Route path="profile" element={<DashboardProfile />} />
+                  <Route path="jobs" element={<DashboardJobs />} />
+                  <Route path="applications" element={<DashboardApplications />} />
+                  <Route path="applications/:id" element={<DashboardApplicationDetail />} />
+                  <Route path="billing" element={<DashboardBilling />} />
+                  <Route path="messages" element={<DashboardMessages />} />
+                  <Route path="messages/:roomId" element={<DashboardMessages />} />
+                  <Route path="saved" element={<DashboardSavedJobs />} />
+                  <Route path="cvs" element={<DashboardCVs />} />
+                  <Route path="cv-search" element={<DashboardCVSearch />} />
+                  <Route path="cv-search/:id" element={<DashboardCandidateDetail />} />
+                  <Route path="alerts" element={<DashboardJobAlerts />} />
+                  <Route path="notifications" element={<DashboardNotifications />} />
+                </Route>
               </Route>
 
               {/* Admin */}
-              <Route path="/admin" element={<AdminLayout />}>
-                <Route index element={<Navigate to="/admin/overview" replace />} />
-                <Route path="overview" element={<AdminOverview />} />
-                <Route path="jobs" element={<AdminJobs />} />
-                <Route path="companies" element={<AdminEmployers />} />
-                <Route path="candidates" element={<AdminEmployees />} />
-                <Route path="applications" element={<AdminApplications />} />
-                <Route path="applications/:id" element={<DashboardApplicationDetail />} />
-                <Route path="messages" element={<AdminMessages />} />
-                <Route path="payments" element={<AdminPayments />} />
-                <Route path="users" element={<AdminUsers />} />
-                <Route path="settings" element={<AdminSettings />} />
+              <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+                <Route path="/admin" element={<AdminLayout />}>
+                  <Route index element={<Navigate to="/admin/overview" replace />} />
+                  <Route path="overview" element={<AdminOverview />} />
+                  <Route path="jobs" element={<AdminJobs />} />
+                  <Route path="companies" element={<AdminEmployers />} />
+                  <Route path="candidates" element={<AdminEmployees />} />
+                  <Route path="applications" element={<AdminApplications />} />
+                  <Route path="applications/:id" element={<DashboardApplicationDetail />} />
+                  <Route path="messages" element={<AdminMessages />} />
+                  <Route path="payments" element={<AdminPayments />} />
+                  <Route path="users" element={<AdminUsers />} />
+                  <Route path="settings" element={<AdminSettings />} />
+                </Route>
               </Route>
 
               {/* Auth */}

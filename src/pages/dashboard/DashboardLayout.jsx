@@ -106,7 +106,46 @@ export default function DashboardLayout() {
   }, [employer?.id]);
 
   const isEmployer = !!employer;
-  const navItems = isEmployer ? employerNav : employeeNav;
+  const isApproved = isEmployer ? employer.verification_status === "approved" : true;
+  
+  const navItems = useMemo(() => {
+    let items = isEmployer ? employerNav : employeeNav;
+    if (isEmployer) {
+      if (!isApproved) {
+        // Only show Overview and Profile for unapproved employers
+        items = items.filter(item => item.id === "overview" || item.id === "profile");
+      } else {
+        // For approved employers, check for CV Database access
+        const hasCVAccess = employer.candidate_database_access;
+        if (!hasCVAccess) {
+          items = items.filter(item => item.id !== "cv-search");
+        }
+      }
+    }
+    return items;
+  }, [isEmployer, isApproved, employer?.candidate_database_access]);
+
+  // Enforce access control for unapproved or non-subscribed employers
+  useEffect(() => {
+    if (isEmployer) {
+      const currentItem = employerNav.find(item => {
+        const exactMatch = item.path === "/dashboard" && location.pathname === "/dashboard";
+        const subMatch = item.path !== "/dashboard" && location.pathname.startsWith(item.path);
+        return exactMatch || subMatch;
+      });
+
+      const currentId = currentItem?.id;
+
+      if (!isApproved && currentId && currentId !== "overview" && currentId !== "profile") {
+        navigate("/dashboard", { replace: true });
+        toast.warning("Profile Verification Required — Please upload your documents and wait for approval to access all features.");
+      } else if (isApproved && currentId === "cv-search" && !employer.candidate_database_access) {
+        navigate("/dashboard", { replace: true });
+        toast.info("Subscription Required — You need an active CV Database plan to access this feature.");
+      }
+    }
+  }, [isEmployer, isApproved, employer?.candidate_database_access, location.pathname, navigate]);
+
   const outletContext = useMemo(
     () => ({ user, employer, employee, setEmployer, setEmployee, isEmployer }),
     [user, employer, employee, isEmployer],
@@ -169,11 +208,11 @@ export default function DashboardLayout() {
             </div>
             <div className="flex items-center gap-1">
               <Link to="/">
-                <Button variant="ghost" size="icon" className="w-8 h-8 text-primary-foreground/40 hover:text-primary-foreground hover:bg-primary-foreground/5 rounded-lg">
+                <Button variant="ghost" size="icon" className="w-8 h-8 text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/5 rounded-lg">
                   <Home className="w-4 h-4" />
                 </Button>
               </Link>
-              <NotificationBell className="text-primary-foreground/40 hover:text-primary-foreground hover:bg-primary-foreground/5 w-8 h-8 rounded-lg" />
+              <NotificationBell className="text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/5 w-8 h-8 rounded-lg" />
               <Button
                 variant="ghost"
                 size="sm"

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AlertCircle, KeyRound, Lock, Mail, User, Loader2 } from 'lucide-react';
 import authService from "@/services/auth";
@@ -14,26 +14,39 @@ function GoogleSignInButton({ onSuccess, onError }) {
 
   useEffect(() => {
     if (!GOOGLE_CLIENT_ID) return;
-    const script = document.createElement('script');
-    script.src = 'https://accounts.google.com/gsi/client';
-    script.async = true;
-    script.onload = () => {
-      window.google?.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
-        callback: (response) => {
-          if (response.credential) onSuccess(response.credential);
-          else onError?.('Google sign-in failed');
-        },
-      });
-      if (btnRef.current) {
-        window.google?.accounts.id.renderButton(btnRef.current, {
-          type: 'standard', theme: 'outline', size: 'large',
-          text: 'continue_with', width: btnRef.current.offsetWidth,
+
+    const initializeGoogle = () => {
+      if (window.google?.accounts?.id) {
+        window.google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: (response) => {
+            if (response.credential) onSuccess(response.credential);
+            else onError?.('Google sign-in failed');
+          },
         });
+        if (btnRef.current) {
+          window.google.accounts.id.renderButton(btnRef.current, {
+            type: 'standard', theme: 'outline', size: 'large',
+            text: 'continue_with', width: btnRef.current.offsetWidth,
+          });
+        }
       }
     };
-    document.head.appendChild(script);
-    return () => { document.head.removeChild(script); };
+
+    if (window.google?.accounts?.id) {
+      initializeGoogle();
+    } else {
+      const scriptId = 'google-gsi-client';
+      if (!document.getElementById(scriptId)) {
+        const script = document.createElement('script');
+        script.id = scriptId;
+        script.src = 'https://accounts.google.com/gsi/client';
+        script.async = true;
+        script.defer = true;
+        script.onload = initializeGoogle;
+        document.head.appendChild(script);
+      }
+    }
   }, [onSuccess, onError]);
 
   if (!GOOGLE_CLIENT_ID) return null;
@@ -133,15 +146,15 @@ export default function Auth() {
           {(mode === 'login' || mode === 'register') && (
             <>
               <GoogleSignInButton
-                onSuccess={async (credential) => {
+                onSuccess={useCallback(async (credential) => {
                   setError(''); setSubmitting(true);
                   try {
                     const result = await authService.googleAuth(credential);
                     if (result.user) { useAuthStore.getState().setUser(result.user); navigate(redirectTo, { replace: true }); }
                   } catch (err) { setError(err.message || 'Google sign-in failed'); }
                   finally { setSubmitting(false); }
-                }}
-                onError={(msg) => setError(msg)}
+                }, [navigate, redirectTo])}
+                onError={useCallback((msg) => setError(msg), [])}
               />
               <div className="my-5 flex items-center gap-3">
                 <div className="h-px flex-1 bg-border" />
