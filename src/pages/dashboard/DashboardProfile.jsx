@@ -35,7 +35,7 @@ export default function DashboardProfile() {
         <p className="text-sm text-muted-foreground mt-0.5">
           {isEmployer
             ? "Manage your company information and settings."
-            : "Your personal details, skills, and job preferences. Work experience, education, and certifications are managed per-CV in the CVs section."}
+            : "Your personal details, skills, experience, education, and job preferences."}
         </p>
       </div>
 
@@ -45,7 +45,6 @@ export default function DashboardProfile() {
         <EmployeeProfile
           employee={employee}
           setEmployee={setEmployee}
-          excludeGroups={["work_experience", "education", "certifications", "projects"]}
         />
       )}
 

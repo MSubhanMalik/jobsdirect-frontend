@@ -131,7 +131,10 @@ export default function AdminEditor({ editor, setEditor }) {
           </div>
           {JOB_FIELD_GROUPS.map((group) => (
             <section key={group.id} className="space-y-4">
-              <div><h3 className="text-sm font-semibold">{group.title}</h3>{group.description && <p className="text-xs text-muted-foreground">{group.description}</p>}</div>
+              <div className="border-b border-border/30 pb-2">
+                <h3 className="text-sm font-display font-semibold text-foreground">{group.title}</h3>
+                {group.description && <p className="text-xs text-muted-foreground mt-0.5">{group.description}</p>}
+              </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 {group.fields.map((field) => <FormFieldRenderer key={field.key} field={field} value={editor.form[field.key]} onChange={(v) => updateEditor(field.key, v)} required={requiredKeys.has(field.key)} />)}
               </div>
@@ -140,28 +143,28 @@ export default function AdminEditor({ editor, setEditor }) {
 
           {/* Addons */}
           <section className="space-y-4">
-            <div>
-              <h3 className="text-sm font-semibold">Addons</h3>
-              <p className="text-xs text-muted-foreground">Active addons for this listing. Toggle to enable/disable.</p>
+            <div className="border-b border-border/30 pb-2">
+              <h3 className="text-sm font-display font-semibold text-foreground">Addons</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">Toggle addons for this listing.</p>
             </div>
             <div className="space-y-2">
               {addonProducts.filter((a) => a.appliesTo === "job").map((addon) => (
-                <label key={addon.id} className="flex items-center gap-3 cursor-pointer rounded-lg border p-3">
+                <label key={addon.id} className={`flex items-center gap-3 cursor-pointer rounded-xl border p-3.5 transition-colors ${
+                  selectedAddons.includes(addon.id) ? "border-accent/30 bg-accent/[0.03]" : "border-border/40 hover:bg-muted/30"
+                }`}>
                   <Checkbox
                     checked={selectedAddons.includes(addon.id)}
                     onCheckedChange={(v) => {
                       setSelectedAddons((prev) => v ? [...prev, addon.id] : prev.filter((id) => id !== addon.id));
                     }}
                   />
-                  <div className="flex-1">
-                    <span className="text-sm font-medium flex items-center gap-1">
-                      <ProductIcon name={addon.icon} /> {addon.name}
+                  <div className="flex-1 min-w-0">
+                    <span className="text-sm font-medium flex items-center gap-1.5">
+                      <ProductIcon name={addon.icon} className="w-3.5 h-3.5" /> {addon.name}
                     </span>
-                    <span className="text-xs text-muted-foreground">{addon.description}</span>
+                    {addon.description && <p className="text-xs text-muted-foreground mt-0.5">{addon.description}</p>}
                   </div>
-                  <Badge variant={selectedAddons.includes(addon.id) ? "default" : "secondary"} className="text-xs">
-                    {selectedAddons.includes(addon.id) ? "Active" : "Inactive"}
-                  </Badge>
+                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${selectedAddons.includes(addon.id) ? "bg-accent" : "bg-border"}`} />
                 </label>
               ))}
             </div>
@@ -178,7 +181,10 @@ export default function AdminEditor({ editor, setEditor }) {
           </div>
           {COMPANY_FIELD_GROUPS.map((group) => (
             <section key={group.id} className="space-y-4">
-              <div><h3 className="text-sm font-semibold">{group.title}</h3>{group.description && <p className="text-xs text-muted-foreground">{group.description}</p>}</div>
+              <div className="border-b border-border/30 pb-2">
+                <h3 className="text-sm font-display font-semibold text-foreground">{group.title}</h3>
+                {group.description && <p className="text-xs text-muted-foreground mt-0.5">{group.description}</p>}
+              </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 {group.fields.map((field) => <FormFieldRenderer key={field.key} field={field} value={editor.form[field.key]} onChange={(v) => updateEditor(field.key, v)} required={requiredKeys.has(field.key)} />)}
               </div>
@@ -215,8 +221,8 @@ export default function AdminEditor({ editor, setEditor }) {
           </Field>
           <Field label="Skills" className="sm:col-span-2"><Input value={editor.form.skills} onChange={(e) => updateEditor("skills", e.target.value)} /></Field>
           <Field label="Bio" className="sm:col-span-2"><Textarea className="min-h-28" value={editor.form.bio} onChange={(e) => updateEditor("bio", e.target.value)} /></Field>
-          <div className="flex items-center justify-between rounded-lg border p-3"><Label>Profile complete</Label><Switch checked={editor.form.profile_completed} onCheckedChange={(c) => updateEditor("profile_completed", c)} /></div>
-          <div className="flex items-center justify-between rounded-lg border p-3"><Label>Searchable</Label><Switch checked={editor.form.is_searchable} onCheckedChange={(c) => updateEditor("is_searchable", c)} /></div>
+          <div className="flex items-center justify-between rounded-xl border border-border/40 bg-muted/20 px-4 py-3"><Label>Profile complete</Label><Switch checked={editor.form.profile_completed} onCheckedChange={(c) => updateEditor("profile_completed", c)} /></div>
+          <div className="flex items-center justify-between rounded-xl border border-border/40 bg-muted/20 px-4 py-3"><Label>Searchable</Label><Switch checked={editor.form.is_searchable} onCheckedChange={(c) => updateEditor("is_searchable", c)} /></div>
         </div>
       );
     }
@@ -232,7 +238,7 @@ export default function AdminEditor({ editor, setEditor }) {
             </Select>
           </Field>
           <Field label={editor.mode === "edit" ? "New password" : "Password"}><Input type="password" required={editor.mode === "create"} value={editor.form.password} onChange={(e) => updateEditor("password", e.target.value)} /></Field>
-          <div className="flex items-center justify-between rounded-lg border p-3"><Label>Email verified</Label><Switch checked={editor.form.email_verified} onCheckedChange={(c) => updateEditor("email_verified", c)} /></div>
+          <div className="flex items-center justify-between rounded-xl border border-border/40 bg-muted/20 px-4 py-3"><Label>Email verified</Label><Switch checked={editor.form.email_verified} onCheckedChange={(c) => updateEditor("email_verified", c)} /></div>
         </div>
       );
     }
@@ -241,16 +247,19 @@ export default function AdminEditor({ editor, setEditor }) {
 
   return (
     <Sheet open={!!editor} onOpenChange={(open) => { if (!open) setEditor(null); }}>
-      <SheetContent className="w-full p-0 sm:max-w-2xl">
+      <SheetContent className="w-full p-0 sm:max-w-2xl border-l border-border/50">
         <form onSubmit={saveEditor} className="flex h-full flex-col">
-          <SheetHeader className="border-b p-6">
-            <SheetTitle>{editor.mode === "edit" ? "Edit" : "Create"} {humanize(editor.entity)}</SheetTitle>
-            <SheetDescription>Changes are saved directly.</SheetDescription>
+          <SheetHeader className="border-b border-border/40 px-6 py-5">
+            <SheetTitle className="font-display text-lg">{editor.mode === "edit" ? "Edit" : "Create"} {humanize(editor.entity)}</SheetTitle>
+            <SheetDescription className="text-xs text-muted-foreground">Changes are saved directly to the database.</SheetDescription>
           </SheetHeader>
           <ScrollArea className="flex-1"><div className="p-6">{renderFields()}</div></ScrollArea>
-          <SheetFooter className="border-t p-4">
-            <Button type="button" variant="outline" onClick={() => setEditor(null)}>Cancel</Button>
-            <Button type="submit" disabled={saving}>{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}Save</Button>
+          <SheetFooter className="border-t border-border/40 px-6 py-4 gap-2">
+            <Button type="button" variant="outline" onClick={() => setEditor(null)} className="rounded-lg">Cancel</Button>
+            <Button type="submit" disabled={saving} className="bg-accent hover:bg-accent/90 text-accent-foreground rounded-lg font-medium">
+              {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : <CheckCircle2 className="h-4 w-4 mr-1.5" />}
+              Save
+            </Button>
           </SheetFooter>
         </form>
       </SheetContent>

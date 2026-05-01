@@ -1,12 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useOutletContext } from "react-router-dom";
+import { useOutletContext, Link, useLocation, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "react-toastify";
-import { FileText, Upload, Star, Trash2, Download, Wand2, Lock, Palette, Crown, Loader2 } from "lucide-react";
+import { FileText, Upload, Star, Trash2, Download, Wand2, Lock, Palette, Crown, Loader2, ArrowRight } from "lucide-react";
 import cvService from "@/services/cv";
+import paymentService from "@/services/payment";
 import ConfirmDialog from "@/components/ui/confirm-dialog";
 
 const TEMPLATE_INFO = {
@@ -22,8 +24,17 @@ const PLAN_INFO = {
   premium: { label: "Premium", color: "bg-amber-50 text-amber-700 border-amber-200" },
 };
 
+function formatPlanPrice(plan) {
+  const amount = Number(plan.amount || 0) / 100;
+  if (amount === 0) return "Free";
+  return `€${amount % 1 === 0 ? amount : amount.toFixed(2)}`;
+}
+
 export default function DashboardCVs() {
   const { user } = useOutletContext();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [checkoutPlanId, setCheckoutPlanId] = useState(null);
   const [cvs, setCvs] = useState([]);
   const [plan, setPlan] = useState("free");
   const [limits, setLimits] = useState({ maxCVs: 1, templates: ["basic"], watermark: true });
@@ -33,6 +44,42 @@ export default function DashboardCVs() {
   const [selectedTemplate, setSelectedTemplate] = useState("basic");
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const fileRef = useRef(null);
+
+  // Fetch CV plan products from payment plans
+  const { data: allPlans = [] } = useQuery({
+    queryKey: ["payment-plans"],
+    queryFn: () => paymentService.listPlans(),
+    staleTime: 10 * 60 * 1000,
+  });
+  const cvPlans = allPlans.filter((p) => p.kind === "cv_plan" || p.type === "cv_plan");
+
+  // Handle payment redirect
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const payment = params.get("payment");
+    const sessionId = params.get("session_id");
+    if (payment === "success" && sessionId) {
+      paymentService.syncCheckoutSession(sessionId).then(() => {
+        toast.success("CV plan upgraded!");
+        refresh();
+      }).catch(() => toast.error("Could not verify payment."));
+      navigate(location.pathname, { replace: true });
+    } else if (payment === "cancelled") {
+      toast.info("Payment cancelled.");
+      navigate(location.pathname, { replace: true });
+    }
+  }, [location.search]);
+
+  const handleCvPlanCheckout = async (planId) => {
+    setCheckoutPlanId(planId);
+    try {
+      const session = await paymentService.createCheckoutSession({ plan_id: planId });
+      window.location.assign(session.url);
+    } catch (err) {
+      toast.error(err.message || "Could not start checkout.");
+      setCheckoutPlanId(null);
+    }
+  };
 
   const refresh = () => {
     cvService.list().then((data) => {
@@ -197,21 +244,57 @@ export default function DashboardCVs() {
         <div className="rounded-xl border border-accent/20 bg-accent/[0.03] p-6">
           <div className="flex items-start gap-4">
             <div className="w-10 h-10 rounded-xl bg-accent/[0.08] flex items-center justify-center shrink-0">
-              <Lock className="w-5 h-5 text-accent" />
+              <Crown className="w-5 h-5 text-accent" />
             </div>
-            <div>
+            <div className="flex-1">
               <p className="font-display font-semibold text-foreground mb-1">Upgrade Your CV Plan</p>
               <p className="text-sm text-muted-foreground mb-4">Premium templates, no watermark, and multiple CVs for different applications.</p>
-              <div className="flex gap-4">
-                <div className="rounded-lg border border-border/50 bg-card p-4 flex-1">
-                  <p className="text-sm font-display font-bold text-foreground">Professional</p>
-                  <p className="text-xs text-muted-foreground mt-1">1 CV, 3 templates, no watermark</p>
+
+              {cvPlans.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {cvPlans.map((cvPlan, i) => {
+                    const isLoading = checkoutPlanId === cvPlan.id;
+                    const isRecommended = i === cvPlans.length - 1 && cvPlans.length > 1;
+                    return (
+                      <div key={cvPlan.id} className={`rounded-xl border bg-card p-5 flex flex-col ${isRecommended ? "border-accent/30" : "border-border/50"}`}>
+                        {isRecommended && (
+                          <span className="text-[0.55rem] font-bold uppercase tracking-wider text-accent mb-2">Recommended</span>
+                        )}
+                        <p className="text-base font-display font-bold text-foreground">{cvPlan.name}</p>
+                        {cvPlan.description && <p className="text-xs text-muted-foreground mt-1">{cvPlan.description}</p>}
+                        <div className="flex items-baseline gap-1 mt-3 mb-4">
+                          <span className="text-xl font-display font-bold text-foreground">{formatPlanPrice(cvPlan)}</span>
+                          {cvPlan.interval && <span className="text-xs text-muted-foreground">/{cvPlan.interval}</span>}
+                        </div>
+                        <Button
+                          size="sm"
+                          className={`w-full rounded-lg h-9 text-xs font-medium mt-auto ${isRecommended ? "bg-accent hover:bg-accent/90 text-accent-foreground" : ""}`}
+                          variant={isRecommended ? "default" : "outline"}
+                          onClick={() => handleCvPlanCheckout(cvPlan.id)}
+                          disabled={Boolean(checkoutPlanId)}
+                        >
+                          {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <ArrowRight className="w-3.5 h-3.5 mr-1.5" />}
+                          {isLoading ? "Redirecting..." : "Upgrade"}
+                        </Button>
+                      </div>
+                    );
+                  })}
                 </div>
-                <div className="rounded-lg border border-border/50 bg-card p-4 flex-1">
-                  <p className="text-sm font-display font-bold text-foreground">Premium</p>
-                  <p className="text-xs text-muted-foreground mt-1">4 CVs, all templates, no watermark</p>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="rounded-xl border border-border/50 bg-card p-5">
+                    <p className="text-base font-display font-bold text-foreground">Professional</p>
+                    <p className="text-xs text-muted-foreground mt-1">1 CV, 3 templates, no watermark</p>
+                    <p className="text-xs text-muted-foreground mt-3">Coming soon</p>
+                  </div>
+                  <div className="rounded-xl border border-accent/30 bg-card p-5">
+                    <span className="text-[0.55rem] font-bold uppercase tracking-wider text-accent">Recommended</span>
+                    <p className="text-base font-display font-bold text-foreground mt-1">Premium</p>
+                    <p className="text-xs text-muted-foreground mt-1">4 CVs, all templates, no watermark</p>
+                    <p className="text-xs text-muted-foreground mt-3">Coming soon</p>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>

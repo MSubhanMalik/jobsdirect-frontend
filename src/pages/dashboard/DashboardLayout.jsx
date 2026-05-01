@@ -201,7 +201,7 @@ export default function DashboardLayout() {
       </div>
 
       {/* ── Navigation ── */}
-      <div className="bg-card border-b border-border/50 sticky top-[4.25rem] z-30">
+      <div className="bg-card border-b border-border/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <nav className="flex gap-0.5 overflow-x-auto py-1.5 scrollbar-none">
             {navItems.map((item) => {

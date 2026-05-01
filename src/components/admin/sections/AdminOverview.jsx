@@ -4,8 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Briefcase, CheckCircle2, ClipboardList, Gauge, Mail, Plus, ShieldCheck, BarChart3 } from "lucide-react";
+import { Briefcase, CheckCircle2, ClipboardList, Gauge, Mail, Plus, ShieldCheck, BarChart3, ChevronRight, ArrowRight } from "lucide-react";
 import { StatCard, SectionHeader, EmptyState } from "../shared/UIComponents";
 import { formatDate } from "../shared/helpers";
 import { queryKeys } from "../shared/constants";
@@ -14,6 +13,14 @@ import employerService from "@/services/employer";
 import applicationService from "@/services/application";
 import contactService from "@/services/contact";
 import paymentService from "@/services/payment";
+
+const typeConfig = {
+  Job: { dot: "bg-accent" },
+  Application: { dot: "bg-blue-500" },
+  Message: { dot: "bg-amber-500" },
+  Payment: { dot: "bg-emerald-500" },
+  Company: { dot: "bg-indigo-500" },
+};
 
 export default function AdminOverview() {
   const { openEditor } = useOutletContext();
@@ -45,22 +52,18 @@ export default function AdminOverview() {
       await services[entity].update(id, updates);
       keys.forEach((key) => queryClient.invalidateQueries({ queryKey: key }));
       toast.success(title);
-    } catch (err) {
-      toast.error(`Failed to update ${entity}`);
-    }
+    } catch { toast.error(`Failed to update ${entity}`); }
   };
 
   const pendingQueue = [
-    ...jobs.filter((job) => job.status === "pending_review").slice(0, 4).map((job) => ({
-      id: job.id,
-      title: job.title,
-      detail: `${job.company_name || "Company"} - ${job.location || "Location"}`,
+    ...jobs.filter((job) => job.status === "pending_review").slice(0, 5).map((job) => ({
+      id: job.id, title: job.title,
+      detail: `${job.company_name || "Company"} · ${job.location || "Location"}`,
       type: "Job",
       action: () => updateEntity("Job", job.id, { status: "approved" }, [queryKeys.jobs], "Job approved"),
     })),
-    ...employers.filter((employer) => ["pending", "submitted"].includes(employer.verification_status)).slice(0, 3).map((employer) => ({
-      id: employer.id,
-      title: employer.company_name,
+    ...employers.filter((e) => ["pending", "submitted"].includes(e.verification_status)).slice(0, 3).map((employer) => ({
+      id: employer.id, title: employer.company_name,
       detail: employer.user_email,
       type: "Company",
       action: () => updateEntity("Employer", employer.id, { verification_status: "approved", approved_at: new Date().toISOString() }, [queryKeys.employers], "Company approved"),
@@ -72,114 +75,90 @@ export default function AdminOverview() {
     ...applications.map((item) => ({ type: "Application", title: item.job_title || item.employee_email, date: item.updatedAt || item.createdAt })),
     ...messages.map((item) => ({ type: "Message", title: item.subject, date: item.updatedAt || item.createdAt })),
     ...payments.map((item) => ({ type: "Payment", title: item.plan_id || item.stripe_session_id, date: item.updatedAt || item.createdAt })),
-  ]
-    .filter((item) => item.date)
-    .sort((a, b) => new Date(b.date) - new Date(a.date))
-    .slice(0, 8);
-
-  const pipeline = [
-    { label: "Pending jobs", value: stats.pendingJobs, total: Math.max(jobs.length, 1), tone: "bg-amber-500" },
-    { label: "Live jobs", value: stats.liveJobs, total: Math.max(jobs.length, 1), tone: "bg-emerald-500" },
-    { label: "Applications", value: applications.length, total: Math.max(applications.length + jobs.length, 1), tone: "bg-blue-600" },
-    { label: "New messages", value: stats.newMessages, total: Math.max(messages.length, 1), tone: "bg-indigo-500" },
-  ];
+  ].filter((item) => item.date).sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 8);
 
   return (
     <div className="space-y-6">
       <SectionHeader
-        title="Command center"
-        description="Run publishing, moderation, accounts, and site content from one place."
-        action={<Button onClick={() => openEditor("job")}><Plus className="h-4 w-4" />New Job</Button>}
+        title="Command Center"
+        description="Manage publishing, moderation, accounts, and site content."
+        action={
+          <Button onClick={() => openEditor("job")} className="bg-accent hover:bg-accent/90 text-accent-foreground rounded-full px-5 h-9 text-sm font-medium">
+            <Plus className="h-4 w-4 mr-1.5" /> New Job
+          </Button>
+        }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard icon={Briefcase} label="Live jobs" value={stats.liveJobs} subtext={`${jobs.length} total listings`} tone="accent" />
-        <StatCard icon={Gauge} label="Needs review" value={stats.pendingJobs + stats.pendingEmployers} subtext="Jobs and companies" tone="amber" />
-        <StatCard icon={ClipboardList} label="Applications" value={applications.length} subtext="Candidate pipeline" tone="blue" />
-        <StatCard icon={Mail} label="New messages" value={stats.newMessages} subtext={`${messages.length} inbox items`} tone="primary" />
+      {/* Stats */}
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard icon={Briefcase} label="Live Jobs" value={stats.liveJobs} subtext={`${jobs.length} total listings`} />
+        <StatCard icon={Gauge} label="Needs Review" value={stats.pendingJobs + stats.pendingEmployers} subtext="Jobs & companies" />
+        <StatCard icon={ClipboardList} label="Applications" value={applications.length} subtext="Candidate pipeline" />
+        <StatCard icon={Mail} label="New Messages" value={stats.newMessages} subtext={`${messages.length} total`} />
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <Card className="rounded-lg shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <ShieldCheck className="h-4 w-4 text-accent" />
-              Approval queue
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {pendingQueue.length ? (
-              <div className="space-y-3">
-                {pendingQueue.map((item) => (
-                  <div key={`${item.type}-${item.id}`} className="flex items-center justify-between gap-4 rounded-lg border p-3">
+      <div className="grid gap-4 xl:grid-cols-2">
+        {/* Approval Queue */}
+        <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-border/40">
+            <h3 className="text-base font-display font-semibold text-foreground flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-accent" /> Approval Queue
+            </h3>
+            <span className="text-xs text-muted-foreground">{pendingQueue.length} pending</span>
+          </div>
+          {pendingQueue.length ? (
+            <div className="divide-y divide-border/30">
+              {pendingQueue.map((item) => (
+                <div key={`${item.type}-${item.id}`} className="flex items-center justify-between gap-4 px-6 py-4">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${typeConfig[item.type]?.dot || "bg-muted-foreground"}`} />
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <Badge variant="secondary">{item.type}</Badge>
-                        <p className="truncate text-sm font-medium">{item.title}</p>
+                        <p className="truncate text-sm font-medium text-foreground">{item.title}</p>
+                        <Badge variant="secondary" className="text-[0.6rem] shrink-0">{item.type}</Badge>
                       </div>
-                      <p className="mt-1 truncate text-xs text-muted-foreground">{item.detail}</p>
+                      <p className="text-xs text-muted-foreground truncate mt-0.5">{item.detail}</p>
                     </div>
-                    <Button size="sm" variant="outline" onClick={item.action}>
-                      <CheckCircle2 className="h-4 w-4" />
-                      Approve
-                    </Button>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <EmptyState title="No approvals waiting" description="Everything that needs review has been cleared." />
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-lg shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <BarChart3 className="h-4 w-4 text-accent" />
-              Marketplace health
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {pipeline.map((item) => (
-              <div key={item.label} className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">{item.label}</span>
-                  <span className="font-medium">{item.value}</span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="rounded-lg h-8 text-xs font-medium shrink-0"
+                    onClick={item.action}
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Approve
+                  </Button>
                 </div>
-                <div className="h-2 rounded-full bg-muted">
-                  <div
-                    className={`h-2 rounded-full ${item.tone}`}
-                    style={{ width: `${Math.min(100, Math.round((item.value / item.total) * 100))}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
+              ))}
+            </div>
+          ) : (
+            <EmptyState title="Queue is clear" description="No approvals waiting." />
+          )}
+        </div>
 
-      <Card className="rounded-lg shadow-sm">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Recent activity</CardTitle>
-        </CardHeader>
-        <CardContent>
+        {/* Recent Activity */}
+        <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
+          <div className="px-6 py-4 border-b border-border/40">
+            <h3 className="text-base font-display font-semibold text-foreground">Recent Activity</h3>
+          </div>
           {recentActivity.length ? (
-            <div className="divide-y">
+            <div className="divide-y divide-border/30">
               {recentActivity.map((item, index) => (
-                <div key={`${item.type}-${item.title}-${index}`} className="flex items-center justify-between gap-4 py-3">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{item.title || item.type}</p>
-                    <p className="text-xs text-muted-foreground">{item.type}</p>
+                <div key={`${item.type}-${index}`} className="flex items-center gap-3 px-6 py-3.5">
+                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${typeConfig[item.type]?.dot || "bg-muted-foreground"}`} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{item.title || item.type}</p>
+                    <p className="text-[0.65rem] text-muted-foreground">{item.type}</p>
                   </div>
-                  <span className="whitespace-nowrap text-xs text-muted-foreground">{formatDate(item.date)}</span>
+                  <span className="text-[0.65rem] text-muted-foreground whitespace-nowrap shrink-0">{formatDate(item.date)}</span>
                 </div>
               ))}
             </div>
           ) : (
             <EmptyState title="No activity yet" />
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

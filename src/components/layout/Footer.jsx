@@ -30,23 +30,6 @@ export default function Footer() {
   return (
     <footer className="bg-foreground text-primary-foreground">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Newsletter strip */}
-        <div className="py-10 border-b border-primary-foreground/[0.08] flex flex-col sm:flex-row items-center justify-between gap-5">
-          <div>
-            <h3 className="font-display font-semibold text-base text-primary-foreground">Stay in the loop</h3>
-            <p className="text-sm text-primary-foreground/40 mt-0.5">Get the latest opportunities delivered weekly.</p>
-          </div>
-          <div className="flex gap-2 w-full sm:w-auto">
-            <Input
-              placeholder="you@email.com"
-              className="bg-primary-foreground/[0.06] border-primary-foreground/[0.08] text-primary-foreground placeholder:text-primary-foreground/30 w-full sm:w-64 h-11 rounded-xl"
-            />
-            <Button className="bg-accent hover:bg-accent/90 text-accent-foreground whitespace-nowrap rounded-xl h-11 px-5">
-              Subscribe
-              <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
-            </Button>
-          </div>
-        </div>
 
         {/* Main Footer */}
         <div className="py-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12">

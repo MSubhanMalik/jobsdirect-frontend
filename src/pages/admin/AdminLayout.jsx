@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Outlet, useNavigate, useLocation, Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import authService from "@/services/auth";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LogOut, Search, ShieldCheck } from "lucide-react";
+import { LogOut, ShieldCheck } from "lucide-react";
 import { ADMIN_ROLES, navItems } from "@/components/admin/shared/constants";
 import { humanize } from "@/components/admin/shared/helpers";
 import AdminEditor, { useAdminEditor } from "@/components/admin/AdminEditor";
@@ -35,72 +33,95 @@ export default function AdminLayout() {
     return (
       <div className="min-h-screen bg-muted/30 p-6">
         <div className="mx-auto max-w-7xl space-y-4">
-          <Skeleton className="h-16 w-full" />
-          <div className="grid gap-4 md:grid-cols-4"><Skeleton className="h-32" /><Skeleton className="h-32" /><Skeleton className="h-32" /><Skeleton className="h-32" /></div>
-          <Skeleton className="h-96 w-full" />
+          <Skeleton className="h-14 w-full rounded-xl" />
+          <div className="grid gap-3 md:grid-cols-4">{[1,2,3,4].map(i => <Skeleton key={i} className="h-28 rounded-xl" />)}</div>
+          <Skeleton className="h-96 w-full rounded-xl" />
         </div>
       </div>
     );
   }
 
-  // Derive active section from URL path
   const pathSegment = location.pathname.split("/admin/")[1] || "overview";
   const activeSection = pathSegment.split("/")[0] || "overview";
 
   return (
     <div className="min-h-screen bg-muted/30">
-      <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur">
-        <div className="flex min-h-16 flex-col gap-3 px-4 py-3 lg:flex-row lg:items-center lg:justify-between lg:px-6">
+      {/* ── Header ── */}
+      <header className="sticky top-0 z-40 bg-foreground">
+        <div className="flex items-center justify-between h-12 px-4 lg:px-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground"><ShieldCheck className="h-5 w-5" /></div>
-            <div><h1 className="text-lg font-semibold leading-tight">Admin CMS</h1><p className="text-xs text-muted-foreground">JobsDirect operations dashboard</p></div>
+            <div className="w-7 h-7 rounded-md bg-accent flex items-center justify-center">
+              <ShieldCheck className="w-3.5 h-3.5 text-accent-foreground" />
+            </div>
+            <span className="text-sm font-display font-bold text-primary-foreground tracking-tight">
+              Admin<span className="text-primary-foreground/30 font-normal ml-1.5 hidden sm:inline">JobsDirect.ie</span>
+            </span>
           </div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <div className="relative sm:w-80">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input className="pl-9" placeholder="Search current workspace" value={search} onChange={(e) => setSearch(e.target.value)} />
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary">{humanize(authUser?.role)}</Badge>
-              <Button variant="outline" size="sm" onClick={() => authService.logout("/")}><LogOut className="h-4 w-4" />Logout</Button>
-            </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-[0.6rem] text-primary-foreground/30 hidden sm:inline mr-1">{authUser?.email}</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-primary-foreground/40 hover:text-primary-foreground hover:bg-primary-foreground/5 h-7 text-xs rounded-md"
+              onClick={() => authService.logout("/")}
+            >
+              <LogOut className="h-3.5 w-3.5 sm:mr-1" />
+              <span className="hidden sm:inline">Logout</span>
+            </Button>
           </div>
         </div>
       </header>
 
-      <div className="grid lg:grid-cols-[260px_1fr]">
-        <aside className="border-b bg-background lg:min-h-[calc(100vh-65px)] lg:border-b-0 lg:border-r">
-          <div className="sticky top-16 space-y-6 p-4">
-            <nav className="grid gap-1">
+      <div className="grid lg:grid-cols-[240px_1fr]">
+        {/* ── Sidebar ── */}
+        <aside className="border-b border-border/50 bg-card lg:min-h-[calc(100vh-3rem)] lg:border-b-0 lg:border-r lg:border-border/50">
+          <div className="sticky top-12 p-3 space-y-5">
+            <nav className="space-y-0.5">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const sectionPath = item.id === "overview" ? "" : item.id;
-                const isActive = activeSection === item.id || (item.id === "overview" && activeSection === "");
+                const isActive = activeSection === item.id || (item.id === "overview" && (activeSection === "" || activeSection === "overview"));
+
                 return (
                   <Link
                     key={item.id}
                     to={`/admin/${sectionPath}`}
-                    className={`flex h-10 items-center justify-between rounded-lg px-3 text-sm font-medium transition-colors ${
-                      isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    className={`relative w-full flex items-center gap-2.5 rounded-lg px-3 h-9 text-[0.82rem] font-medium transition-all duration-200 ${
+                      isActive
+                        ? "text-foreground bg-muted/70"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
                     }`}
                   >
-                    <span className="flex items-center gap-2"><Icon className="h-4 w-4" />{item.label}</span>
+                    <Icon className={`h-4 w-4 ${isActive ? "text-accent" : ""}`} />
+                    {item.label}
+                    {isActive && (
+                      <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] bg-accent rounded-r-full" />
+                    )}
                   </Link>
                 );
               })}
             </nav>
-            <Separator />
-            <div className="rounded-lg border bg-muted/40 p-4">
-              <p className="text-xs font-medium uppercase text-muted-foreground">Signed in as</p>
-              <p className="mt-2 truncate text-sm font-medium">{authUser?.full_name}</p>
-              <p className="truncate text-xs text-muted-foreground">{authUser?.email}</p>
+
+            <div className="rounded-xl border border-border/50 bg-muted/30 p-4">
+              <p className="text-[0.6rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground mb-2">Signed in as</p>
+              <p className="text-sm font-medium text-foreground truncate">{authUser?.full_name}</p>
+              <p className="text-xs text-muted-foreground truncate mt-0.5">{authUser?.email}</p>
             </div>
           </div>
         </aside>
 
+        {/* ── Main Content ── */}
         <main className="min-w-0 p-4 sm:p-6 lg:p-8">
-          <div className="mx-auto max-w-7xl">
-            <Outlet context={{ authUser, search, setSearch, openEditor }} />
+          <div className="mx-auto max-w-6xl">
+            <motion.div
+              key={location.pathname}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+            >
+              <Outlet context={{ authUser, search, setSearch, openEditor }} />
+            </motion.div>
             <AdminEditor editor={editor} setEditor={setEditor} />
           </div>
         </main>

@@ -343,9 +343,9 @@ export default function Admin() {
     return (
       <div className="min-h-screen bg-muted/30 p-6">
         <div className="mx-auto max-w-7xl space-y-4">
-          <Skeleton className="h-16 w-full" />
-          <div className="grid gap-4 md:grid-cols-4"><Skeleton className="h-32" /><Skeleton className="h-32" /><Skeleton className="h-32" /><Skeleton className="h-32" /></div>
-          <Skeleton className="h-96 w-full" />
+          <Skeleton className="h-14 w-full rounded-xl" />
+          <div className="grid gap-3 md:grid-cols-4">{[1,2,3,4].map(i => <Skeleton key={i} className="h-28 rounded-xl" />)}</div>
+          <Skeleton className="h-96 w-full rounded-xl" />
         </div>
       </div>
     );
@@ -355,82 +355,127 @@ export default function Admin() {
 
   return (
     <div className="min-h-screen bg-muted/30">
-      <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur">
-        <div className="flex min-h-16 flex-col gap-3 px-4 py-3 lg:flex-row lg:items-center lg:justify-between lg:px-6">
+      {/* ── Header ── */}
+      <header className="sticky top-0 z-40 border-b border-border/50 bg-card/95 backdrop-blur-xl">
+        <div className="flex items-center justify-between h-14 px-4 lg:px-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground"><ShieldCheck className="h-5 w-5" /></div>
-            <div><h1 className="text-lg font-semibold leading-tight">Admin CMS</h1><p className="text-xs text-muted-foreground">JobsDirect operations dashboard</p></div>
+            <div className="w-8 h-8 rounded-lg bg-foreground flex items-center justify-center">
+              <ShieldCheck className="w-4 h-4 text-background" />
+            </div>
+            <div className="hidden sm:block">
+              <h1 className="text-sm font-display font-bold text-foreground leading-none">Admin</h1>
+              <p className="text-[0.6rem] text-muted-foreground mt-0.5">JobsDirect.ie</p>
+            </div>
           </div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <div className="relative sm:w-80">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input className="pl-9" placeholder="Search current workspace" value={search} onChange={(e) => setSearch(e.target.value)} />
+
+          <div className="flex items-center gap-3">
+            <div className="relative w-56 lg:w-72">
+              <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/50" />
+              <Input
+                className="pl-9 h-9 rounded-lg border-border/50 bg-muted/30 text-sm placeholder:text-muted-foreground/40"
+                placeholder="Search..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
             </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary">{humanize(authUser?.role)}</Badge>
-              <Button variant="outline" size="sm" onClick={() => authService.logout("/")}><LogOut className="h-4 w-4" />Logout</Button>
-            </div>
+            <Badge variant="secondary" className="text-[0.6rem] font-medium hidden sm:flex">{humanize(authUser?.role)}</Badge>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:text-foreground h-8 text-xs rounded-lg"
+              onClick={() => authService.logout("/")}
+            >
+              <LogOut className="h-3.5 w-3.5 sm:mr-1.5" />
+              <span className="hidden sm:inline">Logout</span>
+            </Button>
           </div>
         </div>
       </header>
 
-      <div className="grid lg:grid-cols-[260px_1fr]">
-        <aside className="border-b bg-background lg:min-h-[calc(100vh-65px)] lg:border-b-0 lg:border-r">
-          <div className="sticky top-16 space-y-6 p-4">
-            <nav className="grid gap-1">
+      <div className="grid lg:grid-cols-[240px_1fr]">
+        {/* ── Sidebar ── */}
+        <aside className="border-b border-border/50 bg-card lg:min-h-[calc(100vh-3.5rem)] lg:border-b-0 lg:border-r lg:border-border/50">
+          <div className="sticky top-14 p-3 space-y-5">
+            <nav className="space-y-0.5">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeSection === item.id;
+                const count = navCounts[item.id];
                 return (
-                  <button key={item.id} type="button" onClick={() => setActiveSection(item.id)}
-                    className={`flex h-10 items-center justify-between rounded-lg px-3 text-sm font-medium transition-colors ${isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}>
-                    <span className="flex items-center gap-2"><Icon className="h-4 w-4" />{item.label}</span>
-                    {navCounts[item.id] ? <Badge variant={isActive ? "secondary" : "outline"} className="h-5 px-1.5 text-[10px]">{navCounts[item.id]}</Badge> : null}
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setActiveSection(item.id)}
+                    className={`relative w-full flex items-center justify-between rounded-lg px-3 h-9 text-[0.82rem] font-medium transition-all duration-200 ${
+                      isActive
+                        ? "text-foreground bg-muted/70"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
+                    }`}
+                  >
+                    <span className="flex items-center gap-2.5">
+                      <Icon className={`h-4 w-4 ${isActive ? "text-accent" : ""}`} />
+                      {item.label}
+                    </span>
+                    {count > 0 && (
+                      <span className={`text-[0.6rem] font-semibold min-w-[1.25rem] h-5 flex items-center justify-center rounded-md px-1.5 ${
+                        isActive ? "bg-accent/10 text-accent" : "bg-muted text-muted-foreground"
+                      }`}>
+                        {count}
+                      </span>
+                    )}
+                    {isActive && (
+                      <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] bg-accent rounded-r-full" />
+                    )}
                   </button>
                 );
               })}
             </nav>
-            <Separator />
-            <div className="rounded-lg border bg-muted/40 p-4">
-              <p className="text-xs font-medium uppercase text-muted-foreground">Signed in as</p>
-              <p className="mt-2 truncate text-sm font-medium">{authUser?.full_name}</p>
-              <p className="truncate text-xs text-muted-foreground">{authUser?.email}</p>
+
+            {/* User card */}
+            <div className="rounded-xl border border-border/50 bg-muted/30 p-4">
+              <p className="text-[0.6rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground mb-2">Signed in as</p>
+              <p className="text-sm font-medium text-foreground truncate">{authUser?.full_name}</p>
+              <p className="text-xs text-muted-foreground truncate mt-0.5">{authUser?.email}</p>
             </div>
           </div>
         </aside>
 
+        {/* ── Main Content ── */}
         <main className="min-w-0 p-4 sm:p-6 lg:p-8">
-          <div className="mx-auto max-w-7xl">{renderActiveSection()}</div>
+          <div className="mx-auto max-w-6xl">{renderActiveSection()}</div>
         </main>
       </div>
 
-      {/* Entity Editor Sheet */}
+      {/* ── Entity Editor Sheet ── */}
       <Sheet open={!!editor} onOpenChange={(open) => { if (!open) setEditor(null); }}>
         <SheetContent className="w-full p-0 sm:max-w-2xl">
           <form onSubmit={saveEditor} className="flex h-full flex-col">
-            <SheetHeader className="border-b p-6">
-              <SheetTitle>{editor?.mode === "edit" ? "Edit" : "Create"} {humanize(editor?.entity)}</SheetTitle>
-              <SheetDescription>Changes are saved directly to the CMS store.</SheetDescription>
+            <SheetHeader className="border-b border-border/50 p-6">
+              <SheetTitle className="font-display">{editor?.mode === "edit" ? "Edit" : "Create"} {humanize(editor?.entity)}</SheetTitle>
+              <SheetDescription className="text-xs">Changes are saved directly to the database.</SheetDescription>
             </SheetHeader>
             <ScrollArea className="flex-1"><div className="p-6">{renderEditorFields()}</div></ScrollArea>
-            <SheetFooter className="border-t p-4">
-              <Button type="button" variant="outline" onClick={() => setEditor(null)}>Cancel</Button>
-              <Button type="submit" disabled={saving}>{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}Save</Button>
+            <SheetFooter className="border-t border-border/50 p-4 gap-2">
+              <Button type="button" variant="outline" onClick={() => setEditor(null)} className="rounded-lg">Cancel</Button>
+              <Button type="submit" disabled={saving} className="bg-accent hover:bg-accent/90 text-accent-foreground rounded-lg font-medium">
+                {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : <CheckCircle2 className="h-4 w-4 mr-1.5" />}
+                Save
+              </Button>
             </SheetFooter>
           </form>
         </SheetContent>
       </Sheet>
 
-      {/* Delete Confirmation */}
+      {/* ── Delete Confirmation ── */}
       <AlertDialog open={!!deleteDialog} onOpenChange={(open) => { if (!open) setDeleteDialog(null); }}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete this record?</AlertDialogTitle>
-            <AlertDialogDescription>{deleteDialog?.label ? `"${deleteDialog.label}" will be removed from the CMS.` : "This record will be removed from the CMS."}</AlertDialogDescription>
+            <AlertDialogTitle className="font-display">Delete this record?</AlertDialogTitle>
+            <AlertDialogDescription className="text-sm">{deleteDialog?.label ? `"${deleteDialog.label}" will be permanently removed.` : "This record will be permanently removed."}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={confirmDelete} disabled={saving}>Delete</AlertDialogAction>
+            <AlertDialogCancel className="rounded-lg">Cancel</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-lg" onClick={confirmDelete} disabled={saving}>Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

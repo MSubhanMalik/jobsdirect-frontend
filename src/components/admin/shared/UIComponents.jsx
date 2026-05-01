@@ -1,53 +1,39 @@
-import React from "react";
+import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Inbox } from "lucide-react";
+import { Inbox, ChevronDown } from "lucide-react";
 import { statusMeta } from "./constants";
 import { humanize } from "./helpers";
 
 export function StatusBadge({ value }) {
-  const meta = statusMeta[value] || { label: humanize(value || "Unknown"), className: "border-slate-200 bg-slate-50 text-slate-700" };
+  const meta = statusMeta[value] || { label: humanize(value || "Unknown"), className: "border-border bg-muted text-muted-foreground" };
   return (
-    <Badge variant="outline" className={`whitespace-nowrap ${meta.className}`}>
+    <Badge variant="outline" className={`whitespace-nowrap text-[0.65rem] font-medium ${meta.className}`}>
       {meta.label}
     </Badge>
   );
 }
 
-export function StatCard({ icon: Icon, label, value, subtext, tone = "primary" }) {
-  const toneClass = {
-    primary: "bg-primary text-primary-foreground",
-    accent: "bg-accent text-accent-foreground",
-    amber: "bg-amber-500 text-white",
-    blue: "bg-blue-600 text-white",
-  }[tone];
-
+export function StatCard({ icon: Icon, label, value, subtext }) {
   return (
-    <Card className="rounded-lg shadow-sm">
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-xs font-medium uppercase text-muted-foreground">{label}</p>
-            <p className="mt-2 text-2xl font-semibold tracking-tight">{value}</p>
-            {subtext && <p className="mt-1 text-xs text-muted-foreground">{subtext}</p>}
-          </div>
-          <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${toneClass}`}>
-            <Icon className="h-5 w-5" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="rounded-xl border border-border/50 bg-card p-5">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">{label}</span>
+        <Icon className="w-4 h-4 text-muted-foreground/40" />
+      </div>
+      <p className="text-2xl font-display font-bold text-foreground">{value}</p>
+      {subtext && <p className="text-xs text-muted-foreground mt-1">{subtext}</p>}
+    </div>
   );
 }
 
 export function SectionHeader({ title, description, action }) {
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between mb-6">
       <div>
-        <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
-        {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
+        <h2 className="text-lg font-display font-semibold text-foreground">{title}</h2>
+        {description && <p className="text-sm text-muted-foreground mt-0.5">{description}</p>}
       </div>
       {action}
     </div>
@@ -57,7 +43,7 @@ export function SectionHeader({ title, description, action }) {
 export function Field({ label, children, className = "" }) {
   return (
     <div className={`space-y-2 ${className}`}>
-      <Label>{label}</Label>
+      <Label className="text-sm font-medium">{label}</Label>
       {children}
     </div>
   );
@@ -65,22 +51,33 @@ export function Field({ label, children, className = "" }) {
 
 export function EmptyState({ icon: Icon = Inbox, title, description }) {
   return (
-    <div className="flex min-h-56 flex-col items-center justify-center rounded-lg border border-dashed bg-background p-8 text-center">
-      <Icon className="h-9 w-9 text-muted-foreground" />
-      <p className="mt-3 text-sm font-medium">{title}</p>
-      {description && <p className="mt-1 max-w-md text-sm text-muted-foreground">{description}</p>}
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center mb-4">
+        <Icon className="w-5 h-5 text-muted-foreground/30" />
+      </div>
+      <p className="text-sm font-medium text-foreground">{title}</p>
+      {description && <p className="text-xs text-muted-foreground mt-1 max-w-md">{description}</p>}
     </div>
   );
 }
 
 export function FieldControlMatrix({ title, description, groups, value, onToggle }) {
+  const [open, setOpen] = useState(false);
+
   return (
-    <Card className="rounded-lg shadow-sm">
-      <CardHeader>
-        <CardTitle className="text-base">{title}</CardTitle>
-        {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
-      </CardHeader>
-      <CardContent className="space-y-6">
+    <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-muted/20 transition-colors"
+      >
+        <div>
+          <h3 className="text-base font-display font-semibold text-foreground">{title}</h3>
+          {description && <p className="text-xs text-muted-foreground mt-0.5">{description}</p>}
+        </div>
+        <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && <div className="px-6 py-5 space-y-6 border-t border-border/40">
         {groups.map((group) => {
           const configurableFields = group.fields.filter((field) => !field.adminOnly && field.manageInEmployerForm !== false);
           if (!configurableFields.length) return null;
@@ -88,8 +85,8 @@ export function FieldControlMatrix({ title, description, groups, value, onToggle
           return (
             <section key={group.id} className="space-y-3">
               <div>
-                <h3 className="text-sm font-semibold">{group.title}</h3>
-                {group.description ? <p className="text-xs text-muted-foreground">{group.description}</p> : null}
+                <h4 className="text-sm font-semibold text-foreground">{group.title}</h4>
+                {group.description && <p className="text-xs text-muted-foreground">{group.description}</p>}
               </div>
               <div className="space-y-2">
                 {configurableFields.map((field) => {
@@ -97,18 +94,18 @@ export function FieldControlMatrix({ title, description, groups, value, onToggle
                   return (
                     <div
                       key={field.key}
-                      className="grid gap-3 rounded-lg border p-3 md:grid-cols-[minmax(0,1fr)_110px_110px]"
+                      className="grid gap-3 rounded-lg border border-border/40 bg-muted/20 p-3 md:grid-cols-[minmax(0,1fr)_100px_100px]"
                     >
                       <div>
-                        <p className="text-sm font-medium">{field.label}</p>
-                        <p className="text-xs text-muted-foreground">{field.type.replace(/_/g, " ")}</p>
+                        <p className="text-sm font-medium text-foreground">{field.label}</p>
+                        <p className="text-[0.65rem] text-muted-foreground capitalize">{field.type.replace(/_/g, " ")}</p>
                       </div>
                       <div className="flex items-center justify-between gap-2 md:justify-self-end">
-                        <Label>Visible</Label>
+                        <Label className="text-xs">Visible</Label>
                         <Switch checked={Boolean(control.visible)} onCheckedChange={(checked) => onToggle(field.key, { visible: checked })} />
                       </div>
                       <div className="flex items-center justify-between gap-2 md:justify-self-end">
-                        <Label>Required</Label>
+                        <Label className="text-xs">Required</Label>
                         <Switch
                           checked={Boolean(control.required)}
                           disabled={field.supportsRequired === false || !control.visible}
@@ -122,7 +119,7 @@ export function FieldControlMatrix({ title, description, groups, value, onToggle
             </section>
           );
         })}
-      </CardContent>
-    </Card>
+      </div>}
+    </div>
   );
 }

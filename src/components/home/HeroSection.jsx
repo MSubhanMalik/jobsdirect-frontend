@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, MapPin, ArrowRight, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { LOCATION_OPTIONS } from "@/lib/siteSettings";
 
 export default function HeroSection() {
   const navigate = useNavigate();
@@ -126,14 +127,21 @@ export default function HeroSection() {
               </div>
 
               {/* Location */}
-              <div className="relative flex-1 flex items-center">
-                <MapPin className="absolute left-4 w-[1.1rem] h-[1.1rem] text-muted-foreground/50 z-10" />
-                <Input
-                  placeholder="City or county"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  className="border-0 bg-transparent shadow-none focus-visible:ring-0 h-12 pl-11 text-[0.95rem] placeholder:text-muted-foreground/50"
-                />
+              <div className="flex-1">
+                <Select value={location || "all"} onValueChange={(v) => setLocation(v === "all" ? "" : v)}>
+                  <SelectTrigger className="border-0 bg-transparent shadow-none focus:ring-0 h-12 text-[0.95rem] text-muted-foreground/70">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-[1.1rem] h-[1.1rem] text-muted-foreground/50 shrink-0" />
+                      <SelectValue placeholder="All Locations" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Locations</SelectItem>
+                    {LOCATION_OPTIONS.map((l) => (
+                      <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Divider */}
