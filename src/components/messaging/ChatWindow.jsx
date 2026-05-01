@@ -62,11 +62,13 @@ export default function ChatWindow({ room, currentUserId, isEmployer }) {
     );
   }
 
-  const jobTitle = room.application?.job?.title || "Untitled Listing";
+  const jobTitle = room.application?.job?.title || "Direct Outreach";
   const jobId = room.application?.job?.id;
   const applicationId = room.application?.id || room.applicationId;
   const otherParty = isEmployer
-    ? `${room.application?.user?.firstName || "Candidate"} ${room.application?.user?.lastName || ""}`.trim()
+    ? (room.application 
+        ? `${room.application.user?.firstName || "Candidate"} ${room.application.user?.lastName || ""}`.trim()
+        : `${room.candidate?.firstName || "Candidate"} ${room.candidate?.lastName || ""}`.trim())
     : (room.application?.job?.companyName || "Employer");
 
   return (
@@ -76,9 +78,21 @@ export default function ChatWindow({ room, currentUserId, isEmployer }) {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="font-bold text-sm truncate">{jobTitle}</p>
-            <p className="text-xs text-muted-foreground">{otherParty}</p>
+            <div className="flex flex-col">
+              <p className="text-xs text-muted-foreground">{otherParty}</p>
+              {isEmployer && room.candidate?.email && (
+                <p className="text-[10px] text-muted-foreground/70">{room.candidate.email}</p>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            {isEmployer && room.candidateId && (
+              <Button asChild variant="outline" size="sm" className="h-8 text-xs">
+                <Link to={`/dashboard/cv-search/${room.candidateId}`}>
+                  <FileText className="w-3.5 h-3.5 mr-1.5" /> View Profile
+                </Link>
+              </Button>
+            )}
             {jobId && (
               <Button asChild variant="outline" size="sm" className="h-8 text-xs">
                 <Link to={`/jobs/${jobId}`}>

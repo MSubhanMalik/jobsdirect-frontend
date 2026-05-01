@@ -21,17 +21,41 @@ export default function DashboardMessages() {
       setLoading(false);
       return;
     }
-    messageApiService.getRooms()
-      .then((data) => {
+
+    const params = new URLSearchParams(window.location.search);
+    const candidateId = params.get("candidateId");
+
+    const fetchRooms = async () => {
+      try {
+        let data = await messageApiService.getRooms();
+        
+        // If we have a candidateId, ensure a room exists
+        if (candidateId) {
+          const existing = data.find(r => r.candidateId === candidateId && !r.applicationId);
+          if (existing) {
+            navigate(`/dashboard/messages/${existing.id}`, { replace: true });
+          } else {
+            // Create new room
+            const newRoom = await messageApiService.createRoom({ candidateId });
+            data = [newRoom, ...data];
+            navigate(`/dashboard/messages/${newRoom.id}`, { replace: true });
+          }
+        }
+
         setRooms(data);
         if (roomId && data.length > 0) {
           const room = data.find(r => r.id === roomId);
           if (room) setSelectedRoom(room);
         }
-      })
-      .catch(() => setRooms([]))
-      .finally(() => setLoading(false));
-  }, [roomId, hasProPlan]);
+      } catch (err) {
+        setRooms([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRooms();
+  }, [roomId, hasProPlan, window.location.search]);
 
   const handleRoomSelect = (room) => {
     setSelectedRoom(room);
@@ -74,9 +98,11 @@ export default function DashboardMessages() {
               <p className="p-4 text-sm text-muted-foreground">No conversations yet.</p>
             ) : (
               rooms.map((room) => {
-                const jobTitle = room.application?.job?.title || "Untitled Listing";
+                const jobTitle = room.application?.job?.title || "Direct Outreach";
                 const otherParty = isEmployer
-                  ? `${room.application?.user?.firstName || "Candidate"} ${room.application?.user?.lastName || ""}`.trim()
+                  ? (room.application 
+                      ? `${room.application.user?.firstName || "Candidate"} ${room.application.user?.lastName || ""}`.trim()
+                      : `${room.candidate?.firstName || "Candidate"} ${room.candidate?.lastName || ""}`.trim())
                   : (room.application?.job?.companyName || "Employer");
 
                 return (

@@ -7,10 +7,8 @@ class MessageApiService {
     return Array.isArray(res.data) ? res.data : [];
   }
 
-  async createRoom(applicationId: string): Promise<any> {
-    const res = await axiosInstance.post(api.endpoints.MESSAGE_ROOMS, {
-      applicationId,
-    });
+  async createRoom(payload: { applicationId?: string; candidateId?: string }): Promise<any> {
+    const res = await axiosInstance.post(api.endpoints.MESSAGE_ROOMS, payload);
     return res.data;
   }
 

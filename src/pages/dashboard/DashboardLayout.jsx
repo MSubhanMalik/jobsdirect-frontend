@@ -8,7 +8,7 @@ import employeeService from "@/services/employee";
 import paymentService from "@/services/payment";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LogOut, Home, Briefcase, User, CreditCard, FileText, Send, Settings, MessageSquare, Bookmark, File, Bell } from "lucide-react";
+import { LogOut, Home, Briefcase, User, CreditCard, FileText, Send, Settings, MessageSquare, Bookmark, File, Bell, Search } from "lucide-react";
 import RoleSelector from "@/components/dashboard/RoleSelector";
 import NotificationBell from "@/components/dashboard/NotificationBell";
 
@@ -16,6 +16,7 @@ const employerNav = [
   { id: "overview", label: "Overview", path: "/dashboard", icon: Briefcase },
   { id: "profile", label: "Profile", path: "/dashboard/profile", icon: Settings },
   { id: "jobs", label: "My Jobs", path: "/dashboard/jobs", icon: FileText },
+  { id: "cv-search", label: "CV Database", path: "/dashboard/cv-search", icon: Search },
   { id: "applications", label: "Applications", path: "/dashboard/applications", icon: Send },
   { id: "billing", label: "Billing", path: "/dashboard/billing", icon: CreditCard },
   { id: "messages", label: "Messages", path: "/dashboard/messages", icon: MessageSquare },

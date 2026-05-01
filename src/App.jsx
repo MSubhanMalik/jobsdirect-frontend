@@ -49,6 +49,8 @@ const DashboardBilling = lazy(() => import('./pages/dashboard/DashboardBilling')
 const DashboardMessages = lazy(() => import('./pages/dashboard/DashboardMessages'));
 const DashboardSavedJobs = lazy(() => import('./pages/dashboard/DashboardSavedJobs'));
 const DashboardCVs = lazy(() => import('./pages/dashboard/DashboardCVs'));
+const DashboardCVSearch = lazy(() => import('./pages/dashboard/DashboardCVSearch'));
+const DashboardCandidateDetail = lazy(() => import('./pages/dashboard/DashboardCandidateDetail'));
 const DashboardNotifications = lazy(() => import('./pages/dashboard/NotificationsPage'));
 const DashboardJobAlerts = lazy(() => import('./pages/dashboard/DashboardJobAlerts'));
 
@@ -94,6 +96,8 @@ function App() {
                 <Route path="messages/:roomId" element={<DashboardMessages />} />
                 <Route path="saved" element={<DashboardSavedJobs />} />
                 <Route path="cvs" element={<DashboardCVs />} />
+                <Route path="cv-search" element={<DashboardCVSearch />} />
+                <Route path="cv-search/:id" element={<DashboardCandidateDetail />} />
                 <Route path="alerts" element={<DashboardJobAlerts />} />
                 <Route path="notifications" element={<DashboardNotifications />} />
               </Route>
