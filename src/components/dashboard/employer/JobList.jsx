@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "react-toastify";
-import { Briefcase, Plus, FileText, Clock, CheckCircle, XCircle, Eye, Trash2, Star, Sparkles, Send, Zap } from "lucide-react";
+import { Briefcase, Plus, FileText, Clock, CheckCircle, XCircle, Eye, Trash2, Star, Sparkles, Send, Zap, AlertTriangle, RefreshCw } from "lucide-react";
 import ConfirmDialog from "@/components/ui/confirm-dialog";
 import { useProducts } from "@/hooks/useProducts";
 import ProductIcon from "@/components/products/ProductIcon";
@@ -200,6 +200,16 @@ export default function JobList({ jobs, user, employer, showJobForm, editingJob,
                     )}
                     {job.is_duplicate && (
                       <Badge variant="outline" className="text-xs">Duplicate</Badge>
+                    )}
+                    {job.is_urgent && (
+                      <Badge variant="secondary" className="text-xs gap-1">
+                        <AlertTriangle className="w-3 h-3 text-red-500" /> Urgent
+                      </Badge>
+                    )}
+                    {job.is_auto_renew && (
+                      <Badge variant="secondary" className="text-xs gap-1">
+                        <RefreshCw className="w-3 h-3 text-green-500" /> Auto-Renew
+                      </Badge>
                     )}
                     {timeLeft && (
                       <span className={`text-xs font-medium ${timeLeft === "Expired" ? "text-destructive" : "text-muted-foreground"}`}>

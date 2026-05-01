@@ -1,13 +1,21 @@
 import React from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
-import { CreditCard } from "lucide-react";
-import { useProducts } from "@/hooks/useProducts";
+import { CreditCard, AlertTriangle } from "lucide-react";
+import paymentService from "@/services/payment";
 import CreditBundles from "@/components/products/CreditBundles";
 import SubscriptionPlans from "@/components/products/SubscriptionPlans";
 import TransactionHistory from "@/components/products/TransactionHistory";
 
 export default function BillingTab({ employer, checkoutPlanId, onCheckout, onBillingPortal }) {
-  const { creditBundles, subscriptions } = useProducts();
+  const { data: plans = [] } = useQuery({
+    queryKey: ["payment-plans"],
+    queryFn: () => paymentService.listPlans(),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const creditBundles = plans.filter((p) => p.kind === "credits");
+  const subscriptions = plans.filter((p) => p.kind === "candidate_database");
 
   return (
     <div className="space-y-6">
@@ -38,6 +46,18 @@ export default function BillingTab({ employer, checkoutPlanId, onCheckout, onBil
           </CardContent>
         </Card>
       </div>
+
+      {employer.creditsExpiringSoon > 0 && (
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-bold text-amber-900">Credits Expiring Soon</p>
+            <p className="text-xs text-amber-700">
+              {employer.creditsExpiringSoon} credit{employer.creditsExpiringSoon !== 1 ? "s" : ""} will expire within the next 30 days. Use them before they're lost.
+            </p>
+          </div>
+        </div>
+      )}
 
       <CreditBundles
         plans={creditBundles}

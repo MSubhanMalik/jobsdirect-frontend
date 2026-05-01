@@ -2,9 +2,9 @@ import axiosInstance from "./AxiosService";
 import { api } from "@/config/api";
 
 class CVService {
-  async list(): Promise<any[]> {
+  async list(): Promise<any> {
     const res = await axiosInstance.get(api.endpoints.CVS);
-    return Array.isArray(res.data) ? res.data : [];
+    return res.data; // { cvs: [], plan: string, limits: {} }
   }
 
   async upload(file: File, name?: string): Promise<any> {
@@ -15,8 +15,13 @@ class CVService {
     return res.data;
   }
 
-  async generate(): Promise<any> {
-    const res = await axiosInstance.post(api.endpoints.CV_GENERATE);
+  async generate(opts?: { cvId?: string; templateId?: string }): Promise<any> {
+    const res = await axiosInstance.post(api.endpoints.CV_GENERATE, opts || {});
+    return res.data;
+  }
+
+  async updateContent(id: string, data: Record<string, any>): Promise<any> {
+    const res = await axiosInstance.put(`${api.endpoints.CVS}/${id}/content`, data);
     return res.data;
   }
 

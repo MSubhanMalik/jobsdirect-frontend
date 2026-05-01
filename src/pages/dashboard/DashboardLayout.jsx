@@ -1,14 +1,16 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/authStore";
 import authService from "@/services/auth";
 import employerService from "@/services/employer";
 import employeeService from "@/services/employee";
+import paymentService from "@/services/payment";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LogOut, Briefcase, User, CreditCard, FileText, Send, Settings, MessageSquare, Bookmark, File } from "lucide-react";
+import { LogOut, Home, Briefcase, User, CreditCard, FileText, Send, Settings, MessageSquare, Bookmark, File, Bell } from "lucide-react";
 import RoleSelector from "@/components/dashboard/RoleSelector";
+import NotificationBell from "@/components/dashboard/NotificationBell";
 
 const employerNav = [
   { id: "overview", label: "Overview", path: "/dashboard", icon: Briefcase },
@@ -22,6 +24,7 @@ const employerNav = [
 const employeeNav = [
   { id: "applications", label: "My Applications", path: "/dashboard", icon: Send },
   { id: "saved", label: "Saved Jobs", path: "/dashboard/saved", icon: Bookmark },
+  { id: "alerts", label: "Job Alerts", path: "/dashboard/alerts", icon: Bell },
   { id: "cvs", label: "My CVs", path: "/dashboard/cvs", icon: File },
   { id: "profile", label: "Profile", path: "/dashboard/profile", icon: User },
   { id: "messages", label: "Messages", path: "/dashboard/messages", icon: MessageSquare },
@@ -41,12 +44,14 @@ export default function DashboardLayout() {
     queryKey: ["my-employer", user?.email],
     queryFn: () => employerService.list({ user_email: user.email }),
     enabled: !!user && user.role !== "admin",
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: employeeData, isLoading: employeeLoading } = useQuery({
     queryKey: ["my-employee", user?.email],
     queryFn: () => employeeService.list({ user_email: user.email }),
     enabled: !!user && user.role !== "admin",
+    staleTime: 5 * 60 * 1000,
   });
 
   const [employer, setEmployer] = useState(null);
@@ -61,6 +66,30 @@ export default function DashboardLayout() {
     const items = employeeData?.items || [];
     if (items.length > 0) setEmployee(items[0]);
   }, [employeeData]);
+
+  // Sync employer subscription/credit status from Stripe — once per session
+  const syncedRef = useRef(false);
+  useEffect(() => {
+    if (!employer?.id || syncedRef.current) return;
+    syncedRef.current = true;
+    paymentService.getBalance(employer.id).then((balance) => {
+      if (!balance) return;
+      const updates = {};
+      if (balance.credits !== undefined && balance.credits !== employer.credits) updates.credits = balance.credits;
+      if (balance.candidateDatabaseAccess !== undefined && balance.candidateDatabaseAccess !== employer.candidate_database_access) updates.candidate_database_access = balance.candidateDatabaseAccess;
+      if (balance.candidateDatabaseStatus && balance.candidateDatabaseStatus !== employer.candidate_database_status) updates.candidate_database_status = balance.candidateDatabaseStatus;
+      if (balance.creditsExpiringSoon !== undefined) updates.creditsExpiringSoon = balance.creditsExpiringSoon;
+      if (Object.keys(updates).length) setEmployer((prev) => ({ ...prev, ...updates }));
+    }).catch(() => {});
+  }, [employer?.id]);
+
+  const isEmployer = !!employer;
+  const navItems = isEmployer ? employerNav : employeeNav;
+
+  const outletContext = useMemo(
+    () => ({ user, employer, employee, setEmployer, setEmployee, isEmployer }),
+    [user, employer, employee, isEmployer],
+  );
 
   const loading = authLoading || !user || employerLoading || employeeLoading;
 
@@ -80,11 +109,6 @@ export default function DashboardLayout() {
     }} />;
   }
 
-  const isEmployer = !!employer;
-  const navItems = isEmployer ? employerNav : employeeNav;
-  const activeProfile = isEmployer ? employer : employee;
-  const pathSegment = location.pathname.replace("/dashboard", "").replace(/^\//, "") || "overview";
-
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -97,9 +121,15 @@ export default function DashboardLayout() {
                 {user.firstName} {user.lastName}{employer?.company_name ? ` — ${employer.company_name}` : ""}
               </p>
             </div>
-            <Button variant="ghost" className={`${isEmployer ? "text-primary-foreground/60 hover:text-primary-foreground" : "text-accent-foreground/60 hover:text-accent-foreground"}`} onClick={() => authService.logout("/")}>
-              <LogOut className="w-4 h-4 mr-2" />Logout
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button asChild variant="ghost" className={`${isEmployer ? "text-primary-foreground/60 hover:text-primary-foreground" : "text-accent-foreground/60 hover:text-accent-foreground"}`}>
+                <Link to="/"><Home className="w-4 h-4 mr-2" />Home</Link>
+              </Button>
+              <NotificationBell />
+              <Button variant="ghost" className={`${isEmployer ? "text-primary-foreground/60 hover:text-primary-foreground" : "text-accent-foreground/60 hover:text-accent-foreground"}`} onClick={() => authService.logout("/")}>
+                <LogOut className="w-4 h-4 mr-2" />Logout
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -130,7 +160,7 @@ export default function DashboardLayout() {
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Outlet context={{ user, employer, employee, setEmployer, setEmployee, isEmployer }} />
+        <Outlet context={outletContext} />
       </div>
     </div>
   );

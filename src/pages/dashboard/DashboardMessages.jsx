@@ -1,22 +1,59 @@
 import React, { useEffect, useState } from "react";
-import { useOutletContext } from "react-router-dom";
+import { useOutletContext, useParams, useNavigate, Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
-import { MessageSquare } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { MessageSquare, Briefcase, Lock } from "lucide-react";
 import messageApiService from "@/services/message";
 import ChatWindow from "@/components/messaging/ChatWindow";
 
 export default function DashboardMessages() {
-  const { user } = useOutletContext();
+  const { user, isEmployer, employer } = useOutletContext();
+  const { roomId } = useParams();
+  const navigate = useNavigate();
   const [rooms, setRooms] = useState([]);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const hasProPlan = !isEmployer || employer?.candidate_database_status === "cv_db_pro";
+
   useEffect(() => {
+    if (!hasProPlan) {
+      setLoading(false);
+      return;
+    }
     messageApiService.getRooms()
-      .then(setRooms)
+      .then((data) => {
+        setRooms(data);
+        if (roomId && data.length > 0) {
+          const room = data.find(r => r.id === roomId);
+          if (room) setSelectedRoom(room);
+        }
+      })
       .catch(() => setRooms([]))
       .finally(() => setLoading(false));
-  }, []);
+  }, [roomId, hasProPlan]);
+
+  const handleRoomSelect = (room) => {
+    setSelectedRoom(room);
+    navigate(`/dashboard/messages/${room.id}`);
+  };
+
+  if (!hasProPlan) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-6">
+          <Lock className="w-8 h-8 text-muted-foreground" />
+        </div>
+        <h2 className="text-xl font-bold mb-2">Pro Plan Required</h2>
+        <p className="text-sm text-muted-foreground mb-6 max-w-md">
+          In-platform messaging with candidates is available on the CV Database Pro plan. Upgrade to start conversations directly with applicants.
+        </p>
+        <Button asChild>
+          <Link to="/dashboard/billing">Upgrade to Pro</Link>
+        </Button>
+      </div>
+    );
+  }
 
   if (loading) {
     return <p className="text-sm text-muted-foreground">Loading conversations...</p>;
@@ -36,18 +73,35 @@ export default function DashboardMessages() {
             {rooms.length === 0 ? (
               <p className="p-4 text-sm text-muted-foreground">No conversations yet.</p>
             ) : (
-              rooms.map((room) => (
-                <button
-                  key={room.id}
-                  className={`w-full text-left p-3 hover:bg-muted transition-colors ${selectedRoom?.id === room.id ? "bg-muted" : ""}`}
-                  onClick={() => setSelectedRoom(room)}
-                >
-                  <p className="text-sm font-medium truncate">{room.application?.job?.title || "Conversation"}</p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {room.application?.user?.firstName} {room.application?.user?.lastName}
-                  </p>
-                </button>
-              ))
+              rooms.map((room) => {
+                const jobTitle = room.application?.job?.title || "Untitled Listing";
+                const otherParty = isEmployer
+                  ? `${room.application?.user?.firstName || "Candidate"} ${room.application?.user?.lastName || ""}`.trim()
+                  : (room.application?.job?.companyName || "Employer");
+
+                return (
+                  <button
+                    key={room.id}
+                    className={`w-full text-left p-3 hover:bg-muted transition-colors ${selectedRoom?.id === room.id ? "bg-muted border-l-4 border-l-primary" : "border-l-4 border-l-transparent"}`}
+                    onClick={() => handleRoomSelect(room)}
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                        <Briefcase className="w-4 h-4 text-primary" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex justify-between items-start">
+                          <p className="text-sm font-bold truncate pr-2">{jobTitle}</p>
+                          <span className="text-[10px] text-muted-foreground shrink-0">
+                            {new Date(room.updatedAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground truncate">{otherParty}</p>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })
             )}
           </div>
         </CardContent>
@@ -56,7 +110,7 @@ export default function DashboardMessages() {
       {/* Chat window */}
       <Card className="overflow-hidden">
         <CardContent className="p-0 h-full">
-          <ChatWindow room={selectedRoom} currentUserId={user.id} />
+          <ChatWindow room={selectedRoom} currentUserId={user.id} isEmployer={isEmployer} />
         </CardContent>
       </Card>
     </div>

@@ -41,6 +41,14 @@ class EmployerService {
     const url = api.endpoints.EMPLOYER_DETAIL.replace(":id", id);
     await axiosInstance.delete(url);
   }
+
+  async uploadVerificationDoc(id: string, file: File): Promise<{ verificationDocUrl: string }> {
+    const formData = new FormData();
+    formData.append("file", file);
+    const url = `${api.endpoints.EMPLOYERS}/${id}/verification-doc`;
+    const res = await axiosInstance.post<{ verificationDocUrl: string }>(url, formData);
+    return res.data;
+  }
 }
 
 export default new EmployerService();

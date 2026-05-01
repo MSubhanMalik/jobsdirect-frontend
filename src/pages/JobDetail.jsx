@@ -20,8 +20,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "react-toastify";
 import {
   MapPin, Clock, Building2, Euro, ArrowLeft, Share2, Star,
-  Calendar, Briefcase, Send, CheckCircle, Upload, FileText
+  Calendar, Briefcase, Send, CheckCircle, Upload, FileText, Bookmark
 } from "lucide-react";
+import savedJobService from "@/services/savedJob";
 
 const jobTypeLabels = {
   full_time: "Full Time", part_time: "Part Time", contract: "Contract",
@@ -50,6 +51,7 @@ export default function JobDetail() {
   const [selectedCV, setSelectedCV] = useState("");
   const [guestForm, setGuestForm] = useState({ name: "", email: "", phone: "", county: "", message: "", consent: false });
   const [guestFile, setGuestFile] = useState(null);
+  const [saved, setSaved] = useState(false);
 
   const { data: job, isLoading } = useQuery({
     queryKey: ["job", jobId],
@@ -65,12 +67,13 @@ export default function JobDetail() {
         const empData = await employeeService.list({ user_email: me.email });
         const emps = empData?.items || [];
         if (emps.length > 0) setEmployee(emps[0]);
-        // Load user CVs
+        // Load user CVs and check saved status
         cvService.list().then(setUserCVs).catch(() => {});
         if (jobId) {
           const appData = await applicationService.list({ job_id: jobId, employee_email: me.email });
           const apps = appData?.items || [];
           if (apps.length > 0) setApplied(true);
+          savedJobService.check(jobId).then((res) => setSaved(res.saved)).catch(() => {});
         }
       }
     });
@@ -206,6 +209,20 @@ export default function JobDetail() {
                   >
                     <Send className="w-4 h-4 mr-2" />
                     Apply Now
+                  </Button>
+                )}
+                {user && (
+                  <Button
+                    variant="outline"
+                    className={`w-full ${saved ? "border-accent text-accent" : ""}`}
+                    onClick={async () => {
+                      const result = await savedJobService.toggle(jobId);
+                      setSaved(result.saved);
+                      toast.success(result.saved ? "Job saved" : "Job removed from saved");
+                    }}
+                  >
+                    <Bookmark className={`w-4 h-4 mr-2 ${saved ? "fill-accent" : ""}`} />
+                    {saved ? "Saved" : "Save Job"}
                   </Button>
                 )}
                 <Button variant="outline" className="w-full" onClick={() => {

@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Clock, Building2, Star, Sparkles, Bookmark } from "lucide-react";
+import { MapPin, Clock, Building2, Star, Sparkles, Bookmark, AlertTriangle } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import savedJobService from "@/services/savedJob";
 
@@ -23,9 +23,18 @@ const categoryLabels = {
   legal: "Legal", manufacturing: "Manufacturing", other: "Other",
 };
 
-export default function JobCard({ job }) {
+export default function JobCard({ job, initialSaved = false }) {
   const { isAuthenticated } = useAuthStore();
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved] = useState(initialSaved);
+  const [checking, setChecking] = useState(!initialSaved && isAuthenticated);
+
+  useEffect(() => {
+    if (!isAuthenticated || initialSaved) return;
+    savedJobService.check(job.id)
+      .then((res) => setSaved(res.saved))
+      .catch(() => {})
+      .finally(() => setChecking(false));
+  }, [job.id, isAuthenticated, initialSaved]);
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -52,6 +61,12 @@ export default function JobCard({ job }) {
                   <span className="flex items-center gap-1 text-blue-600 text-xs font-semibold">
                     <Sparkles className="w-3 h-3" />
                     HIGHLIGHTED
+                  </span>
+                )}
+                {job.is_urgent && (
+                  <span className="flex items-center gap-1 text-red-600 text-xs font-semibold">
+                    <AlertTriangle className="w-3 h-3" />
+                    URGENT
                   </span>
                 )}
               </div>

@@ -32,7 +32,7 @@ export default function DashboardSavedJobs() {
       ) : (
         <div className="space-y-4">
           {savedJobs.map((saved) => (
-            saved.job && <JobCard key={saved.id} job={saved.job} />
+            saved.job && <JobCard key={saved.id} job={saved.job} initialSaved={true} />
           ))}
         </div>
       )}

@@ -49,7 +49,7 @@ export default function AdminMessages() {
   };
 
   const filtered = searchRecords(messages, search, [
-    "subject", "sender_name", "sender_email", "body",
+    "subject", "name", "email", "message",
   ]);
 
   const PAGE_SIZE = 20;
@@ -80,12 +80,12 @@ export default function AdminMessages() {
                   <TableCell>
                     <p className="font-medium">{msg.subject || "No subject"}</p>
                     <p className="max-w-xs truncate text-xs text-muted-foreground">
-                      {msg.body || "No content"}
+                      {msg.message || "No content"}
                     </p>
                   </TableCell>
                   <TableCell>
-                    <p className="text-sm">{msg.sender_name || "Unknown"}</p>
-                    <p className="text-xs text-muted-foreground">{msg.sender_email}</p>
+                    <p className="text-sm">{msg.name || "Unknown"}</p>
+                    <p className="text-xs text-muted-foreground">{msg.email}</p>
                   </TableCell>
                   <TableCell>
                     <StatusBadge value={msg.status} />

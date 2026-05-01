@@ -7,9 +7,9 @@ class MessageApiService {
     return Array.isArray(res.data) ? res.data : [];
   }
 
-  async createRoom(applicationId: string, employerId: string, candidateId: string): Promise<any> {
+  async createRoom(applicationId: string): Promise<any> {
     const res = await axiosInstance.post(api.endpoints.MESSAGE_ROOMS, {
-      applicationId, employerId, candidateId,
+      applicationId,
     });
     return res.data;
   }
@@ -17,6 +17,12 @@ class MessageApiService {
   async getMessages(roomId: string, page = 1): Promise<any> {
     const url = api.endpoints.MESSAGE_DETAIL.replace(":roomId", roomId);
     const res = await axiosInstance.get(`${url}?page=${page}`);
+    return res.data;
+  }
+
+  async sendMessage(roomId: string, message: string): Promise<any> {
+    const url = api.endpoints.MESSAGE_DETAIL.replace(":roomId", roomId);
+    const res = await axiosInstance.post(url, { message });
     return res.data;
   }
 }

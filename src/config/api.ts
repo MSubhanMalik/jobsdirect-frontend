@@ -74,7 +74,23 @@ export const api = {
     MESSAGE_ROOMS: "/api/messages/rooms",
     MESSAGE_DETAIL: "/api/messages/:roomId",
 
+    // Notifications
+    NOTIFICATIONS: "/api/notifications",
+    NOTIFICATIONS_READ_ALL: "/api/notifications/read-all",
+    NOTIFICATION_READ: "/api/notifications/:id/read",
+
     // Contact
     CONTACT: "/api/contact",
+
+    // Team
+    TEAM: "/api/team",
+    TEAM_INVITE: "/api/team/invite",
+    TEAM_ACCEPT_INVITE: "/api/team/accept-invite",
+    TEAM_MEMBER_ROLE: "/api/team/:id/role",
+
+    // Job Alerts
+    JOB_ALERTS: "/api/job-alerts",
+    JOB_ALERT_DETAIL: "/api/job-alerts/:id",
+    JOB_ALERT_TOGGLE: "/api/job-alerts/:id/toggle",
   },
 };

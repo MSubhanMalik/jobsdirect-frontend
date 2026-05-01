@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send } from "lucide-react";
+import { Send, Briefcase, FileText, ExternalLink } from "lucide-react";
 import messageApiService from "@/services/message";
 import { joinRoom, sendMessage, onReceiveMessage, onUserTyping, emitTyping } from "@/services/socket";
 
-export default function ChatWindow({ room, currentUserId }) {
+export default function ChatWindow({ room, currentUserId, isEmployer }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(null);
@@ -61,14 +62,39 @@ export default function ChatWindow({ room, currentUserId }) {
     );
   }
 
+  const jobTitle = room.application?.job?.title || "Untitled Listing";
+  const jobId = room.application?.job?.id;
+  const applicationId = room.application?.id || room.applicationId;
+  const otherParty = isEmployer
+    ? `${room.application?.user?.firstName || "Candidate"} ${room.application?.user?.lastName || ""}`.trim()
+    : (room.application?.job?.companyName || "Employer");
+
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="border-b p-4">
-        <p className="font-semibold text-sm">{room.application?.job?.title || "Conversation"}</p>
-        <p className="text-xs text-muted-foreground">
-          {room.application?.user?.firstName} {room.application?.user?.lastName}
-        </p>
+      <div className="border-b p-4 bg-muted/20">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="font-bold text-sm truncate">{jobTitle}</p>
+            <p className="text-xs text-muted-foreground">{otherParty}</p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {jobId && (
+              <Button asChild variant="outline" size="sm" className="h-8 text-xs">
+                <Link to={`/jobs/${jobId}`}>
+                  <Briefcase className="w-3.5 h-3.5 mr-1.5" /> View Listing
+                </Link>
+              </Button>
+            )}
+            {isEmployer && applicationId && (
+              <Button asChild variant="outline" size="sm" className="h-8 text-xs">
+                <Link to={`/dashboard/applications/${applicationId}`}>
+                  <FileText className="w-3.5 h-3.5 mr-1.5" /> View Application
+                </Link>
+              </Button>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Messages */}

@@ -49,6 +49,8 @@ const DashboardBilling = lazy(() => import('./pages/dashboard/DashboardBilling')
 const DashboardMessages = lazy(() => import('./pages/dashboard/DashboardMessages'));
 const DashboardSavedJobs = lazy(() => import('./pages/dashboard/DashboardSavedJobs'));
 const DashboardCVs = lazy(() => import('./pages/dashboard/DashboardCVs'));
+const DashboardNotifications = lazy(() => import('./pages/dashboard/NotificationsPage'));
+const DashboardJobAlerts = lazy(() => import('./pages/dashboard/DashboardJobAlerts'));
 
 function PageLoader() {
   return (
@@ -89,8 +91,11 @@ function App() {
                 <Route path="applications/:id" element={<DashboardApplicationDetail />} />
                 <Route path="billing" element={<DashboardBilling />} />
                 <Route path="messages" element={<DashboardMessages />} />
+                <Route path="messages/:roomId" element={<DashboardMessages />} />
                 <Route path="saved" element={<DashboardSavedJobs />} />
                 <Route path="cvs" element={<DashboardCVs />} />
+                <Route path="alerts" element={<DashboardJobAlerts />} />
+                <Route path="notifications" element={<DashboardNotifications />} />
               </Route>
 
               {/* Admin */}

@@ -13,7 +13,12 @@ import {
   buildEntityFormValues,
   hasFieldValue,
 } from "@/lib/siteSettings";
-import { Save } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import teamService from "@/services/team";
+import { useAuthStore } from "@/stores/authStore";
+import { Save, ShieldCheck, ShieldAlert, FileUp, CheckCircle, Clock } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const EMPLOYER_VISIBLE_FIELDS = COMPANY_FIELDS.filter((field) => !field.adminOnly && field.manageInEmployerForm !== false);
 
@@ -21,10 +26,27 @@ function createEmployerForm(employer) {
   return buildEntityFormValues(EMPLOYER_FORM_DEFAULTS, EMPLOYER_VISIBLE_FIELDS, employer);
 }
 
+const VERIFICATION_STATUSES = {
+  draft: { label: "Draft", color: "bg-slate-100 text-slate-700", icon: Clock },
+  under_review: { label: "Under Review", color: "bg-amber-100 text-amber-800", icon: Clock },
+  approved: { label: "Approved", color: "bg-green-100 text-green-800", icon: CheckCircle },
+  rejected: { label: "Rejected", color: "bg-red-100 text-red-800", icon: ShieldAlert },
+};
+
 export default function EmployerProfile({ employer, setEmployer }) {
+  const { user } = useAuthStore();
   const { settings: appSettings } = useSiteSettings();
   const [form, setForm] = useState(() => createEmployerForm(employer));
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  
+  const { data: members = [] } = useQuery({
+    queryKey: ["team-members"],
+    queryFn: () => teamService.list(),
+  });
+  const currentMember = members.find((m) => m.userId === user?.id);
+  const isRecruiter = currentMember?.role === "recruiter";
+
   const maxDateOfBirth = getAdultDateMax();
   const companyFormConfig = appSettings?.employer_company_form_config || {};
 
@@ -74,12 +96,102 @@ export default function EmployerProfile({ employer, setEmployer }) {
     }
   };
 
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const { verificationDocUrl } = await employerService.uploadVerificationDoc(employer.id, file);
+      setEmployer({ ...employer, verificationDocUrl, verificationStatus: "under_review" });
+      toast.success("Document uploaded successfully. Your profile is now under review.");
+    } catch (err) {
+      toast.error(err.message || "Failed to upload document");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const status = VERIFICATION_STATUSES[employer.verificationStatus] || VERIFICATION_STATUSES.draft;
+  const StatusIcon = status.icon;
+
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0">
         <CardTitle className="text-lg">Company Profile</CardTitle>
+        <Badge className={`${status.color} border-none flex items-center gap-1.5 px-3 py-1`}>
+          <StatusIcon className="w-3.5 h-3.5" />
+          {status.label}
+        </Badge>
       </CardHeader>
       <CardContent className="space-y-6">
+        {employer.verificationStatus === "draft" && (
+          <Alert className="bg-amber-50 border-amber-200">
+            <ShieldAlert className="h-4 w-4 text-amber-600" />
+            <AlertTitle className="text-amber-800">Verification Required</AlertTitle>
+            <AlertDescription className="text-amber-700 text-xs">
+              To publish jobs, you must upload your Employer Registration Document.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {employer.adminReviewNote && (
+          <Alert variant="destructive" className="bg-red-50 border-red-200">
+            <ShieldAlert className="h-4 w-4" />
+            <AlertTitle>Admin Review Note</AlertTitle>
+            <AlertDescription className="text-xs">
+              {employer.adminReviewNote}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-semibold">Verification Document</h3>
+              <p className="text-xs text-muted-foreground">Upload your Employer Registration No. document (PDF, JPG, PNG)</p>
+            </div>
+            <div className="flex items-center gap-3">
+              {employer.verificationDocUrl && (
+                <Button variant="outline" size="sm" asChild>
+                  <a href={employer.verificationDocUrl} target="_blank" rel="noreferrer">View Current</a>
+                </Button>
+              )}
+              <div className="relative">
+                <input
+                  type="file"
+                  id="verification-doc"
+                  className="hidden"
+                  onChange={handleFileUpload}
+                  accept=".pdf,image/*"
+                  disabled={uploading || employer.verificationStatus === "approved"}
+                />
+                <Button 
+                  variant="secondary" 
+                  size="sm" 
+                  asChild
+                  disabled={uploading || employer.verificationStatus === "approved" || isRecruiter}
+                >
+                  <label htmlFor="verification-doc" className={`${uploading || employer.verificationStatus === "approved" || isRecruiter ? 'cursor-not-allowed' : 'cursor-pointer'} flex items-center gap-2`}>
+                    <FileUp className="w-4 h-4" />
+                    {uploading ? "Uploading..." : "Upload New"}
+                  </label>
+                </Button>
+              </div>
+            </div>
+          </div>
+          {isRecruiter && (
+            <p className="text-[10px] text-muted-foreground mt-1 italic">Only owners and admins can upload verification documents.</p>
+          )}
+          {employer.verificationStatus === "under_review" && (
+            <div className="flex items-center gap-2 text-xs text-amber-700 bg-amber-50 p-2 rounded border border-amber-100">
+              <Clock className="w-3.5 h-3.5" />
+              Your document is currently being reviewed by our team.
+            </div>
+          )}
+        </section>
+
+        <hr className="border-muted" />
         {!visibleGroups.length ? (
           <div className="rounded-lg border border-dashed p-5 text-sm text-muted-foreground">
             All employer company fields are currently hidden. Enable them from Admin Site CMS.
@@ -109,10 +221,18 @@ export default function EmployerProfile({ employer, setEmployer }) {
           </section>
         ))}
 
-        <Button onClick={handleSave} disabled={saving} className="bg-primary hover:bg-primary/90">
-          <Save className="mr-2 h-4 w-4" />
-          {saving ? "Saving..." : "Save Profile"}
-        </Button>
+        {isRecruiter ? (
+          <Alert className="bg-muted border-none">
+            <AlertDescription className="text-xs">
+              You are viewing this profile as a <strong>Recruiter</strong>. Company details and verification can only be modified by the account Owner or Admin.
+            </AlertDescription>
+          </Alert>
+        ) : (
+          <Button onClick={handleSave} disabled={saving} className="bg-primary hover:bg-primary/90">
+            <Save className="mr-2 h-4 w-4" />
+            {saving ? "Saving..." : "Save Profile"}
+          </Button>
+        )}
       </CardContent>
     </Card>
   );

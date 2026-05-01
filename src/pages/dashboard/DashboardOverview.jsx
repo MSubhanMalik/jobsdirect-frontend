@@ -1,5 +1,5 @@
 import React from "react";
-import { useOutletContext } from "react-router-dom";
+import { Link, useOutletContext } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import jobService from "@/services/job";
 import applicationService from "@/services/application";
@@ -10,7 +10,8 @@ import DashboardStats from "@/components/dashboard/employer/DashboardStats";
 import VerificationBanner from "@/components/dashboard/employer/VerificationBanner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Lock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Lock, Send, CheckCircle, Eye, Briefcase } from "lucide-react";
 import { toast } from "react-toastify";
 import employerService from "@/services/employer";
 
@@ -34,9 +35,106 @@ export default function DashboardOverview() {
     const applications = appsData?.items || [];
 
     return (
-      <div>
-        <h2 className="text-lg font-semibold mb-4">Welcome back, {user.firstName}</h2>
-        <p className="text-muted-foreground">You have {applications.length} application{applications.length !== 1 ? "s" : ""}.</p>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-display font-bold">Welcome back, {user.firstName}!</h2>
+            <p className="text-muted-foreground">Here's what's happening with your applications.</p>
+          </div>
+          <Link to="/jobs">
+            <Button className="bg-accent hover:bg-accent/90 text-accent-foreground">
+              <Briefcase className="w-4 h-4 mr-2" /> Browse New Jobs
+            </Button>
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="bg-primary/5 border-primary/10">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Send className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Total Applications</p>
+                  <p className="text-2xl font-bold">{applications.length}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-emerald-50 border-emerald-100">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center">
+                  <CheckCircle className="w-6 h-6 text-emerald-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-emerald-800 uppercase tracking-wider">Shortlisted</p>
+                  <p className="text-2xl font-bold text-emerald-900">
+                    {applications.filter(a => a.status === 'shortlisted').length}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-blue-50 border-blue-100">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                  <Eye className="w-6 h-6 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-blue-800 uppercase tracking-wider">Viewed</p>
+                  <p className="text-2xl font-bold text-blue-900">
+                    {applications.filter(a => a.status === 'viewed').length}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between border-b bg-muted/30">
+            <CardTitle className="text-lg">Recent Applications</CardTitle>
+            <Button asChild variant="ghost" size="sm">
+              <Link to="/dashboard/applications">View All <Send className="w-4 h-4 ml-2" /></Link>
+            </Button>
+          </CardHeader>
+          <CardContent className="p-0">
+            {applications.length === 0 ? (
+              <div className="p-12 text-center text-muted-foreground">
+                <p>You haven't applied to any jobs yet.</p>
+              </div>
+            ) : (
+              <div className="divide-y">
+                {applications.slice(0, 5).map((app) => (
+                  <div key={app.id} className="p-4 flex items-center justify-between hover:bg-muted/30 transition-colors group">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
+                        {app.company_name?.charAt(0) || "J"}
+                      </div>
+                      <div>
+                        <Link to={`/dashboard/applications/${app.id}`} className="font-bold text-sm hover:text-primary transition-colors">
+                          {app.job_title}
+                        </Link>
+                        <p className="text-xs text-muted-foreground">{app.company_name}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <Badge variant="outline" className="text-[10px] capitalize font-medium">{app.status}</Badge>
+                      <Button asChild variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Link to={`/dashboard/applications/${app.id}`}><Eye className="w-4 h-4" /></Link>
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     );
   }
