@@ -20,7 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "react-toastify";
 import {
   MapPin, Clock, Building2, Euro, ArrowLeft, Share2, Star,
-  Calendar, Briefcase, Send, CheckCircle
+  Calendar, Briefcase, Send, CheckCircle, Upload, FileText
 } from "lucide-react";
 
 const jobTypeLabels = {
@@ -49,6 +49,7 @@ export default function JobDetail() {
   const [userCVs, setUserCVs] = useState([]);
   const [selectedCV, setSelectedCV] = useState("");
   const [guestForm, setGuestForm] = useState({ name: "", email: "", phone: "", county: "", message: "", consent: false });
+  const [guestFile, setGuestFile] = useState(null);
 
   const { data: job, isLoading } = useQuery({
     queryKey: ["job", jobId],
@@ -95,7 +96,7 @@ export default function JobDetail() {
       employer_email: job.created_by,
       company_name: job.company_name,
       cover_letter: coverLetter,
-      cv_url: employee.cv_url || "",
+      cv_id: selectedCV !== "none" ? selectedCV : null,
       status: "submitted",
     });
     setApplying(false);
@@ -328,6 +329,32 @@ export default function JobDetail() {
               <Label>Message (optional)</Label>
               <Textarea value={guestForm.message} onChange={(e) => setGuestForm({ ...guestForm, message: e.target.value })} placeholder="Why are you a good fit?" className="min-h-[80px]" />
             </div>
+            <div className="space-y-1">
+              <Label>Attach CV (PDF or Word) *</Label>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full justify-start text-muted-foreground font-normal"
+                  onClick={() => document.getElementById("guest-cv-upload").click()}
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  {guestFile ? guestFile.name : "Choose CV file..."}
+                </Button>
+                <input
+                  id="guest-cv-upload"
+                  type="file"
+                  className="hidden"
+                  accept=".pdf,.doc,.docx"
+                  onChange={(e) => setGuestFile(e.target.files[0])}
+                />
+              </div>
+              {guestFile && (
+                <p className="text-[10px] text-emerald-600 flex items-center gap-1">
+                  <CheckCircle className="w-3 h-3" /> File ready to upload
+                </p>
+              )}
+            </div>
             <label className="flex items-start gap-2 cursor-pointer">
               <Checkbox checked={guestForm.consent} onCheckedChange={(v) => setGuestForm({ ...guestForm, consent: Boolean(v) })} className="mt-0.5" />
               <span className="text-xs text-muted-foreground">I consent to my data being shared with the employer for recruitment purposes.</span>
@@ -337,18 +364,20 @@ export default function JobDetail() {
             <Button variant="outline" onClick={() => setShowGuestApply(false)}>Cancel</Button>
             <Button
               className="bg-accent hover:bg-accent/90 text-accent-foreground"
-              disabled={applying || !guestForm.name || !guestForm.email || !guestForm.phone || !guestForm.consent}
+              disabled={applying || !guestForm.name || !guestForm.email || !guestForm.phone || !guestForm.consent || !guestFile}
               onClick={async () => {
                 setApplying(true);
                 try {
-                  await applicationService.guestApply({
-                    job_id: job.id,
-                    name: guestForm.name,
-                    email: guestForm.email,
-                    phone: guestForm.phone,
-                    county: guestForm.county,
-                    message: guestForm.message,
-                  });
+                  const formData = new FormData();
+                  formData.append("job_id", job.id);
+                  formData.append("name", guestForm.name);
+                  formData.append("email", guestForm.email);
+                  formData.append("phone", guestForm.phone);
+                  formData.append("county", guestForm.county);
+                  formData.append("message", guestForm.message);
+                  if (guestFile) formData.append("file", guestFile);
+
+                  await applicationService.guestApply(formData);
                   setApplied(true);
                   setShowGuestApply(false);
                   toast.success("Application submitted! Create an account to track your application.");

@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import {
@@ -10,7 +11,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Users, FileText, Mail, Phone, CheckCircle, XCircle, Star } from "lucide-react";
+import { Users, FileText, Mail, Phone, CheckCircle, XCircle, Star, Eye } from "lucide-react";
 import applicationService from "@/services/application";
 
 const APPLICATION_STATUSES = [
@@ -73,10 +74,13 @@ export default function ApplicationList({ applications, userEmail }) {
           {applications.map((app) => (
             <TableRow key={app.id} className="hover:bg-muted/30 transition-colors">
               <TableCell className="py-4">
-                <div className="flex flex-col">
-                  <span className="font-bold text-sm">{app.employee_name}</span>
+                <Link to={`/dashboard/applications/${app.id}`} className="flex flex-col group">
+                  <span className="font-bold text-sm group-hover:text-primary transition-colors flex items-center gap-2">
+                    {app.employee_name}
+                    <Eye className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </span>
                   <span className="text-xs text-muted-foreground">{app.employee_email}</span>
-                </div>
+                </Link>
               </TableCell>
               <TableCell className="text-sm font-medium">
                 {app.job_title}

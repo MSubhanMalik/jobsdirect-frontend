@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { useOutletContext } from "react-router-dom";
+import { Link, useOutletContext } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
+import { Eye } from "lucide-react";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -71,8 +72,13 @@ export default function AdminApplications() {
               {filtered.map((app) => (
                 <TableRow key={app.id}>
                   <TableCell>
-                    <p className="font-medium">{app.employee_name || "Unknown"}</p>
-                    <p className="text-xs text-muted-foreground">{app.employee_email}</p>
+                    <Link to={`/admin/applications/${app.id}`} className="group">
+                      <p className="font-medium group-hover:text-primary transition-colors flex items-center gap-2">
+                        {app.employee_name || "Unknown"}
+                        <Eye className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </p>
+                      <p className="text-xs text-muted-foreground">{app.employee_email}</p>
+                    </Link>
                   </TableCell>
                   <TableCell className="text-sm">{app.job_title || "Untitled"}</TableCell>
                   <TableCell className="text-sm">{app.company_name || "Unknown"}</TableCell>

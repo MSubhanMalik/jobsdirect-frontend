@@ -31,10 +31,12 @@ class ApplicationService {
     return res.data;
   }
 
-  async guestApply(payload: Record<string, any>): Promise<any> {
+  async guestApply(payload: Record<string, any> | FormData): Promise<any> {
+    const headers = payload instanceof FormData ? { "Content-Type": "multipart/form-data" } : {};
     const res = await axiosInstance.post(
       api.endpoints.APPLICATION_GUEST,
       payload,
+      { headers }
     );
     return res.data;
   }

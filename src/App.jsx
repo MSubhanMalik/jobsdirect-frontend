@@ -44,6 +44,7 @@ const DashboardOverview = lazy(() => import('./pages/dashboard/DashboardOverview
 const DashboardProfile = lazy(() => import('./pages/dashboard/DashboardProfile'));
 const DashboardJobs = lazy(() => import('./pages/dashboard/DashboardJobs'));
 const DashboardApplications = lazy(() => import('./pages/dashboard/DashboardApplications'));
+const DashboardApplicationDetail = lazy(() => import('./pages/dashboard/DashboardApplicationDetail'));
 const DashboardBilling = lazy(() => import('./pages/dashboard/DashboardBilling'));
 const DashboardMessages = lazy(() => import('./pages/dashboard/DashboardMessages'));
 const DashboardSavedJobs = lazy(() => import('./pages/dashboard/DashboardSavedJobs'));
@@ -85,6 +86,7 @@ function App() {
                 <Route path="profile" element={<DashboardProfile />} />
                 <Route path="jobs" element={<DashboardJobs />} />
                 <Route path="applications" element={<DashboardApplications />} />
+                <Route path="applications/:id" element={<DashboardApplicationDetail />} />
                 <Route path="billing" element={<DashboardBilling />} />
                 <Route path="messages" element={<DashboardMessages />} />
                 <Route path="saved" element={<DashboardSavedJobs />} />
@@ -99,6 +101,7 @@ function App() {
                 <Route path="companies" element={<AdminEmployers />} />
                 <Route path="candidates" element={<AdminEmployees />} />
                 <Route path="applications" element={<AdminApplications />} />
+                <Route path="applications/:id" element={<DashboardApplicationDetail />} />
                 <Route path="messages" element={<AdminMessages />} />
                 <Route path="payments" element={<AdminPayments />} />
                 <Route path="users" element={<AdminUsers />} />
