@@ -37,6 +37,18 @@ const categoryLabels = {
   construction: "Construction", transport: "Transport", admin: "Admin",
   legal: "Legal", manufacturing: "Manufacturing", other: "Other",
 };
+const contractTypeLabels = {
+  permanent_full_time: "Permanent full-time", permanent_part_time: "Permanent part-time",
+  fixed_term: "Fixed term", temporary: "Temporary", contract: "Contract", internship: "Internship",
+};
+const careerLevelLabels = {
+  not_required: "Not required", entry_level: "Entry level", junior: "Junior",
+  mid_level: "Mid level", senior: "Senior", manager: "Manager",
+  director: "Director", executive: "Executive",
+};
+const remoteModeLabels = {
+  on_site: "On-site", hybrid: "Hybrid", remote: "Remote", blended: "Blended",
+};
 
 export default function JobDetail() {
   const { id: jobId } = useParams();
@@ -147,7 +159,7 @@ export default function JobDetail() {
     );
   }
 
-  const hasSalary = job.salary_min || job.salary_max;
+  const hasSalary = job.salary_mode !== "not_specified" && (job.salary_min || job.salary_max);
 
   return (
     <div className="min-h-screen bg-background">
@@ -218,17 +230,36 @@ export default function JobDetail() {
                 <Clock className="w-3 h-3 mr-1.5" />
                 {jobTypeLabels[job.job_type] || job.job_type}
               </Badge>
+              {job.contract_type && (
+                <Badge variant="secondary" className="text-xs font-medium rounded-full px-3 py-1">
+                  <FileText className="w-3 h-3 mr-1.5" />
+                  {contractTypeLabels[job.contract_type] || job.contract_type}
+                </Badge>
+              )}
               {job.category && (
                 <Badge variant="secondary" className="text-xs font-medium rounded-full px-3 py-1">
                   <Briefcase className="w-3 h-3 mr-1.5" />
                   {categoryLabels[job.category] || job.category}
                 </Badge>
               )}
+              {job.career_level && job.career_level !== "not_required" && (
+                <Badge variant="secondary" className="text-xs font-medium rounded-full px-3 py-1">
+                  <ArrowUpRight className="w-3 h-3 mr-1.5" />
+                  {careerLevelLabels[job.career_level] || job.career_level}
+                </Badge>
+              )}
               {hasSalary && (
                 <Badge className="bg-accent/10 text-accent border-0 text-xs font-semibold rounded-full px-3 py-1">
                   <Euro className="w-3 h-3 mr-1" />
-                  €{job.salary_min?.toLocaleString()}{job.salary_max ? `–€${job.salary_max.toLocaleString()}` : "+"}
+                  {job.salary_min && `€${job.salary_min.toLocaleString()}`}
+                  {job.salary_max ? ` – €${job.salary_max.toLocaleString()}` : (job.salary_min ? "+" : "")}
                   {job.salary_period && <span className="font-normal ml-1">/{job.salary_period}</span>}
+                </Badge>
+              )}
+              {job.cv_required && (
+                <Badge variant="outline" className="text-xs font-medium rounded-full px-3 py-1 border-accent/30 text-accent">
+                  <FileText className="w-3 h-3 mr-1.5" />
+                  CV Required
                 </Badge>
               )}
             </div>
@@ -248,6 +279,11 @@ export default function JobDetail() {
           >
             {/* Description */}
             <div>
+              {job.short_description && (
+                <p className="text-lg text-foreground font-medium mb-6 border-l-4 border-accent pl-4 py-1 italic">
+                  {job.short_description}
+                </p>
+              )}
               <h2 className="text-base font-display font-semibold text-foreground mb-4">Job Description</h2>
               <div className="prose prose-sm max-w-none text-muted-foreground leading-relaxed whitespace-pre-wrap">
                 {job.description}
@@ -330,7 +366,8 @@ export default function JobDetail() {
                     <Euro className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
                     <div>
                       <p className="text-sm font-medium text-foreground">
-                        €{job.salary_min?.toLocaleString()}{job.salary_max ? ` – €${job.salary_max.toLocaleString()}` : "+"}
+                        {job.salary_min && `€${job.salary_min.toLocaleString()}`}
+                        {job.salary_max ? ` – €${job.salary_max.toLocaleString()}` : (job.salary_min ? "+" : "")}
                       </p>
                       <p className="text-xs text-muted-foreground">per {job.salary_period || "year"}</p>
                     </div>
@@ -347,15 +384,79 @@ export default function JobDetail() {
                   <Clock className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
                   <div>
                     <p className="text-sm font-medium text-foreground">{jobTypeLabels[job.job_type] || job.job_type}</p>
+                    {job.hours_per_week && <p className="text-sm text-foreground mt-0.5">{job.hours_per_week} hours/week</p>}
                     <p className="text-xs text-muted-foreground">Employment type</p>
                   </div>
                 </div>
+                {job.contract_type && (
+                  <div className="flex items-start gap-3">
+                    <FileText className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{contractTypeLabels[job.contract_type] || job.contract_type}</p>
+                      <p className="text-xs text-muted-foreground">Contract type</p>
+                    </div>
+                  </div>
+                )}
+                {job.remote_work_mode && (
+                  <div className="flex items-start gap-3">
+                    <MapPin className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{remoteModeLabels[job.remote_work_mode] || job.remote_work_mode}</p>
+                      <p className="text-xs text-muted-foreground">Work mode</p>
+                    </div>
+                  </div>
+                )}
                 {job.category && (
                   <div className="flex items-start gap-3">
                     <Briefcase className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
                     <div>
                       <p className="text-sm font-medium text-foreground">{categoryLabels[job.category] || job.category}</p>
                       <p className="text-xs text-muted-foreground">Category</p>
+                    </div>
+                  </div>
+                )}
+                {job.sector && (
+                  <div className="flex items-start gap-3">
+                    <Briefcase className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{job.sector}</p>
+                      <p className="text-xs text-muted-foreground">Sector</p>
+                    </div>
+                  </div>
+                )}
+                {job.branch_name && (
+                  <div className="flex items-start gap-3">
+                    <Building2 className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{job.branch_name}</p>
+                      <p className="text-xs text-muted-foreground">Hiring Team / Branch</p>
+                    </div>
+                  </div>
+                )}
+                {job.career_level && job.career_level !== "not_required" && (
+                  <div className="flex items-start gap-3">
+                    <ArrowUpRight className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{careerLevelLabels[job.career_level] || job.career_level}</p>
+                      <p className="text-xs text-muted-foreground">Career level</p>
+                    </div>
+                  </div>
+                )}
+                {job.positions_count > 1 && (
+                  <div className="flex items-start gap-3">
+                    <Users className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{job.positions_count} positions</p>
+                      <p className="text-xs text-muted-foreground">Available roles</p>
+                    </div>
+                  </div>
+                )}
+                {job.job_start_date && (
+                  <div className="flex items-start gap-3">
+                    <Calendar className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{new Date(job.job_start_date).toLocaleDateString("en-IE", { day: "numeric", month: "short", year: "numeric" })}</p>
+                      <p className="text-xs text-muted-foreground">Start date</p>
                     </div>
                   </div>
                 )}
