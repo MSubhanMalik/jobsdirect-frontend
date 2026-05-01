@@ -173,7 +173,7 @@ export default function DashboardLayout() {
                   <Home className="w-4 h-4" />
                 </Button>
               </Link>
-              <NotificationBell />
+              <NotificationBell className="text-primary-foreground/40 hover:text-primary-foreground hover:bg-primary-foreground/5 w-8 h-8 rounded-lg" />
               <Button
                 variant="ghost"
                 size="sm"

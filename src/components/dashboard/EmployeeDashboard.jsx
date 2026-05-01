@@ -81,7 +81,7 @@ export default function EmployeeDashboard({ user, employee, setEmployee }) {
                   <Home className="w-4 h-4" />
                 </Button>
               </Link>
-              <NotificationBell />
+              <NotificationBell className="text-primary-foreground/40 hover:text-primary-foreground hover:bg-primary-foreground/5 w-9 h-9 rounded-xl" />
               <Button
                 variant="ghost"
                 size="sm"

@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Bell, CheckCheck, MessageSquare, Briefcase, Info } from "lucide-react";
 import notificationService from "@/services/notification";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,7 +28,7 @@ function timeAgo(date) {
   return new Date(date).toLocaleDateString();
 }
 
-export default function NotificationBell() {
+export default function NotificationBell({ className }) {
   const queryClient = useQueryClient();
 
   const { data: notificationsData } = useQuery({
@@ -50,7 +51,7 @@ export default function NotificationBell() {
         <Button
           variant="ghost"
           size="icon"
-          className="relative text-inherit hover:bg-white/10"
+          className={cn("relative text-inherit", className)}
         >
           <Bell className="w-5 h-5" />
           {unreadCount > 0 && (
