@@ -79,21 +79,7 @@ export default function DashboardOverview() {
             </CardContent>
           </Card>
 
-          <Card className="bg-blue-50 border-blue-100">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                  <Eye className="w-6 h-6 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-blue-800 uppercase tracking-wider">Viewed</p>
-                  <p className="text-2xl font-bold text-blue-900">
-                    {applications.filter(a => a.status === 'viewed').length}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+
         </div>
 
         <Card>

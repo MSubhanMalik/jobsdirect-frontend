@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useOutletContext } from "react-router-dom";
+import { useOutletContext, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import jobAlertService from "@/services/jobAlert";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,7 @@ const jobTypeOptions = [
 
 export default function DashboardJobAlerts() {
   const { user } = useOutletContext();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ keyword: "", location: "any", category: "any", jobType: "any", frequency: "daily" });
@@ -141,6 +142,21 @@ export default function DashboardJobAlerts() {
                     title={alert.isActive ? "Pause" : "Resume"}
                   >
                     {alert.isActive ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs px-3"
+                    onClick={() => {
+                      const params = new URLSearchParams();
+                      if (alert.keyword) params.set("keyword", alert.keyword);
+                      if (alert.location) params.set("location", alert.location);
+                      if (alert.category) params.set("category", alert.category);
+                      if (alert.jobType) params.set("type", alert.jobType);
+                      navigate(`/jobs?${params.toString()}`);
+                    }}
+                  >
+                    View Jobs
                   </Button>
                   <Button
                     variant="ghost"
