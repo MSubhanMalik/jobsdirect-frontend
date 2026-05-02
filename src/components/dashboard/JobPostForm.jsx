@@ -194,13 +194,21 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
         title: data.title || current.title,
         description: data.description || current.description,
         short_description: data.short_description || current.short_description,
+        company_name: data.company_name || current.company_name,
         location: data.location || current.location,
+        city_town: data.city_town || current.city_town,
         job_type: data.job_type || current.job_type,
-        category: data.category || current.category,
+        contract_type: data.contract_type || current.contract_type,
+        career_level: data.career_level || current.career_level,
+        sector: data.sector || current.sector,
         country: data.country || current.country,
         salary_min: data.salary_min ?? current.salary_min,
         salary_max: data.salary_max ?? current.salary_max,
         salary_period: data.salary_period || current.salary_period,
+        hours_per_week: data.hours_per_week ?? current.hours_per_week,
+        positions_count: data.positions_count ?? current.positions_count,
+        source_url: data.source_url || current.source_url,
+        jobsireland_ref: data.jobsireland_ref || current.jobsireland_ref,
       }));
       setScraped(true);
       toast.success("Job details imported! Review and edit before submitting.");

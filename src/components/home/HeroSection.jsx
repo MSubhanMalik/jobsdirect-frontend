@@ -7,6 +7,7 @@ import { Search, MapPin, ArrowRight, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { LOCATION_OPTIONS } from "@/lib/siteSettings";
+import SearchableSelect from "@/components/ui/searchable-select";
 
 export default function HeroSection() {
   const navigate = useNavigate();
@@ -128,20 +129,14 @@ export default function HeroSection() {
 
               {/* Location */}
               <div className="flex-1">
-                <Select value={location || "all"} onValueChange={(v) => setLocation(v === "all" ? "" : v)}>
-                  <SelectTrigger className="border-0 bg-transparent shadow-none focus:ring-0 h-12 text-[0.95rem] text-muted-foreground/70">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="w-[1.1rem] h-[1.1rem] text-muted-foreground/50 shrink-0" />
-                      <SelectValue placeholder="All Locations" />
-                    </div>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Locations</SelectItem>
-                    {LOCATION_OPTIONS.map((l) => (
-                      <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <SearchableSelect
+                  options={[{ value: "", label: "All Locations" }, ...LOCATION_OPTIONS]}
+                  value={location || ""}
+                  onValueChange={(v) => setLocation(v)}
+                  placeholder="All Locations"
+                  searchPlaceholder="Search location..."
+                  className="border-0 bg-transparent shadow-none focus:ring-0 h-12 text-[0.95rem]"
+                />
               </div>
 
               {/* Divider */}

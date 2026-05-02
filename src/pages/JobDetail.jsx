@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { LOCATION_OPTIONS } from "@/lib/siteSettings";
+import SearchableSelect from "@/components/ui/searchable-select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "react-toastify";
 import { motion } from "framer-motion";
@@ -316,17 +317,36 @@ export default function JobDetail() {
                     <p className="text-xs text-emerald-700 mt-0.5">The employer will review your application.</p>
                   </div>
                 </div>
+              ) : user && user.email === job.created_by ? (
+                <div className="rounded-xl border border-border/50 bg-muted/30 p-4 text-center">
+                  <p className="text-sm text-muted-foreground">This is your listing</p>
+                </div>
               ) : (
-                <Button
-                  className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold rounded-xl h-12 text-[0.95rem]"
-                  onClick={() => {
-                    if (!user) { setShowGuestApply(true); return; }
-                    setShowApply(true);
-                  }}
-                >
-                  <Send className="w-4 h-4 mr-2" />
-                  Apply Now
-                </Button>
+                <>
+                  <Button
+                    className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold rounded-xl h-12 text-[0.95rem]"
+                    onClick={() => {
+                      if (!user) { setShowGuestApply(true); return; }
+                      setShowApply(true);
+                    }}
+                  >
+                    <Send className="w-4 h-4 mr-2" />
+                    Apply Now
+                  </Button>
+                  {!user && (
+                    <div className="mt-3 space-y-2">
+                      <a
+                        href={`/auth?redirect=${encodeURIComponent(`/jobs/${jobId}`)}`}
+                        className="flex items-center justify-center gap-2 w-full h-10 rounded-xl border border-foreground/20 text-sm font-semibold text-foreground hover:bg-foreground hover:text-background transition-colors"
+                      >
+                        Sign in to apply & track
+                      </a>
+                      <p className="text-center text-xs text-muted-foreground">
+                        No account? <button type="button" onClick={() => setShowGuestApply(true)} className="text-muted-foreground hover:text-foreground underline">apply as guest</button>
+                      </p>
+                    </div>
+                  )}
+                </>
               )}
 
               <div className="flex gap-2">
@@ -509,7 +529,7 @@ export default function JobDetail() {
             </DialogHeader>
           </div>
 
-          <div className="p-6 space-y-6">
+          <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {employee && (
               <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 border border-border/50">
                 <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center text-[10px] font-bold text-accent">
@@ -611,7 +631,7 @@ export default function JobDetail() {
             </DialogHeader>
           </div>
 
-          <div className="max-h-[70vh] overflow-y-auto p-6 space-y-6">
+          <div className="flex-1 overflow-y-auto p-6 space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="text-[0.8rem] font-semibold uppercase tracking-wider text-muted-foreground">Full Name *</Label>
@@ -643,16 +663,13 @@ export default function JobDetail() {
               </div>
               <div className="space-y-2">
                 <Label className="text-[0.8rem] font-semibold uppercase tracking-wider text-muted-foreground">County</Label>
-                <Select value={guestForm.county} onValueChange={(v) => setGuestForm({ ...guestForm, county: v })}>
-                  <SelectTrigger className="h-12 rounded-xl border-border/60 focus:ring-accent/20">
-                    <SelectValue placeholder="Select county" />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl">
-                    {LOCATION_OPTIONS.map((l) => (
-                      <SelectItem key={l.value} value={l.value} className="rounded-lg">{l.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <SearchableSelect
+                  options={LOCATION_OPTIONS}
+                  value={guestForm.county || ""}
+                  onValueChange={(v) => setGuestForm({ ...guestForm, county: v })}
+                  placeholder="Select county"
+                  searchPlaceholder="Search county..."
+                />
               </div>
             </div>
 

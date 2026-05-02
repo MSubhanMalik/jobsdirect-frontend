@@ -5,6 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Search, X } from "lucide-react";
 import { CATEGORY_OPTIONS, JOB_TYPE_OPTIONS, LOCATION_OPTIONS } from "@/lib/siteSettings";
+import SearchableSelect from "@/components/ui/searchable-select";
 
 export default function JobFilters({ filters, onChange, onClear }) {
   const hasFilters = filters.keyword || filters.location || filters.type || filters.category || filters.is_featured || filters.is_highlighted || filters.is_urgent;
@@ -31,17 +32,14 @@ export default function JobFilters({ filters, onChange, onClear }) {
 
         {/* Location */}
         <div className="flex-1">
-          <Select value={filters.location || "all"} onValueChange={(v) => onChange({ ...filters, location: v === "all" ? "" : v })}>
-            <SelectTrigger className="border-0 bg-transparent shadow-none focus:ring-0 h-12 text-[0.95rem] text-muted-foreground/70">
-              <SelectValue placeholder="All Locations" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Locations</SelectItem>
-              {LOCATION_OPTIONS.map((l) => (
-                <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <SearchableSelect
+            options={[{ value: "", label: "All Locations" }, ...LOCATION_OPTIONS]}
+            value={filters.location || ""}
+            onValueChange={(v) => onChange({ ...filters, location: v })}
+            placeholder="All Locations"
+            searchPlaceholder="Search location..."
+            className="border-0 bg-transparent shadow-none focus:ring-0 h-12 text-[0.95rem]"
+          />
         </div>
 
         {/* Divider */}

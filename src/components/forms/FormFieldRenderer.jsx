@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import PhoneField from "@/components/ui/phone-input";
+import SearchableSelect from "@/components/ui/searchable-select";
 
 export default function FormFieldRenderer({ field, value, onChange, required = false, disabled = false, inputRef = null }) {
   const wrapperClassName = field.span === 2 ? "sm:col-span-2" : "";
@@ -41,7 +42,16 @@ export default function FormFieldRenderer({ field, value, onChange, required = f
         />
       ) : null}
 
-      {field.type === "select" ? (
+      {field.type === "select" && field.searchable ? (
+        <SearchableSelect
+          options={field.options || []}
+          value={value || ""}
+          onValueChange={onChange}
+          placeholder={field.placeholder || `Select ${field.label.toLowerCase()}`}
+          searchPlaceholder={`Search ${field.label.toLowerCase()}...`}
+          disabled={disabled}
+        />
+      ) : field.type === "select" ? (
         <Select
           value={value || undefined}
           onValueChange={onChange}

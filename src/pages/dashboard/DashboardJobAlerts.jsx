@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "react-toastify";
 import { Bell, Plus, Trash2, Pause, Play, MapPin, Search, Briefcase, ArrowRight, Loader2 } from "lucide-react";
 import { LOCATION_OPTIONS } from "@/lib/siteSettings";
+import SearchableSelect from "@/components/ui/searchable-select";
 
 const categoryOptions = [
   { value: "technology", label: "Technology" }, { value: "healthcare", label: "Healthcare" },
@@ -187,13 +188,14 @@ export default function DashboardJobAlerts() {
             </div>
             <div className="space-y-1.5">
               <Label className="text-sm font-medium">Location</Label>
-              <Select value={form.location} onValueChange={(v) => setForm({ ...form, location: v })}>
-                <SelectTrigger className="h-11"><SelectValue placeholder="Any location" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="any">Any location</SelectItem>
-                  {LOCATION_OPTIONS.map((l) => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <SearchableSelect
+                options={[{ value: "any", label: "Any location" }, ...LOCATION_OPTIONS]}
+                value={form.location || "any"}
+                onValueChange={(v) => setForm({ ...form, location: v })}
+                placeholder="Any location"
+                searchPlaceholder="Search location..."
+                className="h-11"
+              />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">

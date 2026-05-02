@@ -13,6 +13,7 @@ import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Save, Plus, Trash2 } from "lucide-react";
 import PhoneField from "@/components/ui/phone-input";
+import SearchableSelect from "@/components/ui/searchable-select";
 
 function normalizeStringArray(value) {
   if (Array.isArray(value)) return value;
@@ -96,6 +97,17 @@ function FieldRenderer({ field, value, onChange }) {
         />
       );
     case "select":
+      if (field.searchable) {
+        return (
+          <SearchableSelect
+            options={field.options || []}
+            value={value || ""}
+            onValueChange={onChange}
+            placeholder={`Select ${field.label.toLowerCase()}`}
+            searchPlaceholder={`Search ${field.label.toLowerCase()}...`}
+          />
+        );
+      }
       return (
         <Select value={value || ""} onValueChange={onChange}>
           <SelectTrigger><SelectValue placeholder={`Select ${field.label.toLowerCase()}`} /></SelectTrigger>

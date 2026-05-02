@@ -90,36 +90,9 @@ export const APPLICATION_METHOD_OPTIONS = [
   { value: "external", label: "External URL" },
 ];
 
-export const LOCATION_OPTIONS = [
-  { value: "Dublin", label: "Dublin" },
-  { value: "Cork", label: "Cork" },
-  { value: "Galway", label: "Galway" },
-  { value: "Limerick", label: "Limerick" },
-  { value: "Waterford", label: "Waterford" },
-  { value: "Kilkenny", label: "Kilkenny" },
-  { value: "Carlow", label: "Carlow" },
-  { value: "Cavan", label: "Cavan" },
-  { value: "Clare", label: "Clare" },
-  { value: "Donegal", label: "Donegal" },
-  { value: "Kerry", label: "Kerry" },
-  { value: "Kildare", label: "Kildare" },
-  { value: "Laois", label: "Laois" },
-  { value: "Leitrim", label: "Leitrim" },
-  { value: "Longford", label: "Longford" },
-  { value: "Louth", label: "Louth" },
-  { value: "Mayo", label: "Mayo" },
-  { value: "Meath", label: "Meath" },
-  { value: "Monaghan", label: "Monaghan" },
-  { value: "Offaly", label: "Offaly" },
-  { value: "Roscommon", label: "Roscommon" },
-  { value: "Sligo", label: "Sligo" },
-  { value: "Tipperary", label: "Tipperary" },
-  { value: "Westmeath", label: "Westmeath" },
-  { value: "Wexford", label: "Wexford" },
-  { value: "Wicklow", label: "Wicklow" },
-  { value: "Remote", label: "Remote (Ireland)" },
-  { value: "Nationwide", label: "Nationwide" },
-];
+import { LOCATION_OPTIONS as _LOCATION_OPTIONS, COUNTY_OPTIONS as _COUNTY_OPTIONS } from "./locations";
+export const LOCATION_OPTIONS = _LOCATION_OPTIONS;
+export const COUNTY_OPTIONS = _COUNTY_OPTIONS;
 
 export const REMOTE_WORK_MODE_OPTIONS = [
   { value: "on_site", label: "On-site" },
@@ -255,7 +228,7 @@ export const JOB_FIELD_GROUPS = [
     title: "Location And Schedule",
     description: "Where and how the role is worked.",
     fields: [
-      field("location", { label: "County / City", type: "select", options: LOCATION_OPTIONS, defaultValue: "", employerDefaultVisible: true, employerDefaultRequired: true }),
+      field("location", { label: "County / City", type: "select", options: LOCATION_OPTIONS, defaultValue: "", employerDefaultVisible: true, employerDefaultRequired: true, searchable: true }),
       field("country", { label: "Country", type: "text", defaultValue: "Ireland", employerDefaultVisible: false }),
       field("job_start_date", { label: "Start Date", type: "date", defaultValue: "", employerDefaultVisible: false }),
       field("hours_per_week", { label: "Hours Per Week", type: "number", defaultValue: "", employerDefaultVisible: false }),
@@ -364,7 +337,7 @@ export const EMPLOYEE_FIELD_GROUPS = [
       field("title", { label: "Job Title / Role", type: "text", defaultValue: "", employerDefaultVisible: true, placeholder: "e.g. Software Developer" }),
       field("gender", { label: "Gender", type: "select", options: GENDER_OPTIONS, defaultValue: "", employerDefaultVisible: true }),
       field("nationality", { label: "Nationality", type: "text", defaultValue: "", employerDefaultVisible: true, placeholder: "e.g. Irish" }),
-      field("county", { label: "County", type: "select", options: LOCATION_OPTIONS.filter(o => o.value !== "Remote" && o.value !== "Nationwide"), defaultValue: "", employerDefaultVisible: true }),
+      field("county", { label: "County", type: "select", options: COUNTY_OPTIONS, defaultValue: "", employerDefaultVisible: true, searchable: true }),
       field("address", { label: "Address", type: "text", defaultValue: "", employerDefaultVisible: true, span: 2 }),
       field("right_to_work", { label: "Right to Work", type: "select", options: RIGHT_TO_WORK_OPTIONS, defaultValue: "", employerDefaultVisible: true }),
       field("driving_licence", { label: "Driving Licence", type: "select", options: DRIVING_LICENCE_OPTIONS, defaultValue: "none", employerDefaultVisible: true }),
