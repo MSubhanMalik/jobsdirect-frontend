@@ -12,9 +12,9 @@ class MessageApiService {
     return res.data;
   }
 
-  async getMessages(roomId: string, page = 1): Promise<any> {
+  async getMessages(roomId: string, { page = 1, pageSize = 50 } = {}): Promise<any> {
     const url = api.endpoints.MESSAGE_DETAIL.replace(":roomId", roomId);
-    const res = await axiosInstance.get(`${url}?page=${page}`);
+    const res = await axiosInstance.get(`${url}?page=${page}&pageSize=${pageSize}`);
     return res.data;
   }
 

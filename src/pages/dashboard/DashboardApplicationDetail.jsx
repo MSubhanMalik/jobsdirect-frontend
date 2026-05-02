@@ -62,7 +62,7 @@ export default function DashboardApplicationDetail() {
   const handleStartChat = async () => {
     if (!app) return;
     try {
-      const room = await messageService.createRoom(app.id);
+      const room = await messageService.createRoom({ applicationId: app.id });
       setActiveRoom(room);
       navigate(`/dashboard/messages/${room.id}`);
     } catch { toast.error("Failed to start chat"); }
@@ -185,16 +185,16 @@ export default function DashboardApplicationDetail() {
             </div>
           </div>
 
-          {/* Documents */}
-          {app.documents?.length > 0 && (
-            <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
-              <div className="px-6 py-4 border-b border-border/40">
-                <h2 className="text-base font-display font-semibold text-foreground flex items-center gap-2">
-                  <Download className="w-4 h-4 text-muted-foreground" /> Documents
-                </h2>
-              </div>
-              <div className="px-6 py-5 space-y-3">
-                {app.documents.map((doc) => (
+          {/* CV & Documents */}
+          <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
+            <div className="px-6 py-4 border-b border-border/40">
+              <h2 className="text-base font-display font-semibold text-foreground flex items-center gap-2">
+                <Download className="w-4 h-4 text-muted-foreground" /> CV & Documents
+              </h2>
+            </div>
+            <div className="px-6 py-5 space-y-3">
+              {app.documents?.length > 0 ? (
+                app.documents.map((doc) => (
                   <div key={doc.id} className="flex items-center justify-between p-4 rounded-lg border border-border/40 bg-muted/20">
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="w-9 h-9 rounded-lg bg-accent/[0.08] flex items-center justify-center shrink-0">
@@ -203,20 +203,43 @@ export default function DashboardApplicationDetail() {
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">{doc.name || "Document"}</p>
                         <p className="text-xs text-muted-foreground">
-                          {doc.fileName}{doc.fileSize ? ` · ${Math.round(doc.fileSize / 1024)} KB` : ""}
+                          {doc.file_name || doc.name}{doc.file_size ? ` · ${Math.round(doc.file_size / 1024)} KB` : ""}
                         </p>
                       </div>
                     </div>
-                    <a href={doc.file_url} target="_blank" rel="noopener noreferrer">
-                      <Button size="sm" className="bg-accent hover:bg-accent/90 text-accent-foreground rounded-lg h-8 text-xs font-medium">
-                        <Download className="w-3.5 h-3.5 mr-1" /> View
-                      </Button>
-                    </a>
+                    {doc.file_url ? (
+                      <a href={doc.file_url} target="_blank" rel="noopener noreferrer">
+                        <Button size="sm" className="bg-accent hover:bg-accent/90 text-accent-foreground rounded-lg h-8 text-xs font-medium">
+                          <Download className="w-3.5 h-3.5 mr-1" /> View
+                        </Button>
+                      </a>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">No file</span>
+                    )}
                   </div>
-                ))}
-              </div>
+                ))
+              ) : app.cv_url ? (
+                <div className="flex items-center justify-between p-4 rounded-lg border border-border/40 bg-muted/20">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-9 h-9 rounded-lg bg-accent/[0.08] flex items-center justify-center shrink-0">
+                      <FileText className="w-4 h-4 text-accent" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground">Candidate CV</p>
+                      <p className="text-xs text-muted-foreground">Submitted with application</p>
+                    </div>
+                  </div>
+                  <a href={app.cv_url} target="_blank" rel="noopener noreferrer">
+                    <Button size="sm" className="bg-accent hover:bg-accent/90 text-accent-foreground rounded-lg h-8 text-xs font-medium">
+                      <Download className="w-3.5 h-3.5 mr-1" /> View CV
+                    </Button>
+                  </a>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-4">No CV or documents submitted with this application.</p>
+              )}
             </div>
-          )}
+          </div>
 
           {/* Position */}
           <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
@@ -297,7 +320,7 @@ export default function DashboardApplicationDetail() {
                               {msg.message}
                             </div>
                             <span className="text-[0.6rem] text-muted-foreground mt-1 px-1">
-                              {msg.sender?.first_name || "Candidate"} · {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              {msg.sender?.first_name || "Candidate"} · {new Date(msg.createdAt || msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </span>
                           </div>
                         ))
@@ -349,7 +372,7 @@ export default function DashboardApplicationDetail() {
               )}
               <div className="flex items-center gap-3 text-sm text-muted-foreground">
                 <Calendar className="w-4 h-4 shrink-0" />
-                <span>Applied {new Date(app.created_at).toLocaleDateString("en-IE", { day: "numeric", month: "short", year: "numeric" })}</span>
+                <span>Applied {new Date(app.createdAt || app.created_at).toLocaleDateString("en-IE", { day: "numeric", month: "short", year: "numeric" })}</span>
               </div>
             </div>
           </div>

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import authService from "@/services/auth";
 import applicationService from "@/services/application";
+import cvService from "@/services/cv";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -40,6 +41,12 @@ export default function EmployeeDashboard({ user, employee, setEmployee }) {
     queryFn: () => applicationService.list({ employee_email: user.email, pageSize: 100 }),
   });
   const applications = appsData?.items || [];
+
+  const { data: cvsData } = useQuery({
+    queryKey: ["my-cvs"],
+    queryFn: () => cvService.list(),
+  });
+  const cvCount = Array.isArray(cvsData?.cvs) ? cvsData.cvs.length : (Array.isArray(cvsData) ? cvsData.length : 0);
 
   const shortlisted = applications.filter((a) => a.status === "shortlisted").length;
   const displayName = user.first_name || employee.first_name || "there";
@@ -104,7 +111,7 @@ export default function EmployeeDashboard({ user, employee, setEmployee }) {
             {[
               { label: "Total Applied", value: applications.length, icon: Send },
               { label: "Shortlisted", value: shortlisted, icon: Sparkles },
-              { label: "CVs Uploaded", value: employee.cv_url ? 1 : 0, icon: FileText },
+              { label: "CVs", value: cvCount, icon: FileText },
               { label: "Discoverable", value: employee.is_searchable ? "Yes" : "No", icon: Eye },
             ].map((stat) => (
               <div key={stat.label} className="rounded-xl bg-primary-foreground/[0.05] border border-primary-foreground/[0.06] px-4 py-4">
