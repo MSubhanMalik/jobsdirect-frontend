@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, Loader2, Save, ChevronDown } from "lucide-react";
+import PhoneField from "@/components/ui/phone-input";
 import { SectionHeader, Field, FieldControlMatrix } from "../shared/UIComponents";
 
 function Collapsible({ title, description, children }) {
@@ -189,7 +190,7 @@ export default function AdminSettings() {
         <Collapsible title="Contact & Rules" description="Contact info, publishing toggles" defaultOpen={false}>
           <div className="px-6 py-5 grid gap-4">
             <Field label="Contact email"><Input type="email" value={settingsForm.contact_email} onChange={(e) => set("contact_email", e.target.value)} /></Field>
-            <Field label="Contact phone"><Input value={settingsForm.contact_phone} onChange={(e) => set("contact_phone", e.target.value)} /></Field>
+            <Field label="Contact phone"><PhoneField value={settingsForm.contact_phone} onChange={(val) => set("contact_phone", val)} /></Field>
             <Field label="Office location"><Input value={settingsForm.office_location} onChange={(e) => set("office_location", e.target.value)} /></Field>
             <Field label="Footer blurb"><Textarea className="min-h-24 resize-none" value={settingsForm.footer_blurb} onChange={(e) => set("footer_blurb", e.target.value)} /></Field>
             <div className="pt-2 space-y-3">

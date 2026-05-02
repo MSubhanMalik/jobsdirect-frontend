@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import PhoneField from "@/components/ui/phone-input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
@@ -147,12 +148,9 @@ export default function Contact() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="phone" className="text-sm font-medium">Phone <span className="text-muted-foreground font-normal">(optional)</span></Label>
-                        <Input
-                          id="phone"
+                        <PhoneField
                           value={form.phone}
-                          onChange={(e) => update("phone", e.target.value)}
-                          placeholder="+353..."
-                          className="h-11"
+                          onChange={(val) => update("phone", val)}
                         />
                       </div>
                       <div className="space-y-2">

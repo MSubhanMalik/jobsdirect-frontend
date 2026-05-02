@@ -12,6 +12,7 @@ import { EMPLOYEE_FIELD_GROUPS, hasFieldValue } from "@/lib/siteSettings";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Save, Plus, Trash2 } from "lucide-react";
+import PhoneField from "@/components/ui/phone-input";
 
 function normalizeStringArray(value) {
   if (Array.isArray(value)) return value;
@@ -48,6 +49,14 @@ function FieldRenderer({ field, value, onChange }) {
   const maxDateOfBirth = getAdultDateMax();
 
   switch (field.type) {
+    case "phone":
+      return (
+        <PhoneField
+          value={value || ""}
+          onChange={onChange}
+          placeholder={field.placeholder}
+        />
+      );
     case "text":
     case "email":
     case "url":

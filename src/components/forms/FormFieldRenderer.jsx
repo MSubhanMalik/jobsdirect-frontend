@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import PhoneField from "@/components/ui/phone-input";
 
 export default function FormFieldRenderer({ field, value, onChange, required = false, disabled = false, inputRef = null }) {
   const wrapperClassName = field.span === 2 ? "sm:col-span-2" : "";
@@ -59,7 +60,16 @@ export default function FormFieldRenderer({ field, value, onChange, required = f
         </Select>
       ) : null}
 
-      {field.type !== "textarea" && field.type !== "select" ? (
+      {field.type === "phone" ? (
+        <PhoneField
+          value={value ?? ""}
+          onChange={onChange}
+          placeholder={field.placeholder}
+          disabled={disabled}
+        />
+      ) : null}
+
+      {field.type !== "textarea" && field.type !== "select" && field.type !== "phone" ? (
         <Input
           ref={inputRef}
           type={field.type === "email" || field.type === "number" || field.type === "date" || field.type === "url" ? field.type : "text"}

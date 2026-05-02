@@ -191,12 +191,12 @@ export const COMPANY_FIELD_GROUPS = [
     title: "Contact Channels",
     description: "Public-facing and internal contact options.",
     fields: [
-      field("phone", { label: "Main Phone", type: "text", defaultValue: "", employerDefaultVisible: true, employerDefaultRequired: true }),
+      field("phone", { label: "Main Phone", type: "phone", defaultValue: "", employerDefaultVisible: true, employerDefaultRequired: true }),
       field("website", { label: "Website", type: "url", defaultValue: "", employerDefaultVisible: true, employerDefaultRequired: true }),
       field("primary_phone_type", { label: "Primary Phone Type", type: "select", options: PHONE_TYPE_OPTIONS, defaultValue: "landline", employerDefaultVisible: false }),
-      field("primary_phone", { label: "Primary Phone", type: "text", defaultValue: "", employerDefaultVisible: false }),
+      field("primary_phone", { label: "Primary Phone", type: "phone", defaultValue: "", employerDefaultVisible: false }),
       field("secondary_phone_type", { label: "Secondary Phone Type", type: "select", options: PHONE_TYPE_OPTIONS, defaultValue: "mobile", employerDefaultVisible: false }),
-      field("secondary_phone", { label: "Secondary Phone", type: "text", defaultValue: "", employerDefaultVisible: false }),
+      field("secondary_phone", { label: "Secondary Phone", type: "phone", defaultValue: "", employerDefaultVisible: false }),
       field("fax", { label: "Fax", type: "text", defaultValue: "", employerDefaultVisible: false }),
     ],
   },
@@ -284,7 +284,7 @@ export const JOB_FIELD_GROUPS = [
     fields: [
       field("application_method", { label: "Application Method", type: "select", options: APPLICATION_METHOD_OPTIONS, defaultValue: "platform", employerDefaultVisible: false }),
       field("application_email", { label: "Application Email", type: "email", defaultValue: "", employerDefaultVisible: false }),
-      field("application_phone", { label: "Application Phone", type: "text", defaultValue: "", employerDefaultVisible: false }),
+      field("application_phone", { label: "Application Phone", type: "phone", defaultValue: "", employerDefaultVisible: false }),
       field("application_url", { label: "Application URL", type: "url", defaultValue: "", employerDefaultVisible: false }),
       field("application_postal_address", { label: "Postal Address", type: "textarea", defaultValue: "", employerDefaultVisible: false, span: 2 }),
       field("application_questions_text", { label: "Application Questions", type: "textarea", defaultValue: "", employerDefaultVisible: false, span: 2 }),
@@ -359,7 +359,7 @@ export const EMPLOYEE_FIELD_GROUPS = [
     fields: [
       field("first_name", { label: "First Name", type: "text", defaultValue: "", employerDefaultVisible: true, employerDefaultRequired: true }),
       field("last_name", { label: "Last Name", type: "text", defaultValue: "", employerDefaultVisible: true, employerDefaultRequired: true }),
-      field("phone", { label: "Phone", type: "text", defaultValue: "", employerDefaultVisible: true, placeholder: "+353 87 123 4567" }),
+      field("phone", { label: "Phone", type: "phone", defaultValue: "", employerDefaultVisible: true }),
       field("date_of_birth", { label: "Date of Birth", type: "date", defaultValue: "", employerDefaultVisible: true }),
       field("title", { label: "Job Title / Role", type: "text", defaultValue: "", employerDefaultVisible: true, placeholder: "e.g. Software Developer" }),
       field("gender", { label: "Gender", type: "select", options: GENDER_OPTIONS, defaultValue: "", employerDefaultVisible: true }),

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import PhoneField from "@/components/ui/phone-input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -635,12 +636,9 @@ export default function JobDetail() {
               </div>
               <div className="space-y-2">
                 <Label className="text-[0.8rem] font-semibold uppercase tracking-wider text-muted-foreground">Phone Number *</Label>
-                <Input 
-                  value={guestForm.phone} 
-                  onChange={(e) => setGuestForm({ ...guestForm, phone: e.target.value })} 
-                  placeholder="+353 87 123 4567" 
-                  className="h-12 rounded-xl border-border/60 focus:ring-accent/20 focus:border-accent/50 transition-all" 
-                  required 
+                <PhoneField
+                  value={guestForm.phone}
+                  onChange={(val) => setGuestForm({ ...guestForm, phone: val })}
                 />
               </div>
               <div className="space-y-2">
