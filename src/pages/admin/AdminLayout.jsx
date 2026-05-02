@@ -4,8 +4,7 @@ import { motion } from "framer-motion";
 import authService from "@/services/auth";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LogOut, Search, ChevronRight } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { LogOut, ChevronRight } from "lucide-react";
 import { ADMIN_ROLES, navItems } from "@/components/admin/shared/constants";
 import AdminEditor, { useAdminEditor } from "@/components/admin/AdminEditor";
 
@@ -63,21 +62,8 @@ export default function AdminLayout() {
             </Link>
           </div>
 
-          {/* Search */}
-          <div className="px-3 pt-4 pb-2">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#999]" />
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search..."
-                className="h-8 pl-8 text-xs bg-[#fafaf9] border-[#eee] rounded-lg focus-visible:ring-accent/30"
-              />
-            </div>
-          </div>
-
           {/* Navigation */}
-          <nav className="flex-1 px-3 py-2 space-y-0.5">
+          <nav className="flex-1 px-3 pt-4 space-y-0.5">
             {navItems.map((item) => {
               const Icon = item.icon;
               const sectionPath = item.id === "overview" ? "" : item.id;
