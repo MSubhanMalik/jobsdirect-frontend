@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import authService from "@/services/auth";
 import jobService from "@/services/job";
 import employeeService from "@/services/employee";
+import employerService from "@/services/employer";
 import applicationService from "@/services/application";
 import cvService from "@/services/cv";
 import { Button } from "@/components/ui/button";
@@ -62,6 +63,7 @@ export default function JobDetail() {
   const [applied, setApplied] = useState(false);
   const [user, setUser] = useState(null);
   const [employee, setEmployee] = useState(null);
+  const [isEmployer, setIsEmployer] = useState(false);
   const [consent, setConsent] = useState(false);
   const [userCVs, setUserCVs] = useState([]);
   const [selectedCV, setSelectedCV] = useState("");
@@ -83,6 +85,8 @@ export default function JobDetail() {
         const empData = await employeeService.list({ user_email: me.email });
         const emps = empData?.items || [];
         if (emps.length > 0) setEmployee(emps[0]);
+        const emplrData = await employerService.list({ user_email: me.email }).catch(() => ({ items: [] }));
+        if ((emplrData?.items || []).length > 0) setIsEmployer(true);
         cvService.list().then(setUserCVs).catch(() => {});
         if (jobId) {
           const appData = await applicationService.list({ job_id: jobId, employee_email: me.email });
@@ -321,7 +325,7 @@ export default function JobDetail() {
                 <div className="rounded-xl border border-border/50 bg-muted/30 p-4 text-center">
                   <p className="text-sm text-muted-foreground">This is your listing</p>
                 </div>
-              ) : user && !employee ? (
+              ) : user && isEmployer ? (
                 <div className="rounded-xl border border-border/50 bg-muted/30 p-4 text-center">
                   <p className="text-sm text-muted-foreground">Employer accounts cannot apply to jobs</p>
                 </div>
