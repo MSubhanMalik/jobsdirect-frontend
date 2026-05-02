@@ -403,8 +403,9 @@ export default function JobDetail() {
                 <div className="flex items-start gap-3">
                   <MapPin className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
                   <div>
-                    <p className="text-sm font-medium text-foreground">{job.location}</p>
-                    <p className="text-xs text-muted-foreground">Location</p>
+                    <p className="text-sm font-medium text-foreground">{job.location_full || job.location}</p>
+                    {job.location_full && job.location && <p className="text-xs text-muted-foreground">{job.location}</p>}
+                    {!job.location_full && <p className="text-xs text-muted-foreground">Location</p>}
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
