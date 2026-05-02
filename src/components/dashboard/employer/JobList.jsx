@@ -270,7 +270,7 @@ export default function JobList({ jobs, user, employer, showJobForm, editingJob,
                   )}
 
                   {/* Addon buttons */}
-                  {job.status === "approved" && !job.is_expired && purchasableAddons
+                  {["approved", "pending_review", "draft"].includes(job.status) && !job.is_expired && purchasableAddons
                     .filter((addon) => !(job.active_addons || []).some((a) => a.id === addon.id))
                     .map((addon) => (
                       <Button

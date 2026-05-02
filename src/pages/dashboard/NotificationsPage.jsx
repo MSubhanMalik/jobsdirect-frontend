@@ -85,11 +85,11 @@ export default function NotificationsPage() {
           </Card>
         ) : (
           notifications.map((notif) => (
-            <Card key={notif.id} className={`transition-colors ${!notif.isRead ? "border-primary/30 bg-primary/5" : ""}`}>
+            <Card key={notif.id} className={`transition-colors ${!notif.is_read ? "border-primary/30 bg-primary/5" : ""}`}>
               <CardContent className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                 <div className="flex gap-4">
                   <div className={`mt-1 w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                    !notif.isRead ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                    !notif.is_read ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
                   }`}>
                     <Bell className="w-5 h-5" />
                   </div>
@@ -111,7 +111,7 @@ export default function NotificationsPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 self-end sm:self-start">
-                  {!notif.isRead && (
+                  {!notif.is_read && (
                     <Button
                       variant="ghost"
                       size="icon"

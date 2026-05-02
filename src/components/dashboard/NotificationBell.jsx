@@ -93,16 +93,16 @@ export default function NotificationBell({ className }) {
                   key={notif.id}
                   to={notif.link || "/dashboard/notifications"}
                   className={`flex gap-3 px-4 py-3 hover:bg-muted/50 transition-colors ${
-                    !notif.isRead ? "bg-primary/5" : ""
+                    !notif.is_read ? "bg-primary/5" : ""
                   }`}
                 >
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
-                    !notif.isRead ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                    !notif.is_read ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
                   }`}>
                     <Icon className="w-4 h-4" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className={`text-sm leading-tight ${!notif.isRead ? "font-semibold" : "font-medium text-muted-foreground"}`}>
+                    <p className={`text-sm leading-tight ${!notif.is_read ? "font-semibold" : "font-medium text-muted-foreground"}`}>
                       {notif.title}
                     </p>
                     <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{notif.message}</p>
@@ -110,7 +110,7 @@ export default function NotificationBell({ className }) {
                       {timeAgo(notif.createdAt)}
                     </span>
                   </div>
-                  {!notif.isRead && (
+                  {!notif.is_read && (
                     <div className="w-2 h-2 rounded-full bg-primary shrink-0 mt-2" />
                   )}
                 </Link>
