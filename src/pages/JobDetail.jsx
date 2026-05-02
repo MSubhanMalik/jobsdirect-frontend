@@ -340,7 +340,7 @@ export default function JobDetail() {
                   <Button
                     className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold rounded-xl h-12 text-[0.95rem]"
                     onClick={() => {
-                      if (!user) { setShowGuestApply(true); return; }
+                      if (!user) { window.location.assign(`/auth?redirect=${encodeURIComponent(`/jobs/${jobId}`)}`); return; }
                       setShowApply(true);
                     }}
                   >
@@ -348,17 +348,9 @@ export default function JobDetail() {
                     Apply Now
                   </Button>
                   {!user && (
-                    <div className="mt-3 space-y-2">
-                      <a
-                        href={`/auth?redirect=${encodeURIComponent(`/jobs/${jobId}`)}`}
-                        className="flex items-center justify-center gap-2 w-full h-10 rounded-xl border border-foreground/20 text-sm font-semibold text-foreground hover:bg-foreground hover:text-background transition-colors"
-                      >
-                        Sign in to apply & track
-                      </a>
-                      <p className="text-center text-xs text-muted-foreground">
-                        No account? <button type="button" onClick={() => setShowGuestApply(true)} className="text-muted-foreground hover:text-foreground underline">apply as guest</button>
-                      </p>
-                    </div>
+                    <p className="text-center text-xs text-muted-foreground mt-3">
+                      No account? <button type="button" onClick={() => setShowGuestApply(true)} className="text-accent font-semibold hover:underline">Quick apply as guest</button>
+                    </p>
                   )}
                 </>
               )}

@@ -240,21 +240,38 @@ export default function DashboardCVs() {
       )}
 
       {/* Upgrade */}
-      {plan === "free" && (
+      {plan !== "premium" && (() => {
+        // Filter plans: show only plans above current tier
+        const tierOrder = ["free", "professional", "premium"];
+        const currentTier = tierOrder.indexOf(plan);
+        const availablePlans = cvPlans.filter((p) => {
+          const planTier = tierOrder.indexOf(p.cv_plan_tier || p.id?.replace("cv_", ""));
+          return planTier > currentTier;
+        });
+        if (!availablePlans.length && !cvPlans.length) return null;
+        const plansToShow = availablePlans.length ? availablePlans : cvPlans;
+
+        return (
         <div className="rounded-xl border border-accent/20 bg-accent/[0.03] p-6">
           <div className="flex items-start gap-4">
             <div className="w-10 h-10 rounded-xl bg-accent/[0.08] flex items-center justify-center shrink-0">
               <Crown className="w-5 h-5 text-accent" />
             </div>
             <div className="flex-1">
-              <p className="font-display font-semibold text-foreground mb-1">Upgrade Your CV Plan</p>
-              <p className="text-sm text-muted-foreground mb-4">Premium templates, no watermark, and multiple CVs for different applications.</p>
+              <p className="font-display font-semibold text-foreground mb-1">
+                {plan === "free" ? "Upgrade Your CV Plan" : "Upgrade to Premium"}
+              </p>
+              <p className="text-sm text-muted-foreground mb-4">
+                {plan === "free"
+                  ? "Premium templates, no watermark, and multiple CVs for different applications."
+                  : "Get up to 4 CVs with all templates for different job types."}
+              </p>
 
-              {cvPlans.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {cvPlans.map((cvPlan, i) => {
+              {plansToShow.length > 0 ? (
+                <div className={`grid grid-cols-1 ${plansToShow.length > 1 ? "sm:grid-cols-2" : ""} gap-3`}>
+                  {plansToShow.map((cvPlan, i) => {
                     const isLoading = checkoutPlanId === cvPlan.id;
-                    const isRecommended = i === cvPlans.length - 1 && cvPlans.length > 1;
+                    const isRecommended = i === plansToShow.length - 1 && plansToShow.length > 1;
                     return (
                       <div key={cvPlan.id} className={`rounded-xl border bg-card p-5 flex flex-col ${isRecommended ? "border-accent/30" : "border-border/50"}`}>
                         {isRecommended && (
@@ -268,8 +285,8 @@ export default function DashboardCVs() {
                         </div>
                         <Button
                           size="sm"
-                          className={`w-full rounded-lg h-9 text-xs font-medium mt-auto ${isRecommended ? "bg-accent hover:bg-accent/90 text-accent-foreground" : ""}`}
-                          variant={isRecommended ? "default" : "outline"}
+                          className={`w-full rounded-lg h-9 text-xs font-medium mt-auto ${isRecommended || plansToShow.length === 1 ? "bg-accent hover:bg-accent/90 text-accent-foreground" : ""}`}
+                          variant={isRecommended || plansToShow.length === 1 ? "default" : "outline"}
                           onClick={() => handleCvPlanCheckout(cvPlan.id)}
                           disabled={Boolean(checkoutPlanId)}
                         >
@@ -298,7 +315,8 @@ export default function DashboardCVs() {
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
 
       <ConfirmDialog
         open={!!deleteConfirm}
