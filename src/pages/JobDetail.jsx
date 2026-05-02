@@ -23,7 +23,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "react-toastify";
 import { motion } from "framer-motion";
 import {
-  MapPin, Clock, Building2, Euro, ArrowLeft, Share2, Star,
+  MapPin, Clock, Building2, Euro, ArrowLeft, Share2, Star, Users,
   Calendar, Briefcase, Send, CheckCircle, Upload, FileText, Bookmark,
   ArrowUpRight, Loader2, Sparkles, AlertTriangle
 } from "lucide-react";
