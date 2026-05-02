@@ -203,7 +203,6 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
         salary_period: data.salary_period || current.salary_period,
       }));
       setScraped(true);
-      setListingType("paid");
       toast.success("Job details imported! Review and edit before submitting.");
     } catch (error) {
       toast.error(`Import failed — ${error.message || "Could not fetch job from JobsIreland.ie"}`);
@@ -283,6 +282,12 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
                       id="jobRef"
                       value={jobRef}
                       onChange={(e) => { setJobRef(e.target.value.replace(/\D/g, "").slice(0, 7)); setScraped(false); }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          if (!scraping && jobRef.length === 7) handleScrape();
+                        }
+                      }}
                       placeholder="e.g. 1234567"
                       maxLength={7}
                     />

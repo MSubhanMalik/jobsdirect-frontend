@@ -23,6 +23,7 @@ export function createEmployerForm(employer = {}) {
   return {
     ...formValues,
     user_email: employer.user_email || "",
+    verification_doc_url: employer.verification_doc_url || "",
   };
 }
 

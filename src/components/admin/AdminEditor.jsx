@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { CheckCircle2, Loader2, Plus, Trash2 } from "lucide-react";
+import { CheckCircle2, Loader2, Plus, Trash2, FileText, ExternalLink } from "lucide-react";
 import FormFieldRenderer from "@/components/forms/FormFieldRenderer";
 import { Field } from "@/components/admin/shared/UIComponents";
 import { humanize, toNumber, splitList } from "@/components/admin/shared/helpers";
@@ -190,6 +190,33 @@ export default function AdminEditor({ editor, setEditor }) {
               </div>
             </section>
           ))}
+
+          {/* Verification Document */}
+          {editor.form.verification_doc_url && (
+            <section className="space-y-4">
+              <div className="border-b border-border/30 pb-2">
+                <h3 className="text-sm font-display font-semibold text-foreground">Verification Document</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">Identity/Company verification file uploaded by the employer.</p>
+              </div>
+              <div className="rounded-xl border border-border/40 bg-muted/10 p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-background border border-border/60 flex items-center justify-center">
+                    <FileText className="w-5 h-5 text-muted-foreground/60" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Verification File</p>
+                    <p className="text-[0.65rem] text-muted-foreground uppercase tracking-wider font-semibold">Ready for review</p>
+                  </div>
+                </div>
+                <Button asChild variant="outline" size="sm" className="rounded-lg h-9">
+                  <a href={editor.form.verification_doc_url} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
+                    View Document
+                  </a>
+                </Button>
+              </div>
+            </section>
+          )}
         </div>
       );
     }

@@ -1,15 +1,20 @@
 import React, { useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
-import { CreditCard, BarChart3, Users } from "lucide-react";
-import { StatusBadge, StatCard, SectionHeader, EmptyState } from "../shared/UIComponents";
+import { Badge } from "@/components/ui/badge";
+import { CreditCard, BarChart3, Users, Mail, Clock, ArrowUpRight } from "lucide-react";
+import { StatCard, SectionHeader, EmptyState } from "../shared/UIComponents";
 import { searchRecords, formatDate, formatMoneyFromCents, humanize } from "../shared/helpers";
 import { queryKeys } from "../shared/constants";
 import PaginationControls from "@/components/ui/pagination-controls";
 import paymentService from "@/services/payment";
+
+const STATUS_CONFIG = {
+  paid: { dot: "bg-emerald-500", label: "Paid" },
+  unpaid: { dot: "bg-amber-500", label: "Unpaid" },
+  checkout_created: { dot: "bg-slate-400", label: "Pending" },
+  no_payment_required: { dot: "bg-blue-500", label: "Free" },
+};
 
 export default function AdminPayments() {
   const { search } = useOutletContext();
@@ -67,40 +72,44 @@ export default function AdminPayments() {
       {filtered.length === 0 ? (
         <EmptyState icon={CreditCard} title="No payments found" />
       ) : (
-        <div className="rounded-lg border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Payment</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Created</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paged.map((payment) => (
-                <TableRow key={payment.id}>
-                  <TableCell>
-                    <p className="font-medium">{humanize(payment.plan_id || payment.kind || "checkout")}</p>
-                    <p className="max-w-xs truncate text-xs text-muted-foreground">{payment.id}</p>
-                  </TableCell>
-                  <TableCell>
-                    <p className="text-sm">{payment.customer_email || "No email"}</p>
-                  </TableCell>
-                  <TableCell className="text-sm font-medium">
-                    {formatMoneyFromCents(payment.amount_total, payment.currency)}
-                  </TableCell>
-                  <TableCell>
-                    <StatusBadge value={payment.payment_status || payment.status} />
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {formatDate(payment.createdAt)}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        <div className="rounded-xl border border-border/50 bg-card overflow-hidden divide-y divide-border/30">
+          {paged.map((payment) => {
+            const statusKey = payment.payment_status || payment.status || "checkout_created";
+            const config = STATUS_CONFIG[statusKey] || STATUS_CONFIG.checkout_created;
+            const amount = formatMoneyFromCents(payment.amount_total, payment.currency);
+            const kindLabel = humanize(payment.kind || payment.plan_id || "checkout");
+            const dateStr = formatDate(payment.created_at || payment.createdAt);
+
+            return (
+              <div key={payment.id} className="flex items-center gap-4 px-5 py-4 hover:bg-muted/20 transition-colors">
+                {/* Status dot + payment info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${config.dot}`} />
+                    <p className="text-sm font-display font-semibold text-foreground truncate">{kindLabel}</p>
+                    <Badge variant="secondary" className="text-[0.55rem] rounded-md px-1.5 py-0 h-4">{config.label}</Badge>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1"><Mail className="w-3 h-3" />{payment.customer_email || "No email"}</span>
+                    {dateStr && <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{dateStr}</span>}
+                  </div>
+                </div>
+
+                {/* Plan ID */}
+                <div className="hidden lg:block shrink-0 max-w-[160px]">
+                  <p className="text-[0.65rem] text-muted-foreground truncate" title={payment.id}>{payment.id}</p>
+                </div>
+
+                {/* Amount */}
+                <div className="shrink-0 text-right">
+                  <p className="text-sm font-display font-bold text-foreground">{amount}</p>
+                  {payment.employer_id && (
+                    <p className="text-[0.6rem] text-muted-foreground">Employer</p>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 

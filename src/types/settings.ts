@@ -26,7 +26,6 @@ export interface SiteSettings {
   contact_phone: string;
   office_location: string;
   footer_blurb: string;
-  featured_jobs_enabled: boolean;
   employer_approval_required: boolean;
   job_approval_required: boolean;
   pricing_products: PricingProducts;

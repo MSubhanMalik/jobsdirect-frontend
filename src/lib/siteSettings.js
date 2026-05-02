@@ -577,7 +577,6 @@ export const DEFAULT_SITE_SETTINGS = {
   contact_phone: "+353 1 234 5678",
   office_location: "Dublin, Ireland",
   footer_blurb: "Ireland's premier job platform connecting talented professionals with leading employers across the country.",
-  featured_jobs_enabled: true,
   employer_approval_required: true,
   job_approval_required: true,
   pricing_products: DEFAULT_PRICING_PRODUCTS,

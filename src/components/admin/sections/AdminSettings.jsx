@@ -194,7 +194,6 @@ export default function AdminSettings() {
             <Field label="Footer blurb"><Textarea className="min-h-24 resize-none" value={settingsForm.footer_blurb} onChange={(e) => set("footer_blurb", e.target.value)} /></Field>
             <div className="pt-2 space-y-3">
               {[
-                ["featured_jobs_enabled", "Featured jobs enabled"],
                 ["employer_approval_required", "Employer approval required"],
                 ["job_approval_required", "Job approval required"],
               ].map(([field, label]) => (
