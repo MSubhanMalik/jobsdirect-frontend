@@ -158,18 +158,28 @@ export default function EmployerDashboard({ user, employer, setEmployer }) {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="bg-primary text-primary-foreground py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative overflow-hidden border-b border-border/50 bg-gradient-to-br from-muted/60 via-background to-accent/[0.04]">
+        <div className="absolute inset-0 opacity-[0.03]" style={{
+          backgroundImage: "radial-gradient(circle at 1px 1px, hsl(var(--foreground)) 1px, transparent 0)",
+          backgroundSize: "32px 32px",
+        }} />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-display font-bold">Employer Dashboard</h1>
-              <p className="text-primary-foreground/70 mt-1">
-                {user.first_name} {user.last_name}{employer.company_name ? ` — ${employer.company_name}` : ''}
-              </p>
-              <p className="text-primary-foreground/50 text-sm">{user.email}</p>
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center shrink-0">
+                <span className="text-base font-display font-bold text-accent">
+                  {(employer.company_name || user.first_name || "E")[0].toUpperCase()}
+                </span>
+              </div>
+              <div>
+                <h1 className="text-xl sm:text-2xl font-display font-bold text-foreground tracking-tight">Employer Dashboard</h1>
+                <p className="text-muted-foreground text-sm mt-0.5">
+                  {user.first_name} {user.last_name}{employer.company_name ? ` · ${employer.company_name}` : ''}
+                </p>
+              </div>
             </div>
-            <Button variant="ghost" className="text-primary-foreground/60 hover:text-primary-foreground" onClick={() => authService.logout("/")}>
-              <LogOut className="w-4 h-4 mr-2" />Logout
+            <Button variant="outline" size="sm" className="rounded-xl h-9 text-xs font-medium text-muted-foreground" onClick={() => authService.logout("/")}>
+              <LogOut className="w-3.5 h-3.5 mr-1.5" />Logout
             </Button>
           </div>
         </div>

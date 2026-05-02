@@ -55,44 +55,43 @@ export default function EmployeeDashboard({ user, employee, setEmployee }) {
   return (
     <div className="min-h-screen bg-muted/30">
       {/* ── Hero header ── */}
-      <div className="relative overflow-hidden bg-foreground">
-        {/* Decorative grid */}
+      <div className="relative overflow-hidden border-b border-border/50 bg-gradient-to-br from-muted/60 via-background to-accent/[0.04]">
         <div className="absolute inset-0 opacity-[0.03]" style={{
-          backgroundImage: "linear-gradient(hsl(var(--accent)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--accent)) 1px, transparent 1px)",
-          backgroundSize: "60px 60px",
+          backgroundImage: "radial-gradient(circle at 1px 1px, hsl(var(--foreground)) 1px, transparent 0)",
+          backgroundSize: "32px 32px",
         }} />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
           <div className="flex items-start sm:items-center justify-between gap-4">
             {/* Left: avatar + greeting */}
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-accent flex items-center justify-center shrink-0">
-                <span className="text-lg font-display font-bold text-accent-foreground">{initials}</span>
+              <div className="w-14 h-14 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center shrink-0">
+                <span className="text-lg font-display font-bold text-accent">{initials}</span>
               </div>
               <div>
                 <motion.h1
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
-                  className="text-xl sm:text-2xl font-display font-bold text-primary-foreground tracking-tight"
+                  className="text-xl sm:text-2xl font-display font-bold text-foreground tracking-tight"
                 >
                   Welcome back, {displayName}
                 </motion.h1>
-                <p className="text-primary-foreground/35 text-sm mt-0.5">{user.email}</p>
+                <p className="text-muted-foreground text-sm mt-0.5">{user.email}</p>
               </div>
             </div>
 
             {/* Right: actions */}
             <div className="flex items-center gap-2">
               <Link to="/">
-                <Button variant="ghost" size="icon" className="text-primary-foreground/40 hover:text-primary-foreground hover:bg-primary-foreground/5 w-9 h-9 rounded-xl">
+                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground w-9 h-9 rounded-xl">
                   <Home className="w-4 h-4" />
                 </Button>
               </Link>
-              <NotificationBell className="text-primary-foreground/40 hover:text-primary-foreground hover:bg-primary-foreground/5 w-9 h-9 rounded-xl" />
+              <NotificationBell className="text-muted-foreground hover:text-foreground w-9 h-9 rounded-xl" />
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-primary-foreground/40 hover:text-primary-foreground hover:bg-primary-foreground/5 h-9 text-xs rounded-xl"
+                className="text-muted-foreground hover:text-foreground h-9 text-xs rounded-xl"
                 onClick={() => authService.logout("/")}
               >
                 <LogOut className="w-3.5 h-3.5 mr-1.5" />
@@ -114,12 +113,12 @@ export default function EmployeeDashboard({ user, employee, setEmployee }) {
               { label: "CVs", value: cvCount, icon: FileText },
               { label: "Discoverable", value: employee.is_searchable ? "Yes" : "No", icon: Eye },
             ].map((stat) => (
-              <div key={stat.label} className="rounded-xl bg-primary-foreground/[0.05] border border-primary-foreground/[0.06] px-4 py-4">
+              <div key={stat.label} className="rounded-xl bg-card border border-border/50 px-4 py-4">
                 <div className="flex items-center gap-2 mb-2">
                   <stat.icon className="w-3.5 h-3.5 text-accent" />
-                  <span className="text-[0.65rem] font-semibold uppercase tracking-[0.1em] text-primary-foreground/35">{stat.label}</span>
+                  <span className="text-[0.65rem] font-semibold uppercase tracking-[0.1em] text-muted-foreground">{stat.label}</span>
                 </div>
-                <p className="text-2xl font-display font-bold text-primary-foreground">{stat.value}</p>
+                <p className="text-2xl font-display font-bold text-foreground">{stat.value}</p>
               </div>
             ))}
           </motion.div>

@@ -186,62 +186,49 @@ export default function DashboardLayout() {
 
   return (
     <div className="min-h-screen bg-muted/30">
-      {/* ── Hero header with background image ── */}
-      <div className="relative overflow-hidden bg-foreground">
-        {/* Background image */}
-        <div className="absolute inset-0">
-          <img
-            src="https://picsum.photos/id/1076/2400/600"
-            alt=""
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-foreground/85" />
-          <div className="absolute inset-0 bg-gradient-to-r from-foreground/95 via-foreground/80 to-foreground/60" />
-        </div>
-
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Top row */}
-          <div className="flex items-center justify-between h-14">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center">
-                <span className="text-xs font-display font-bold text-accent-foreground">{initials}</span>
-              </div>
-              <div className="hidden sm:block">
-                <p className="text-sm font-medium text-primary-foreground/90 leading-none">{displayName}</p>
-                <p className="text-[0.6rem] text-primary-foreground/40 mt-0.5">
-                  {isEmployer ? employer.company_name || "Employer" : "Job Seeker"}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-1">
-              <Link to="/">
-                <Button variant="ghost" size="icon" className="w-8 h-8 text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/5 rounded-lg">
-                  <Home className="w-4 h-4" />
-                </Button>
-              </Link>
-              <NotificationBell className="text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/5 w-8 h-8 rounded-lg" />
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-primary-foreground/40 hover:text-primary-foreground hover:bg-primary-foreground/5 h-8 text-xs rounded-lg ml-1"
-                onClick={() => authService.logout("/")}
-              >
-                <LogOut className="w-3.5 h-3.5 sm:mr-1.5" />
-                <span className="hidden sm:inline">Logout</span>
+      {/* ── Header ── */}
+      <div className="bg-card border-b border-border/40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14">
+          <Link to="/" className="text-sm font-display font-semibold text-foreground tracking-tight hover:text-accent transition-colors">
+            JobsDirect<span className="text-accent">.ie</span>
+          </Link>
+          <div className="flex items-center gap-1">
+            <Link to="/">
+              <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground hover:text-foreground rounded-lg">
+                <Home className="w-4 h-4" />
               </Button>
-            </div>
+            </Link>
+            <NotificationBell className="text-muted-foreground hover:text-foreground w-8 h-8 rounded-lg" />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:text-foreground h-8 text-xs rounded-lg ml-1"
+              onClick={() => authService.logout("/")}
+            >
+              <LogOut className="w-3.5 h-3.5 sm:mr-1.5" />
+              <span className="hidden sm:inline">Logout</span>
+            </Button>
           </div>
+        </div>
+      </div>
 
-          {/* Greeting */}
-          <div className="pb-6 pt-2">
-            <h1 className="text-xl sm:text-2xl font-display font-bold text-primary-foreground tracking-tight">
-              {isEmployer ? "Employer Dashboard" : "My Dashboard"}
-            </h1>
-            <p className="text-sm text-primary-foreground/35 mt-0.5">
-              {isEmployer
-                ? `Manage your listings, applications, and billing`
-                : `Track your applications and manage your profile`}
-            </p>
+      {/* ── Page title ── */}
+      <div className="bg-muted/40 border-b border-border/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center gap-4">
+            <div className="w-11 h-11 rounded-xl bg-accent flex items-center justify-center shrink-0">
+              <span className="text-sm font-display font-bold text-accent-foreground">{initials}</span>
+            </div>
+            <div>
+              <h1 className="text-lg sm:text-xl font-display font-bold text-foreground tracking-tight leading-tight">
+                {isEmployer ? (employer.company_name || "Employer Dashboard") : `Hi, ${user.first_name || "there"}`}
+              </h1>
+              <p className="text-[0.8rem] text-muted-foreground mt-0.5">
+                {isEmployer
+                  ? `${displayName} · Manage listings, applications & billing`
+                  : "Track applications and manage your profile"}
+              </p>
+            </div>
           </div>
         </div>
       </div>
