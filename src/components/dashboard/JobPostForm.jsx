@@ -10,8 +10,6 @@ import { toast } from "react-toastify";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { useProducts } from "@/hooks/useProducts";
 import FormFieldRenderer from "@/components/forms/FormFieldRenderer";
-import AddonSelector from "@/components/products/AddonSelector";
-import CostSummary from "@/components/products/CostSummary";
 import {
   JOB_FIELD_GROUPS,
   JOB_FIELDS,
@@ -19,8 +17,8 @@ import {
   buildEntityFormValues,
   hasFieldValue,
 } from "@/lib/siteSettings";
-import { CheckCircle2, CreditCard, ExternalLink, Gift, Loader2, Send, X, Zap } from "lucide-react";
-import ConfirmDialog from "@/components/ui/confirm-dialog";
+import { CheckCircle2, ExternalLink, Loader2, Send, X } from "lucide-react";
+import JobPaymentModal from "./JobPaymentModal";
 
 const EMPLOYER_JOB_FIELDS = JOB_FIELDS.filter((field) => !field.adminOnly && field.manageInEmployerForm !== false);
 
@@ -49,10 +47,6 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
   const [scraping, setScraping] = useState(false);
   const [scraped, setScraped] = useState(false);
 
-  // Pricing state
-  const [listingType, setListingType] = useState(initialJob ? "paid" : "free");
-  const [selectedAddons, setSelectedAddons] = useState([]);
-  const [costEstimate, setCostEstimate] = useState(null);
   const [balance, setBalance] = useState(null);
 
   const isEditing = Boolean(initialJob?.id);
@@ -65,33 +59,19 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
 
   const canPostFree = balance?.canPostFree && !isEditing && inputMethod !== "import";
 
-  // Import = always paid
-  useEffect(() => {
-    if (inputMethod === "import") setListingType("paid");
-  }, [inputMethod]);
 
-  // Fetch cost estimate from backend whenever addons change
-  useEffect(() => {
-    if (isEditing || listingType === "free") {
-      setCostEstimate(null);
-      return;
-    }
-    const addonIds = [...selectedAddons];
-    if (inputMethod === "import") addonIds.push("addon_import");
-    productService.getCostEstimate(addonIds).then(setCostEstimate).catch(() => {});
-  }, [listingType, selectedAddons, inputMethod, isEditing]);
 
-  // Filter addons: don't show "Import" and "Duplicate" in the checkbox list (they're handled by flow)
-  const selectableAddons = addonProducts.filter((a) => a.id !== "addon_import" && a.id !== "addon_duplicate");
 
-  const totalCost = costEstimate?.total || 0;
+
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+
+
 
   // Reset form on initial job change
   useEffect(() => {
     setForm(createInitialForm(initialJob));
     setJobRef("");
     setScraped(false);
-    setSelectedAddons([]);
   }, [initialJob]);
 
   useEffect(() => {
@@ -127,26 +107,31 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
     return true;
   };
 
-  const [showConfirm, setShowConfirm] = useState(false);
+
 
   const handleSubmit = (event) => {
     event.preventDefault();
     if (!validateVisibleRequiredFields()) return;
 
-    // Free listings and edits don't need confirmation
-    if (isEditing || listingType === "free") {
+    if (isEditing) {
       executeSubmit();
       return;
     }
-    // Paid listings — show confirmation first
-    setShowConfirm(true);
+    
+    // New job — show plan/addon selection modal
+    setShowPaymentModal(true);
   };
 
-  const executeSubmit = async () => {
-    setShowConfirm(false);
+  const executeSubmit = async (selections = null) => {
+    setShowPaymentModal(false);
     setSubmitting(true);
     try {
-      const addonIds = [...selectedAddons];
+      // Use selections from modal if provided (for new jobs)
+      const currentListingType = selections ? selections.listingType : "paid";
+      const currentAddons = selections ? selections.selectedAddons : [];
+      const currentTotalCost = selections ? selections.totalCost : 0;
+
+      const addonIds = [...currentAddons];
       if (inputMethod === "import" && scraped) addonIds.push("addon_import");
 
       const payload = {
@@ -163,7 +148,7 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
       };
 
       if (!isEditing) {
-        payload.listing_type = listingType;
+        payload.listing_type = currentListingType;
         payload.is_imported = Boolean(inputMethod === "import" && scraped);
       }
 
@@ -183,9 +168,9 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
       toast.success(
         isEditing
           ? "Job Updated — Your job listing has been updated."
-          : listingType === "free"
+          : currentListingType === "free"
             ? "Job Submitted — Your free 14-day listing has been submitted for review."
-            : `Job Submitted — Your 30-day listing has been submitted. ${formatCredits(totalCost)} deducted.`
+            : `Job Submitted — Your 30-day listing has been submitted. ${formatCredits(currentTotalCost)} deducted.`
       );
       onSuccess();
     } catch (error) {
@@ -324,56 +309,7 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
             </div>
           )}
 
-          {/* ─── Pricing Section ─── */}
-          {!isEditing && showForm && (
-            <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold flex items-center gap-2">
-                  <CreditCard className="h-4 w-4" />
-                  Listing Type
-                </h3>
-                <span className="text-xs font-medium text-muted-foreground">
-                  Balance: <span className="font-bold text-foreground">{creditBalance} credits</span>
-                </span>
-              </div>
 
-              {inputMethod === "import" ? (
-                <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2">
-                  <p className="text-sm font-medium text-amber-800">Imported listings are always paid</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-3">
-                  <button type="button" className={`rounded-lg border p-3 text-left transition ${listingType === "free" ? "border-emerald-600 bg-emerald-50 shadow-[0_0_0_1px_theme(colors.emerald.600)]" : "border-slate-200 hover:border-slate-300"} ${!canPostFree ? "opacity-50 cursor-not-allowed" : ""}`} onClick={() => canPostFree && setListingType("free")} disabled={!canPostFree}>
-                    <div className="flex items-center gap-2 mb-1">
-                      <Gift className="h-4 w-4 text-emerald-600" />
-                      <span className="text-sm font-semibold">Free Listing</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground">14 days, 1 per month</p>
-                    {!canPostFree && <p className="text-xs text-amber-600 mt-1">Used this month</p>}
-                  </button>
-                  <button type="button" className={`rounded-lg border p-3 text-left transition ${listingType === "paid" ? "border-emerald-600 bg-emerald-50 shadow-[0_0_0_1px_theme(colors.emerald.600)]" : "border-slate-200 hover:border-slate-300"}`} onClick={() => setListingType("paid")}>
-                    <div className="flex items-center gap-2 mb-1">
-                      <Zap className="h-4 w-4 text-amber-500" />
-                      <span className="text-sm font-semibold">Paid Listing</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground">{listingProduct ? `${listingProduct.duration} days, ${formatCredits(listingProduct.creditCost)}` : "30 days"}</p>
-                  </button>
-                </div>
-              )}
-
-              {listingType === "paid" && (
-                <AddonSelector
-                  addons={selectableAddons}
-                  selected={selectedAddons}
-                  onToggle={handleAddonToggle}
-                />
-              )}
-
-              {listingType === "paid" && costEstimate && (
-                <CostSummary costEstimate={costEstimate} creditBalance={creditBalance} />
-              )}
-            </div>
-          )}
 
           {/* ─── Job Form Fields ─── */}
           {showForm && (
@@ -414,11 +350,7 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
                     ? (isEditing ? "Saving..." : "Submitting...")
                     : isEditing
                       ? "Save Changes"
-                      : listingType === "free"
-                        ? "Submit Free Listing"
-                        : creditBalance >= totalCost
-                          ? `Submit (${formatCredits(totalCost)})`
-                          : "Submit & Pay via Stripe"
+                      : "Submit Job"
                   }
                 </Button>
               </div>
@@ -427,19 +359,15 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
         </form>
       </CardContent>
 
-      <ConfirmDialog
-        open={showConfirm}
-        title="Confirm Job Submission"
-        description={
-          creditBalance >= totalCost
-            ? `This will deduct ${formatCredits(totalCost)} from your balance (${creditBalance} available). Proceed?`
-            : `You don't have enough credits (${creditBalance} available, ${formatCredits(totalCost)} needed). You'll be redirected to Stripe to pay.`
-        }
-        confirmLabel={creditBalance >= totalCost ? `Deduct ${formatCredits(totalCost)}` : "Pay via Stripe"}
+      <JobPaymentModal
+        open={showPaymentModal}
+        onOpenChange={setShowPaymentModal}
+        employer={employer}
+        inputMethod={inputMethod}
         onConfirm={executeSubmit}
-        onCancel={() => setShowConfirm(false)}
-        disabled={submitting}
+        submitting={submitting}
       />
+
     </Card>
   );
 }

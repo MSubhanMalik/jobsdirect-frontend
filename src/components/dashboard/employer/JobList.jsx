@@ -63,7 +63,12 @@ export default function JobList({ jobs, user, employer, showJobForm, editingJob,
     if (!addonConfirm) return;
     setActivatingAddon(true);
     try {
-      await jobService.activateAddon(addonConfirm.job.id, addonConfirm.addon.id);
+      const result = await jobService.activateAddon(addonConfirm.job.id, addonConfirm.addon.id);
+      if (result.needsCheckout && result.checkoutUrl) {
+        toast.info("Redirecting to payment...");
+        window.location.assign(result.checkoutUrl);
+        return;
+      }
       queryClient.invalidateQueries({ queryKey: ["employer-jobs", user.email] });
       toast.success(`${addonConfirm.addon.name} activated!`);
     } catch (err) { toast.error(`Could not activate — ${err.message}`); }
