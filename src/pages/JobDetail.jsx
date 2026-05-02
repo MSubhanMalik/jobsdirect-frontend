@@ -521,8 +521,8 @@ export default function JobDetail() {
 
       {/* ── Apply Dialog ── */}
       <Dialog open={showApply} onOpenChange={setShowApply}>
-        <DialogContent className="p-0 overflow-hidden border-none max-w-lg">
-          <div className="bg-gradient-to-br from-accent/10 via-background to-background p-6 border-b border-border/50">
+        <DialogContent className="p-0 border-none max-w-lg">
+          <div className="bg-gradient-to-br from-accent/10 via-background to-background p-6 border-b border-border/50 shrink-0">
             <DialogHeader>
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center text-accent">
@@ -623,8 +623,8 @@ export default function JobDetail() {
 
       {/* ── Guest Apply Dialog ── */}
       <Dialog open={showGuestApply} onOpenChange={setShowGuestApply}>
-        <DialogContent className="p-0 overflow-hidden border-none max-w-xl">
-          <div className="bg-gradient-to-br from-accent/10 via-background to-background p-6 border-b border-border/50">
+        <DialogContent className="p-0 border-none max-w-xl">
+          <div className="bg-gradient-to-br from-accent/10 via-background to-background p-6 border-b border-border/50 shrink-0">
             <DialogHeader>
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center text-accent">
