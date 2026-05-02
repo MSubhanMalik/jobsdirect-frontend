@@ -54,7 +54,7 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
 
   // Load balance on mount
   useEffect(() => {
-    paymentService.getBalance(employer?.id).then(setBalance).catch(() => {});
+    paymentService.getBalance(employer?.id).then(setBalance).catch(() => { });
   }, [employer?.id]);
 
   const canPostFree = balance?.can_post_free && !isEditing && inputMethod !== "import";
@@ -117,7 +117,7 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
       executeSubmit();
       return;
     }
-    
+
     // New job — show plan/addon selection modal
     setShowPaymentModal(true);
   };
@@ -163,7 +163,7 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
         }
       }
 
-      paymentService.getBalance(employer?.id).then(setBalance).catch(() => {});
+      paymentService.getBalance(employer?.id).then(setBalance).catch(() => { });
 
       toast.success(
         isEditing
@@ -321,7 +321,7 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
             <>
               {!visibleGroups.length && (
                 <div className="rounded-lg border border-dashed p-5 text-sm text-muted-foreground">
-                  All employer job fields are currently hidden. Enable them from Admin Site CMS.
+                  All employer job fields are currently hidden. Enable them from Admin Settings.
                 </div>
               )}
 

@@ -38,12 +38,12 @@ export const statusMeta = {
 
 export const navItems = [
   { id: "overview", label: "Overview", icon: LayoutDashboard, path: "overview" },
-  { id: "jobs", label: "Jobs CMS", icon: Briefcase, path: "jobs" },
+  { id: "jobs", label: "Jobs", icon: Briefcase, path: "jobs" },
   { id: "companies", label: "Companies", icon: Building2, path: "companies" },
   { id: "candidates", label: "Candidates", icon: Users, path: "candidates" },
   { id: "applications", label: "Applications", icon: ClipboardList, path: "applications" },
   { id: "messages", label: "Messages", icon: MessageSquare, path: "messages" },
   { id: "payments", label: "Payments", icon: CreditCard, path: "payments" },
   { id: "users", label: "Users", icon: UserCog },
-  { id: "settings", label: "Site CMS", icon: SlidersHorizontal, path: "settings" },
+  { id: "settings", label: "Settings", icon: SlidersHorizontal, path: "settings" },
 ];

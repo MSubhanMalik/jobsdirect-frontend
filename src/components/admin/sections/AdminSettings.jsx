@@ -164,7 +164,7 @@ export default function AdminSettings() {
   return (
     <form onSubmit={onSave} className="space-y-8">
       <SectionHeader
-        title="Site CMS"
+        title="Settings"
         description="Customize brand text, publishing rules, and form configurations."
         action={
           <Button type="submit" disabled={saving} className="bg-accent hover:bg-accent/90 text-accent-foreground rounded-full px-6 h-9 text-sm font-medium">

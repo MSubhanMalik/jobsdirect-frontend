@@ -39,7 +39,7 @@ export default function EmployerProfile({ employer, setEmployer }) {
   const [form, setForm] = useState(() => createEmployerForm(employer));
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  
+
   const { data: members = [] } = useQuery({
     queryKey: ["team-members"],
     queryFn: () => teamService.list(),
@@ -119,7 +119,7 @@ export default function EmployerProfile({ employer, setEmployer }) {
       toast.error("Document Required — Please upload a verification document first.");
       return;
     }
-    
+
     setSaving(true);
     try {
       const updated = await employerService.submitForVerification(employer.id);
@@ -187,9 +187,9 @@ export default function EmployerProfile({ employer, setEmployer }) {
                   disabled={uploading || employer.verification_status === "approved"}
                 />
                 <div className="flex items-center gap-2">
-                  <Button 
-                    variant="secondary" 
-                    size="sm" 
+                  <Button
+                    variant="secondary"
+                    size="sm"
                     asChild
                     disabled={uploading || employer.verification_status === "approved" || isRecruiter}
                   >
@@ -199,8 +199,8 @@ export default function EmployerProfile({ employer, setEmployer }) {
                     </label>
                   </Button>
                   {employer.verification_status === "draft" && employer.verification_doc_url && (
-                    <Button 
-                      onClick={handleSubmitForVerification} 
+                    <Button
+                      onClick={handleSubmitForVerification}
                       disabled={saving || uploading}
                       size="sm"
                       className="bg-accent hover:bg-accent/90 text-accent-foreground"
@@ -227,7 +227,7 @@ export default function EmployerProfile({ employer, setEmployer }) {
         <hr className="border-muted" />
         {!visibleGroups.length ? (
           <div className="rounded-lg border border-dashed p-5 text-sm text-muted-foreground">
-            All employer company fields are currently hidden. Enable them from Admin Site CMS.
+            All employer company fields are currently hidden. Enable them from Admin Settings.
           </div>
         ) : null}
 
