@@ -66,6 +66,7 @@ export default function DashboardBilling() {
   return (
     <BillingTab
       employer={employer}
+      setEmployer={setEmployer}
       checkoutPlanId={checkoutPlanId}
       onCheckout={handleCheckout}
       onBillingPortal={handleBillingPortal}

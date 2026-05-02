@@ -6,12 +6,30 @@ import CreditBundles from "@/components/products/CreditBundles";
 import SubscriptionPlans from "@/components/products/SubscriptionPlans";
 import TransactionHistory from "@/components/products/TransactionHistory";
 
-export default function BillingTab({ employer, checkoutPlanId, onCheckout, onBillingPortal }) {
+export default function BillingTab({ employer, setEmployer, checkoutPlanId, onCheckout, onBillingPortal }) {
   const { data: plans = [] } = useQuery({
     queryKey: ["payment-plans"],
     queryFn: () => paymentService.listPlans(),
     staleTime: 5 * 60 * 1000,
   });
+
+  // Refresh balance every time the billing tab is viewed
+  const { data: balance } = useQuery({
+    queryKey: ["employer-balance-billing", employer?.id],
+    queryFn: () => paymentService.getBalance(employer?.id),
+    enabled: !!employer?.id,
+    staleTime: 0,
+  });
+
+  React.useEffect(() => {
+    if (!balance) return;
+    const updates = {};
+    if (balance.credits !== undefined && balance.credits !== employer.credits) updates.credits = balance.credits;
+    if (balance.candidate_database_access !== undefined && balance.candidate_database_access !== employer.candidate_database_access) updates.candidate_database_access = balance.candidate_database_access;
+    if (balance.candidate_database_status && balance.candidate_database_status !== employer.candidate_database_status) updates.candidate_database_status = balance.candidate_database_status;
+    if (balance.credits_expiring_soon !== undefined) updates.credits_expiring_soon = balance.credits_expiring_soon;
+    if (Object.keys(updates).length && setEmployer) setEmployer((prev) => ({ ...prev, ...updates }));
+  }, [balance]);
 
   const creditBundles = plans.filter((p) => p.kind === "credits");
   const subscriptions = plans.filter((p) => p.kind === "candidate_database");

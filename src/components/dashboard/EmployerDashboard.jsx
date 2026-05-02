@@ -265,6 +265,7 @@ export default function EmployerDashboard({ user, employer, setEmployer }) {
             <TabsContent value="billing">
               <BillingTab
                 employer={employer}
+                setEmployer={setEmployer}
                 creditPlans={creditPlans}
                 subscriptionPlans={subscriptionPlans}
                 checkoutPlanId={checkoutPlanId}
