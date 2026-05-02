@@ -51,7 +51,14 @@ export default function DashboardLayout() {
     if (payment === "success" && sessionId) {
       paymentService.syncCheckoutSession(sessionId).then((result) => {
         if (result.success) {
-          toast.success("Payment complete — Your job listing is now pending review.");
+          const kind = result.payment?.kind;
+          let msg = "Payment complete — Thank you for your purchase.";
+          if (kind === "job_posting") msg = "Payment complete — Your job listing is now pending review.";
+          else if (kind === "credit_bundle") msg = "Payment complete — Credits added to your balance.";
+          else if (kind === "subscription" || kind === "candidate_database") msg = "Subscription active — You now have access to the CV Database.";
+          else if (kind === "cv_plan") msg = "Plan upgraded — Your CV features have been updated.";
+          
+          toast.success(msg);
           queryClient.invalidateQueries({ queryKey: ["my-employer", user?.email] });
           queryClient.invalidateQueries({ queryKey: ["employer-jobs", user?.email] });
         }

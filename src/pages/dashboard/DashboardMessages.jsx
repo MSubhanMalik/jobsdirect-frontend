@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useOutletContext, useParams, useNavigate, Link } from "react-router-dom";
+import { useOutletContext, useParams, useNavigate, Link, useLocation, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MessageSquare, Briefcase, Lock, ArrowRight, ChevronRight } from "lucide-react";
@@ -13,15 +13,15 @@ export default function DashboardMessages() {
   const [rooms, setRooms] = useState([]);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
 
   const hasProPlan = !isEmployer || employer?.candidate_database_status === "cv_db_pro";
+  const candidate_id = searchParams.get("candidateId");
 
   useEffect(() => {
     if (!hasProPlan) { setLoading(false); return; }
-
-    const params = new URLSearchParams(window.location.search);
-    const candidate_id = params.get("candidateId");
-
+    
     const fetchRooms = async () => {
       try {
         let data = await messageApiService.getRooms();
@@ -30,22 +30,32 @@ export default function DashboardMessages() {
           if (existing) {
             navigate(`/dashboard/messages/${existing.id}`, { replace: true });
           } else {
-            const newRoom = await messageApiService.createRoom({ candidate_id });
+            const newRoom = await messageApiService.createRoom({ candidateId: candidate_id });
             data = [newRoom, ...data];
             navigate(`/dashboard/messages/${newRoom.id}`, { replace: true });
           }
+          // Important: return early if we are redirecting to avoid double-fetching/setting
+          return;
         }
+
         setRooms(data);
         if (roomId && data.length > 0) {
           const room = data.find(r => r.id === roomId);
           if (room) setSelectedRoom(room);
+        } else if (!roomId && data.length > 0) {
+          // If no roomId but we have rooms, maybe auto-select first? 
+          // (Optional, keeping as is for now)
         }
-      } catch { setRooms([]); }
-      finally { setLoading(false); }
+      } catch (err) {
+        console.error("[DashboardMessages] Error fetching rooms:", err);
+        setRooms([]);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchRooms();
-  }, [roomId, hasProPlan, window.location.search]);
+  }, [roomId, hasProPlan, candidate_id]);
 
   const handleRoomSelect = (room) => {
     setSelectedRoom(room);
@@ -141,7 +151,10 @@ export default function DashboardMessages() {
                             {jobTitle}
                           </p>
                           <span className="text-[0.6rem] text-muted-foreground shrink-0">
-                            {new Date(room.updated_at).toLocaleDateString("en-IE", { day: "numeric", month: "short" })}
+                            {(() => {
+                              const d = room.updatedAt || room.updated_at || room.createdAt || room.created_at;
+                              return d ? new Date(d).toLocaleDateString("en-IE", { day: "numeric", month: "short" }) : "Recently";
+                            })()}
                           </span>
                         </div>
                         <p className="text-xs text-muted-foreground truncate mt-0.5">{otherParty}</p>
