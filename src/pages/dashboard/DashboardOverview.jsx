@@ -246,6 +246,16 @@ function EmployeeOverview({ user, employee }) {
   });
   const applications = appsData?.items || [];
   const shortlisted = applications.filter((a) => a.status === "shortlisted").length;
+
+  const { data: cvsData } = useQuery({
+    queryKey: ["my-cvs-count"],
+    queryFn: async () => {
+      const cvService = (await import("@/services/cv")).default;
+      return cvService.list();
+    },
+  });
+  const cvCount = Array.isArray(cvsData?.cvs) ? cvsData.cvs.length : 0;
+
   const displayName = user.first_name || "there";
 
   return (
@@ -281,7 +291,7 @@ function EmployeeOverview({ user, employee }) {
         {[
           { label: "Applied", value: applications.length, icon: Send },
           { label: "Shortlisted", value: shortlisted, icon: Sparkles },
-          { label: "CVs", value: employee.cv_url ? 1 : 0, icon: FileText },
+          { label: "CVs", value: cvCount, icon: FileText },
           { label: "Discoverable", value: employee.is_searchable ? "Yes" : "No", icon: Eye },
         ].map((stat) => (
           <div key={stat.label} className="rounded-xl bg-card border border-border/50 p-5">
