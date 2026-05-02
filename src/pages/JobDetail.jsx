@@ -321,6 +321,10 @@ export default function JobDetail() {
                 <div className="rounded-xl border border-border/50 bg-muted/30 p-4 text-center">
                   <p className="text-sm text-muted-foreground">This is your listing</p>
                 </div>
+              ) : user && !employee ? (
+                <div className="rounded-xl border border-border/50 bg-muted/30 p-4 text-center">
+                  <p className="text-sm text-muted-foreground">Employer accounts cannot apply to jobs</p>
+                </div>
               ) : (
                 <>
                   <Button
