@@ -87,7 +87,13 @@ export default function JobDetail() {
         if (emps.length > 0) setEmployee(emps[0]);
         const emplrData = await employerService.list({ user_email: me.email }).catch(() => ({ items: [] }));
         if ((emplrData?.items || []).length > 0) setIsEmployer(true);
-        cvService.list().then(setUserCVs).catch(() => {});
+        cvService.list().then((data) => {
+          const cvs = Array.isArray(data?.cvs) ? data.cvs : (Array.isArray(data) ? data : []);
+          setUserCVs(cvs);
+          // Auto-select default CV, or the only CV, or the most recent
+          const defaultCv = cvs.find((c) => c.is_default) || cvs[0];
+          if (defaultCv) setSelectedCV(defaultCv.id);
+        }).catch(() => {});
         if (jobId) {
           const appData = await applicationService.list({ job_id: jobId, employee_email: me.email });
           const apps = appData?.items || [];
@@ -563,7 +569,7 @@ export default function JobDetail() {
                         <div className="flex items-center gap-2">
                           <FileText className="w-3.5 h-3.5 text-muted-foreground" />
                           <span>{cv.name}</span>
-                          {cv.isDefault && <Badge variant="secondary" className="ml-2 text-[10px] px-1.5 h-4">Default</Badge>}
+                          {cv.is_default && <Badge variant="secondary" className="ml-2 text-[10px] px-1.5 h-4">Default</Badge>}
                         </div>
                       </SelectItem>
                     ))}
