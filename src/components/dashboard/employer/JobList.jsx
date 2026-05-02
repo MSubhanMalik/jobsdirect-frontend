@@ -64,9 +64,9 @@ export default function JobList({ jobs, user, employer, showJobForm, editingJob,
     setActivatingAddon(true);
     try {
       const result = await jobService.activateAddon(addonConfirm.job.id, addonConfirm.addon.id);
-      if (result.needsCheckout && result.checkoutUrl) {
+      if (result.needs_checkout && result.checkout_url) {
         toast.info("Redirecting to payment...");
-        window.location.assign(result.checkoutUrl);
+        window.location.assign(result.checkout_url);
         return;
       }
       queryClient.invalidateQueries({ queryKey: ["employer-jobs", user.email] });
@@ -99,9 +99,9 @@ export default function JobList({ jobs, user, employer, showJobForm, editingJob,
     setDuplicating(true);
     try {
       const result = await jobService.duplicate(jobId);
-      if (result.needsCheckout && result.checkoutUrl) {
+      if (result.needs_checkout && result.checkout_url) {
         toast.info("Redirecting to payment...");
-        window.location.assign(result.checkoutUrl);
+        window.location.assign(result.checkout_url);
         return;
       }
       queryClient.invalidateQueries({ queryKey: ["employer-jobs", user.email] });
@@ -241,7 +241,7 @@ export default function JobList({ jobs, user, employer, showJobForm, editingJob,
                       onClick={async () => {
                         try {
                           const result = await jobService.checkout(job.id);
-                          if (result.checkoutUrl) window.location.assign(result.checkoutUrl);
+                          if (result.checkout_url) window.location.assign(result.checkout_url);
                         } catch (err) { toast.error(err.message || "Could not resume checkout"); }
                       }}
                     >
@@ -329,8 +329,8 @@ export default function JobList({ jobs, user, employer, showJobForm, editingJob,
       <ConfirmDialog
         open={!!addonConfirm}
         title={`Activate ${addonConfirm?.addon?.name}`}
-        description={`Add "${addonConfirm?.addon?.name}" to "${addonConfirm?.job?.title}" for ${addonConfirm?.addon?.creditCost} credits.`}
-        confirmLabel={activatingAddon ? "Activating..." : `Activate (${addonConfirm?.addon?.creditCost} credits)`}
+        description={`Add "${addonConfirm?.addon?.name}" to "${addonConfirm?.job?.title}" for ${addonConfirm?.addon?.credit_cost} credits.`}
+        confirmLabel={activatingAddon ? "Activating..." : `Activate (${addonConfirm?.addon?.credit_cost} credits)`}
         onConfirm={handleActivateAddon}
         onCancel={() => setAddonConfirm(null)}
         disabled={activatingAddon}

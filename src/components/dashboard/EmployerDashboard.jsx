@@ -68,8 +68,8 @@ export default function EmployerDashboard({ user, employer, setEmployer }) {
       if (!balance) return;
       const updates = {};
       if (balance.credits !== undefined && balance.credits !== employer.credits) updates.credits = balance.credits;
-      if (balance.candidateDatabaseAccess !== undefined && balance.candidateDatabaseAccess !== employer.candidate_database_access) updates.candidate_database_access = balance.candidateDatabaseAccess;
-      if (balance.candidateDatabaseStatus && balance.candidateDatabaseStatus !== employer.candidate_database_status) updates.candidate_database_status = balance.candidateDatabaseStatus;
+      if (balance.candidate_database_access !== undefined && balance.candidate_database_access !== employer.candidate_database_access) updates.candidate_database_access = balance.candidate_database_access;
+      if (balance.candidate_database_status && balance.candidate_database_status !== employer.candidate_database_status) updates.candidate_database_status = balance.candidate_database_status;
       if (Object.keys(updates).length) setEmployer((prev) => ({ ...prev, ...updates }));
     }).catch(() => {});
   }, [employer?.id, isApproved]);
@@ -164,7 +164,7 @@ export default function EmployerDashboard({ user, employer, setEmployer }) {
             <div>
               <h1 className="text-2xl font-display font-bold">Employer Dashboard</h1>
               <p className="text-primary-foreground/70 mt-1">
-                {user.firstName} {user.lastName}{employer.company_name ? ` — ${employer.company_name}` : ''}
+                {user.first_name} {user.last_name}{employer.company_name ? ` — ${employer.company_name}` : ''}
               </p>
               <p className="text-primary-foreground/50 text-sm">{user.email}</p>
             </div>

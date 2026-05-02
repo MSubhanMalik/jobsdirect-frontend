@@ -120,12 +120,16 @@ export default function AdminEmployers() {
                     <DropdownMenuItem onClick={() => openEditor("employer", employer)}>
                       <Pencil className="mr-2 h-4 w-4" /> Edit
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => updateEntity(employer.id, { verification_status: "approved", approved_at: new Date().toISOString() }, "Company approved")}>
-                      <CheckCircle2 className="mr-2 h-4 w-4" /> Approve
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => updateEntity(employer.id, { verification_status: "rejected" }, "Company rejected")}>
-                      <XCircle className="mr-2 h-4 w-4" /> Reject
-                    </DropdownMenuItem>
+                    {employer.verification_status !== "approved" && (
+                      <DropdownMenuItem onClick={() => updateEntity(employer.id, { verification_status: "approved", approved_at: new Date().toISOString() }, "Company approved")}>
+                        <CheckCircle2 className="mr-2 h-4 w-4" /> Approve
+                      </DropdownMenuItem>
+                    )}
+                    {employer.verification_status !== "rejected" && (
+                      <DropdownMenuItem onClick={() => updateEntity(employer.id, { verification_status: "rejected" }, "Company rejected")}>
+                        <XCircle className="mr-2 h-4 w-4" /> Reject
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem className="text-destructive" onClick={() => setDeleteDialog({ id: employer.id, label: employer.company_name })}>
                       <Trash2 className="mr-2 h-4 w-4" /> Delete
                     </DropdownMenuItem>

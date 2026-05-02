@@ -30,7 +30,7 @@ function Collapsible({ title, description, children }) {
     </div>
   );
 }
-import { COMPANY_FIELD_GROUPS, JOB_FIELD_GROUPS, DEFAULT_SITE_SETTINGS, mergeSiteSettingsWithDefaults } from "@/lib/siteSettings";
+import { COMPANY_FIELD_GROUPS, JOB_FIELD_GROUPS, EMPLOYEE_FIELD_GROUPS, DEFAULT_SITE_SETTINGS, mergeSiteSettingsWithDefaults } from "@/lib/siteSettings";
 import { queryKeys } from "../shared/constants";
 import settingsService from "@/services/settings";
 import { refreshSiteSettings } from "@/hooks/useSiteSettings";
@@ -48,7 +48,7 @@ function ProductCard({ product, updateProduct, removeProduct }) {
           <span className={`w-2 h-2 rounded-full ${product.enabled !== false ? "bg-emerald-500" : "bg-muted-foreground"}`} />
           <p className="text-sm font-display font-semibold text-foreground">{product.name || "Unnamed Product"}</p>
           <Badge variant="outline" className="text-[0.55rem] rounded-md px-1.5 py-0 h-4 capitalize">{product.type?.replace("_", " ")}</Badge>
-          {product.stripeProductId && <span className="text-[0.55rem] text-muted-foreground hidden sm:inline">{product.stripeProductId}</span>}
+          {product.stripe_product_id && <span className="text-[0.55rem] text-muted-foreground hidden sm:inline">{product.stripe_product_id}</span>}
         </div>
         <div className="flex items-center gap-2">
           <Switch checked={product.enabled !== false} onCheckedChange={(v) => { updateProduct("enabled", v); }} onClick={(e) => e.stopPropagation()} />
@@ -75,16 +75,16 @@ function ProductCard({ product, updateProduct, removeProduct }) {
               </SelectContent>
             </Select>
           </Field>
-          <Field label="Stripe Product ID"><Input placeholder="prod_xxx" value={product.stripeProductId || ""} onChange={(e) => updateProduct("stripeProductId", e.target.value)} className="h-9 text-sm" /></Field>
+          <Field label="Stripe Product ID"><Input placeholder="prod_xxx" value={product.stripe_product_id || ""} onChange={(e) => updateProduct("stripe_product_id", e.target.value)} className="h-9 text-sm" /></Field>
           {(product.type === "listing" || product.type === "addon") && (
-            <Field label="Credit Cost"><Input type="number" step="0.5" min="0" value={product.creditCost ?? ""} onChange={(e) => updateProduct("creditCost", Number(e.target.value) || 0)} className="h-9 text-sm" /></Field>
+            <Field label="Credit Cost"><Input type="number" step="0.5" min="0" value={product.credit_cost ?? ""} onChange={(e) => updateProduct("credit_cost", Number(e.target.value) || 0)} className="h-9 text-sm" /></Field>
           )}
           {product.type === "credit_bundle" && (
             <Field label="Credits Granted"><Input type="number" min="0" value={product.credits ?? ""} onChange={(e) => updateProduct("credits", Number(e.target.value) || 0)} className="h-9 text-sm" /></Field>
           )}
           {product.type === "cv_plan" && (
             <Field label="CV Plan Tier">
-              <Select value={product.cvPlanTier || "professional"} onValueChange={(v) => updateProduct("cvPlanTier", v)}>
+              <Select value={product.cv_plan_tier || "professional"} onValueChange={(v) => updateProduct("cv_plan_tier", v)}>
                 <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="professional">Professional</SelectItem>
@@ -220,7 +220,7 @@ export default function AdminSettings() {
               const products = [...(settingsForm.products || [])];
               products.push({
                 id: `product_${Date.now()}`, name: "", description: "", type: "addon",
-                creditCost: 0, credits: 0, stripeProductId: "", icon: "zap",
+                credit_cost: 0, credits: 0, stripe_product_id: "", icon: "zap",
                 appliesTo: "job", duration: 0, enabled: true,
               });
               set("products", products);
@@ -267,6 +267,20 @@ export default function AdminSettings() {
           groups={JOB_FIELD_GROUPS}
           value={settingsForm.employer_job_form_config}
           onToggle={(fieldKey, updates) => updateSettingsFieldControl("employer_job_form_config", fieldKey, updates)}
+        />
+        <FieldControlMatrix
+          title="Employee Profile Form"
+          description="Control which fields job seekers see on their profile form."
+          groups={EMPLOYEE_FIELD_GROUPS}
+          value={settingsForm.employee_profile_form_config}
+          onToggle={(fieldKey, updates) => updateSettingsFieldControl("employee_profile_form_config", fieldKey, updates)}
+        />
+        <FieldControlMatrix
+          title="Candidate View (Employer)"
+          description="Control which candidate fields are visible to employers in CV search."
+          groups={EMPLOYEE_FIELD_GROUPS}
+          value={settingsForm.employee_candidate_view_config}
+          onToggle={(fieldKey, updates) => updateSettingsFieldControl("employee_candidate_view_config", fieldKey, updates)}
         />
       </div>
     </form>

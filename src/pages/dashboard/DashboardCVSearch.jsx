@@ -20,8 +20,8 @@ export default function DashboardCVSearch() {
   const [experience, setExperience] = useState("");
   const [page, setPage] = useState(1);
 
-  const hasAccess = employer?.candidate_database_access || employer?.candidateDatabaseAccess;
-  const hasPro = employer?.candidate_database_status === "cv_db_pro" || employer?.candidateDatabaseStatus === "cv_db_pro";
+  const hasAccess = employer?.candidate_database_access;
+  const hasPro = employer?.candidate_database_status === "cv_db_pro";
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["candidate-search", search, location, experience, page],
@@ -194,7 +194,7 @@ export default function DashboardCVSearch() {
                         to={`/dashboard/cv-search/${candidate.id}`}
                         className="text-[0.95rem] font-display font-semibold text-foreground hover:text-accent transition-colors truncate"
                       >
-                        {candidate.user?.firstName} {candidate.user?.lastName}
+                        {candidate.user?.first_name} {candidate.user?.last_name}
                       </Link>
                       {candidate.is_searchable && (
                         <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" title="Available" />
@@ -246,7 +246,7 @@ export default function DashboardCVSearch() {
                     </Button>
                     {hasPro ? (
                       <Button asChild size="sm" className="h-8 text-xs rounded-lg w-28 justify-start bg-accent hover:bg-accent/90 text-accent-foreground">
-                        <Link to={`/dashboard/messages?candidateId=${candidate.userId}`}>
+                        <Link to={`/dashboard/messages?candidateId=${candidate.user_id}`}>
                           <MessageSquare className="w-3.5 h-3.5 mr-1.5" /> Message
                         </Link>
                       </Button>

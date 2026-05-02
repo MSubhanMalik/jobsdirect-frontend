@@ -63,7 +63,7 @@ export default function BillingTab({ employer, checkoutPlanId, onCheckout, onBil
       </div>
 
       {/* Expiring credits warning */}
-      {employer.creditsExpiringSoon > 0 && (
+      {employer.credits_expiring_soon > 0 && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-3">
           <div className="w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
             <AlertTriangle className="w-4 h-4 text-amber-600" />
@@ -71,7 +71,7 @@ export default function BillingTab({ employer, checkoutPlanId, onCheckout, onBil
           <div>
             <p className="text-sm font-semibold text-amber-900">Credits Expiring Soon</p>
             <p className="text-xs text-amber-700 mt-0.5">
-              {employer.creditsExpiringSoon} credit{employer.creditsExpiringSoon !== 1 ? "s" : ""} will expire within 30 days. Use them before they're lost.
+              {employer.credits_expiring_soon} credit{employer.credits_expiring_soon !== 1 ? "s" : ""} will expire within 30 days. Use them before they're lost.
             </p>
           </div>
         </div>

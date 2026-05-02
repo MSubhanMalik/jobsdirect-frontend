@@ -1,44 +1,47 @@
 export interface WorkExperience {
-  jobTitle: string;
+  job_title: string;
   company: string;
-  duration: string;
+  start_date: string;
+  end_date: string;
+  current: boolean;
   responsibilities: string;
 }
 
 export interface Education {
   degree: string;
   institution: string;
-  duration: string;
+  field_of_study: string;
+  year: string;
   description: string;
 }
 
 export interface Employee {
   id: string;
-  userId: string;
-  firstName?: string;
-  lastName?: string;
+  user_id: string;
+  first_name?: string;
+  last_name?: string;
   title?: string;
   phone?: string;
   address?: string;
   location?: string;
   bio?: string;
-  profileCompleted: boolean;
-  skills?: string;
-  experienceYears?: number;
-  dateOfBirth?: string;
-  desiredJobType?: string;
-  desiredLocation?: string;
+  profile_completed: boolean;
+  skills?: string[];
+  experience_years?: number;
+  date_of_birth?: string;
+  desired_job_type?: string;
+  desired_location?: string;
   availability?: string;
-  isSearchable: boolean;
-  workExperience?: WorkExperience[];
+  is_searchable: boolean;
+  work_experience?: WorkExperience[];
   education?: Education[];
-  createdAt: string;
-  updatedAt: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface EmployeeCreatePayload {
-  firstName?: string;
-  lastName?: string;
+  first_name?: string;
+  last_name?: string;
   [key: string]: any;
 }
 

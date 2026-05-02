@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Pencil, Eye, EyeOff, MoreHorizontal, Trash2, User, MapPin, Briefcase } from "lucide-react";
 import ConfirmDialog from "@/components/ui/confirm-dialog";
 import { SectionHeader, EmptyState } from "../shared/UIComponents";
@@ -20,8 +21,17 @@ export default function AdminEmployees() {
   const queryClient = useQueryClient();
   const [deleteDialog, setDeleteDialog] = useState(null);
   const [page, setPage] = useState(1);
+  const [visibility, setVisibility] = useState("all");
 
-  const employeesQuery = useQuery({ queryKey: [...queryKeys.employees, page], queryFn: () => employeeService.list({ pageSize: 20, page }) });
+  const employeesQuery = useQuery({
+    queryKey: [...queryKeys.employees, page, visibility],
+    queryFn: () => employeeService.list({
+      pageSize: 20,
+      page,
+      ...(visibility === "visible" ? { is_searchable: true } : {}),
+      ...(visibility === "hidden" ? { is_searchable: false } : {}),
+    }),
+  });
   const employees = employeesQuery.data?.items || [];
   const totalPages = employeesQuery.data?.totalPages || 1;
   const total = employeesQuery.data?.total || 0;
@@ -57,6 +67,20 @@ export default function AdminEmployees() {
           </Button>
         }
       />
+
+      {/* Filters */}
+      <div className="flex gap-3">
+        <Select value={visibility} onValueChange={(v) => { setVisibility(v); setPage(1); }}>
+          <SelectTrigger className="w-44 h-9 rounded-lg text-sm">
+            <SelectValue placeholder="All candidates" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All candidates</SelectItem>
+            <SelectItem value="visible">Visible to employers</SelectItem>
+            <SelectItem value="hidden">Hidden from employers</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       {filtered.length === 0 ? (
         <EmptyState title="No candidates found" description="Try adjusting your search." />

@@ -512,6 +512,7 @@ export const EMPLOYER_FORM_DEFAULTS = buildFormDefaults(COMPANY_FIELDS.filter((c
 export const EMPLOYER_EDITOR_DEFAULTS = buildFormDefaults(COMPANY_FIELDS);
 export const JOB_FORM_DEFAULTS = buildFormDefaults(JOB_FIELDS.filter((currentField) => !currentField.adminOnly));
 export const JOB_EDITOR_DEFAULTS = buildFormDefaults(JOB_FIELDS);
+export const EMPLOYEE_EDITOR_DEFAULTS = buildFormDefaults(EMPLOYEE_FIELDS);
 
 export const EMPLOYER_COMPANY_FORM_CONTROL_DEFAULTS = COMPANY_FIELDS
   .filter((currentField) => currentField.manageInEmployerForm && !currentField.adminOnly)
@@ -532,6 +533,21 @@ export const EMPLOYER_JOB_FORM_CONTROL_DEFAULTS = JOB_FIELDS
     };
     return acc;
   }, {});
+
+export const EMPLOYEE_PROFILE_FORM_CONTROL_DEFAULTS = EMPLOYEE_FIELDS.reduce((acc, currentField) => {
+  acc[currentField.key] = {
+    visible: true,
+    required: Boolean(currentField.employerDefaultRequired),
+  };
+  return acc;
+}, {});
+
+export const EMPLOYEE_CANDIDATE_VIEW_CONTROL_DEFAULTS = EMPLOYEE_FIELDS.reduce((acc, currentField) => {
+  acc[currentField.key] = {
+    visible: currentField.employerDefaultVisible !== false,
+  };
+  return acc;
+}, {});
 
 export const EMPLOYEE_FORM_DEFAULTS = EMPLOYEE_FIELDS.reduce((acc, currentField) => {
   if (currentField.type === "tags" || currentField.type === "repeater") {
@@ -569,6 +585,8 @@ export const DEFAULT_SITE_SETTINGS = {
   payment_plans: DEFAULT_PAYMENT_PLANS,
   employer_company_form_config: EMPLOYER_COMPANY_FORM_CONTROL_DEFAULTS,
   employer_job_form_config: EMPLOYER_JOB_FORM_CONTROL_DEFAULTS,
+  employee_profile_form_config: EMPLOYEE_PROFILE_FORM_CONTROL_DEFAULTS,
+  employee_candidate_view_config: EMPLOYEE_CANDIDATE_VIEW_CONTROL_DEFAULTS,
 };
 
 const buildFieldMap = (fields) =>
@@ -606,6 +624,14 @@ export function mergeSiteSettingsWithDefaults(settings = {}) {
     employer_job_form_config: mergeFieldControlConfig(
       EMPLOYER_JOB_FORM_CONTROL_DEFAULTS,
       settings?.employer_job_form_config,
+    ),
+    employee_profile_form_config: mergeFieldControlConfig(
+      EMPLOYEE_PROFILE_FORM_CONTROL_DEFAULTS,
+      settings?.employee_profile_form_config,
+    ),
+    employee_candidate_view_config: mergeFieldControlConfig(
+      EMPLOYEE_CANDIDATE_VIEW_CONTROL_DEFAULTS,
+      settings?.employee_candidate_view_config,
     ),
   };
 }

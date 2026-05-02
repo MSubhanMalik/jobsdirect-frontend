@@ -13,12 +13,12 @@ export default function CostSummary({ costEstimate, creditBalance }) {
     <div className="rounded-md bg-white border border-slate-200 px-3 py-2 space-y-1">
       <div className="flex items-center justify-between text-sm">
         <span>{costEstimate.listing.name}</span>
-        <span>{formatCredits(costEstimate.listing.creditCost)}</span>
+        <span>{formatCredits(costEstimate.listing.credit_cost)}</span>
       </div>
       {costEstimate.addons.map((a) => (
         <div key={a.id} className="flex items-center justify-between text-xs text-muted-foreground">
           <span>+ {a.name}</span>
-          <span>{formatCredits(a.creditCost)}</span>
+          <span>{formatCredits(a.credit_cost)}</span>
         </div>
       ))}
       <div className="flex items-center justify-between font-bold border-t border-slate-100 pt-1 mt-1">

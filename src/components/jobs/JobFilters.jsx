@@ -1,16 +1,18 @@
 import React from "react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Search, X } from "lucide-react";
 import { CATEGORY_OPTIONS, JOB_TYPE_OPTIONS, LOCATION_OPTIONS } from "@/lib/siteSettings";
 
 export default function JobFilters({ filters, onChange, onClear }) {
-  const hasFilters = filters.keyword || filters.location || filters.type || filters.category;
+  const hasFilters = filters.keyword || filters.location || filters.type || filters.category || filters.is_featured || filters.is_highlighted || filters.is_urgent;
 
   return (
     <div className="bg-card rounded-2xl border border-border/60 p-3 shadow-[0_4px_24px_rgba(0,0,0,0.06)]">
       <div className="flex flex-col sm:flex-row items-stretch gap-0">
+
         {/* Keyword */}
         <div className="relative flex-1 flex items-center">
           <Search className="absolute left-4 w-[1.1rem] h-[1.1rem] text-muted-foreground/50" />
@@ -99,6 +101,22 @@ export default function JobFilters({ filters, onChange, onClear }) {
             Search
           </Button>
         </div>
+      </div>
+
+      {/* Badge filters */}
+      <div className="flex items-center gap-5 px-3 pt-2 pb-1 border-t border-border/30 mt-2">
+        <label className="flex items-center gap-1.5 cursor-pointer">
+          <Checkbox checked={filters.is_featured} onCheckedChange={(v) => onChange({ ...filters, is_featured: Boolean(v) })} />
+          <span className="text-xs text-muted-foreground">Featured</span>
+        </label>
+        <label className="flex items-center gap-1.5 cursor-pointer">
+          <Checkbox checked={filters.is_highlighted} onCheckedChange={(v) => onChange({ ...filters, is_highlighted: Boolean(v) })} />
+          <span className="text-xs text-muted-foreground">Highlighted</span>
+        </label>
+        <label className="flex items-center gap-1.5 cursor-pointer">
+          <Checkbox checked={filters.is_urgent} onCheckedChange={(v) => onChange({ ...filters, is_urgent: Boolean(v) })} />
+          <span className="text-xs text-muted-foreground">Urgent Hiring</span>
+        </label>
       </div>
     </div>
   );

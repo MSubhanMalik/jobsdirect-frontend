@@ -493,100 +493,218 @@ export default function JobDetail() {
 
       {/* ── Apply Dialog ── */}
       <Dialog open={showApply} onOpenChange={setShowApply}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="font-display">Apply to {job.title}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
+        <DialogContent className="p-0 overflow-hidden border-none max-w-lg">
+          <div className="bg-gradient-to-br from-accent/10 via-background to-background p-6 border-b border-border/50">
+            <DialogHeader>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center text-accent">
+                  <Briefcase className="w-5 h-5" />
+                </div>
+                <div>
+                  <DialogTitle className="text-xl font-display font-bold text-foreground">Apply to Role</DialogTitle>
+                  <p className="text-xs text-muted-foreground truncate max-w-[300px]">{job.title}</p>
+                </div>
+              </div>
+            </DialogHeader>
+          </div>
+
+          <div className="p-6 space-y-6">
             {employee && (
-              <p className="text-sm text-muted-foreground">
-                Applying as <span className="font-medium text-foreground">{employee.first_name} {employee.last_name}</span>
-              </p>
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 border border-border/50">
+                <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center text-[10px] font-bold text-accent">
+                  {employee.first_name?.[0]}{employee.last_name?.[0]}
+                </div>
+                <p className="text-sm font-medium text-foreground">
+                  Applying as <span className="text-accent">{employee.first_name} {employee.last_name}</span>
+                </p>
+              </div>
             )}
+
             {userCVs.length > 0 && (
-              <div className="space-y-1.5">
-                <Label className="text-sm font-medium">Attach CV</Label>
+              <div className="space-y-2">
+                <Label className="text-[0.8rem] font-semibold uppercase tracking-wider text-muted-foreground">Select Resume</Label>
                 <Select value={selectedCV} onValueChange={setSelectedCV}>
-                  <SelectTrigger className="h-11"><SelectValue placeholder="Select a CV (optional)" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No CV attached</SelectItem>
+                  <SelectTrigger className="h-12 rounded-xl border-border/60 focus:ring-accent/20">
+                    <SelectValue placeholder="Choose a CV from your profile" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-border/60">
+                    <SelectItem value="none" className="rounded-lg">No CV attached (Not recommended)</SelectItem>
                     {userCVs.map((cv) => (
-                      <SelectItem key={cv.id} value={cv.id}>{cv.name}{cv.isDefault ? " (Default)" : ""}</SelectItem>
+                      <SelectItem key={cv.id} value={cv.id} className="rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <FileText className="w-3.5 h-3.5 text-muted-foreground" />
+                          <span>{cv.name}</span>
+                          {cv.isDefault && <Badge variant="secondary" className="ml-2 text-[10px] px-1.5 h-4">Default</Badge>}
+                        </div>
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
             )}
-            <div className="space-y-1.5">
-              <Label className="text-sm font-medium">Cover Letter <span className="text-muted-foreground font-normal">(optional)</span></Label>
+
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <Label className="text-[0.8rem] font-semibold uppercase tracking-wider text-muted-foreground">Cover Letter</Label>
+                <span className="text-[10px] font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded uppercase">Optional</span>
+              </div>
               <Textarea
-                placeholder="Why are you a good fit for this role?"
+                placeholder="Briefly explain why you're a great match for this position..."
                 value={coverLetter}
                 onChange={(e) => setCoverLetter(e.target.value)}
-                className="min-h-[120px] resize-none"
+                className="min-h-[140px] rounded-xl border-border/60 focus:ring-accent/20 resize-none transition-all focus:border-accent/50"
               />
             </div>
-            <label className="flex items-start gap-2.5 cursor-pointer">
-              <Checkbox checked={consent} onCheckedChange={(v) => setConsent(Boolean(v))} className="mt-0.5" />
-              <span className="text-xs text-muted-foreground leading-relaxed">I consent to my data being shared with the employer for recruitment purposes.</span>
-            </label>
+
+            <div className="p-4 rounded-xl border border-border/40 bg-muted/20">
+              <label className="flex items-start gap-3 cursor-pointer group">
+                <Checkbox 
+                  checked={consent} 
+                  onCheckedChange={(v) => setConsent(Boolean(v))} 
+                  className="mt-1 border-muted-foreground/30 data-[state=checked]:bg-accent data-[state=checked]:border-accent transition-colors" 
+                />
+                <span className="text-xs text-muted-foreground leading-relaxed group-hover:text-foreground transition-colors">
+                  I consent to my application data, including my profile details and attached CV, being shared with <span className="font-semibold text-foreground">{job.company_name}</span> for recruitment purposes.
+                </span>
+              </label>
+            </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowApply(false)} className="rounded-lg">Cancel</Button>
+
+          <div className="p-6 bg-muted/30 border-t border-border/50 flex flex-col sm:flex-row gap-3">
+            <Button 
+              variant="ghost" 
+              onClick={() => setShowApply(false)} 
+              className="flex-1 rounded-xl h-12 font-medium hover:bg-background transition-all"
+            >
+              Cancel
+            </Button>
             <Button
-              className="bg-accent hover:bg-accent/90 text-accent-foreground rounded-lg font-medium"
+              className="flex-[2] bg-accent hover:bg-accent/90 text-accent-foreground rounded-xl h-12 font-bold shadow-lg shadow-accent/20 transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:translate-y-0"
               onClick={handleApply}
               disabled={applying || !consent}
             >
-              {applying ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Submitting...</> : "Submit Application"}
+              {applying ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Processing...</>
+              ) : (
+                <><Send className="w-4 h-4 mr-2" />Submit Application</>
+              )}
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
       {/* ── Guest Apply Dialog ── */}
       <Dialog open={showGuestApply} onOpenChange={setShowGuestApply}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="font-display">Quick Apply — {job?.title}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3 py-2">
-            <div className="space-y-1.5">
-              <Label className="text-sm font-medium">Full Name *</Label>
-              <Input value={guestForm.name} onChange={(e) => setGuestForm({ ...guestForm, name: e.target.value })} placeholder="John Doe" className="h-11" required />
+        <DialogContent className="p-0 overflow-hidden border-none max-w-xl">
+          <div className="bg-gradient-to-br from-accent/10 via-background to-background p-6 border-b border-border/50">
+            <DialogHeader>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center text-accent">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <DialogTitle className="text-xl font-display font-bold text-foreground">Quick Apply</DialogTitle>
+                  <p className="text-xs text-muted-foreground truncate max-w-[350px]">{job?.title}</p>
+                </div>
+              </div>
+            </DialogHeader>
+          </div>
+
+          <div className="max-h-[70vh] overflow-y-auto p-6 space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-[0.8rem] font-semibold uppercase tracking-wider text-muted-foreground">Full Name *</Label>
+                <Input 
+                  value={guestForm.name} 
+                  onChange={(e) => setGuestForm({ ...guestForm, name: e.target.value })} 
+                  placeholder="John Doe" 
+                  className="h-12 rounded-xl border-border/60 focus:ring-accent/20 focus:border-accent/50 transition-all" 
+                  required 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[0.8rem] font-semibold uppercase tracking-wider text-muted-foreground">Email Address *</Label>
+                <Input 
+                  type="email" 
+                  value={guestForm.email} 
+                  onChange={(e) => setGuestForm({ ...guestForm, email: e.target.value })} 
+                  placeholder="john@example.com" 
+                  className="h-12 rounded-xl border-border/60 focus:ring-accent/20 focus:border-accent/50 transition-all" 
+                  required 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[0.8rem] font-semibold uppercase tracking-wider text-muted-foreground">Phone Number *</Label>
+                <Input 
+                  value={guestForm.phone} 
+                  onChange={(e) => setGuestForm({ ...guestForm, phone: e.target.value })} 
+                  placeholder="+353 87 123 4567" 
+                  className="h-12 rounded-xl border-border/60 focus:ring-accent/20 focus:border-accent/50 transition-all" 
+                  required 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[0.8rem] font-semibold uppercase tracking-wider text-muted-foreground">County</Label>
+                <Select value={guestForm.county} onValueChange={(v) => setGuestForm({ ...guestForm, county: v })}>
+                  <SelectTrigger className="h-12 rounded-xl border-border/60 focus:ring-accent/20">
+                    <SelectValue placeholder="Select county" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    {LOCATION_OPTIONS.map((l) => (
+                      <SelectItem key={l.value} value={l.value} className="rounded-lg">{l.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-sm font-medium">Email *</Label>
-              <Input type="email" value={guestForm.email} onChange={(e) => setGuestForm({ ...guestForm, email: e.target.value })} placeholder="john@example.com" className="h-11" required />
+
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <Label className="text-[0.8rem] font-semibold uppercase tracking-wider text-muted-foreground">Message</Label>
+                <span className="text-[10px] font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded uppercase">Optional</span>
+              </div>
+              <Textarea 
+                value={guestForm.message} 
+                onChange={(e) => setGuestForm({ ...guestForm, message: e.target.value })} 
+                placeholder="Why are you a good fit for this role?" 
+                className="min-h-[100px] rounded-xl border-border/60 focus:ring-accent/20 focus:border-accent/50 transition-all resize-none" 
+              />
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-sm font-medium">Phone *</Label>
-              <Input value={guestForm.phone} onChange={(e) => setGuestForm({ ...guestForm, phone: e.target.value })} placeholder="+353 87 123 4567" className="h-11" required />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-sm font-medium">County</Label>
-              <Select value={guestForm.county} onValueChange={(v) => setGuestForm({ ...guestForm, county: v })}>
-                <SelectTrigger className="h-11"><SelectValue placeholder="Select county" /></SelectTrigger>
-                <SelectContent>
-                  {LOCATION_OPTIONS.map((l) => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-sm font-medium">Message <span className="text-muted-foreground font-normal">(optional)</span></Label>
-              <Textarea value={guestForm.message} onChange={(e) => setGuestForm({ ...guestForm, message: e.target.value })} placeholder="Why are you a good fit?" className="min-h-[80px] resize-none" />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-sm font-medium">Attach CV *</Label>
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full justify-start text-muted-foreground font-normal h-11 rounded-lg"
+
+            <div className="space-y-2">
+              <Label className="text-[0.8rem] font-semibold uppercase tracking-wider text-muted-foreground">Attach CV *</Label>
+              <div 
+                className={`group relative flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-xl transition-all cursor-pointer ${
+                  guestFile 
+                  ? "bg-emerald-50/30 border-emerald-500/50" 
+                  : "bg-muted/30 border-border/60 hover:bg-muted/50 hover:border-accent/40"
+                }`}
                 onClick={() => document.getElementById("guest-cv-upload").click()}
               >
-                <Upload className="w-4 h-4 mr-2" />
-                {guestFile ? guestFile.name : "Choose CV file (PDF/Word)"}
-              </Button>
+                {guestFile ? (
+                  <div className="flex flex-col items-center">
+                    <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 mb-2">
+                      <CheckCircle className="w-6 h-6" />
+                    </div>
+                    <p className="text-sm font-semibold text-emerald-800">{guestFile.name}</p>
+                    <p className="text-[10px] text-emerald-600 mt-1 uppercase font-bold tracking-tight">File Ready to upload</p>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="mt-2 h-7 text-[10px] text-muted-foreground hover:text-red-500 hover:bg-transparent"
+                      onClick={(e) => { e.stopPropagation(); setGuestFile(null); }}
+                    >
+                      Remove and change
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <Upload className="w-8 h-8 text-muted-foreground/40 group-hover:text-accent/60 mb-2 transition-colors" />
+                    <p className="text-sm font-medium text-foreground">Click to upload your CV</p>
+                    <p className="text-xs text-muted-foreground mt-1">PDF or Word documents accepted</p>
+                  </>
+                )}
+              </div>
               <input
                 id="guest-cv-upload"
                 type="file"
@@ -594,21 +712,32 @@ export default function JobDetail() {
                 accept=".pdf,.doc,.docx"
                 onChange={(e) => setGuestFile(e.target.files[0])}
               />
-              {guestFile && (
-                <p className="text-[0.65rem] text-emerald-600 flex items-center gap-1 font-medium">
-                  <CheckCircle className="w-3 h-3" /> File ready
-                </p>
-              )}
             </div>
-            <label className="flex items-start gap-2.5 cursor-pointer">
-              <Checkbox checked={guestForm.consent} onCheckedChange={(v) => setGuestForm({ ...guestForm, consent: Boolean(v) })} className="mt-0.5" />
-              <span className="text-xs text-muted-foreground leading-relaxed">I consent to my data being shared with the employer for recruitment purposes.</span>
-            </label>
+
+            <div className="p-4 rounded-xl border border-border/40 bg-muted/20">
+              <label className="flex items-start gap-3 cursor-pointer group">
+                <Checkbox 
+                  checked={guestForm.consent} 
+                  onCheckedChange={(v) => setGuestForm({ ...guestForm, consent: Boolean(v) })} 
+                  className="mt-1 border-muted-foreground/30 data-[state=checked]:bg-accent data-[state=checked]:border-accent transition-colors" 
+                />
+                <span className="text-xs text-muted-foreground leading-relaxed group-hover:text-foreground transition-colors">
+                  I consent to my application data being shared with <span className="font-semibold text-foreground">{job?.company_name || "the employer"}</span> for recruitment purposes.
+                </span>
+              </label>
+            </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowGuestApply(false)} className="rounded-lg">Cancel</Button>
+
+          <div className="p-6 bg-muted/30 border-t border-border/50 flex flex-col sm:flex-row gap-3">
+            <Button 
+              variant="ghost" 
+              onClick={() => setShowGuestApply(false)} 
+              className="flex-1 rounded-xl h-12 font-medium hover:bg-background transition-all"
+            >
+              Cancel
+            </Button>
             <Button
-              className="bg-accent hover:bg-accent/90 text-accent-foreground rounded-lg font-medium"
+              className="flex-[2] bg-accent hover:bg-accent/90 text-accent-foreground rounded-xl h-12 font-bold shadow-lg shadow-accent/20 transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:translate-y-0"
               disabled={applying || !guestForm.name || !guestForm.email || !guestForm.phone || !guestForm.consent || !guestFile}
               onClick={async () => {
                 setApplying(true);
@@ -632,9 +761,13 @@ export default function JobDetail() {
                 }
               }}
             >
-              {applying ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Submitting...</> : "Submit Application"}
+              {applying ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Sending...</>
+              ) : (
+                <><Send className="w-4 h-4 mr-2" />Submit Application</>
+              )}
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

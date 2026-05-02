@@ -180,7 +180,7 @@ export default function DashboardApplicationDetail() {
             </div>
             <div className="px-6 py-5">
               <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                {app.coverLetter || app.cover_letter || "No cover letter provided."}
+                {app.cover_letter || "No cover letter provided."}
               </p>
             </div>
           </div>
@@ -230,7 +230,7 @@ export default function DashboardApplicationDetail() {
                   <p className="text-xs text-muted-foreground">{app.company_name}{app.job?.location ? ` · ${app.job.location}` : ""}</p>
                 </div>
               </div>
-              <Link to={`/jobs/${app.jobId || app.job_id}`}>
+              <Link to={`/jobs/${app.job_id}`}>
                 <Button variant="outline" size="sm" className="rounded-lg h-8 text-xs font-medium">
                   View Job <ExternalLink className="w-3 h-3 ml-1.5" />
                 </Button>
@@ -259,7 +259,7 @@ export default function DashboardApplicationDetail() {
                     </div>
                   </div>
                 )}
-                {!app.userId && (
+                {!app.user_id && (
                   <div className="mb-5 p-4 rounded-lg border border-amber-200 bg-amber-50 flex items-start gap-3">
                     <Mail className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                     <div>
@@ -275,7 +275,7 @@ export default function DashboardApplicationDetail() {
                     <p className="text-sm text-muted-foreground mb-4">Start a conversation with this candidate.</p>
                     <Button
                       onClick={handleStartChat}
-                      disabled={!app.userId || employer?.candidate_database_status !== "cv_db_pro"}
+                      disabled={!app.user_id || employer?.candidate_database_status !== "cv_db_pro"}
                       className="bg-accent hover:bg-accent/90 text-accent-foreground rounded-full px-6 h-10 font-medium"
                     >
                       <Send className="w-4 h-4 mr-2" /> Message Candidate
@@ -288,16 +288,16 @@ export default function DashboardApplicationDetail() {
                         <p className="text-center text-xs text-muted-foreground py-10">No messages yet.</p>
                       ) : (
                         messagesData.items.map((msg) => (
-                          <div key={msg.id} className={`flex flex-col ${msg.senderId === user.id ? "items-end" : "items-start"}`}>
+                          <div key={msg.id} className={`flex flex-col ${msg.sender_id === user.id ? "items-end" : "items-start"}`}>
                             <div className={`px-4 py-2.5 rounded-2xl text-sm max-w-[85%] ${
-                              msg.senderId === user.id
+                              msg.sender_id === user.id
                                 ? "bg-foreground text-background rounded-br-md"
                                 : "bg-muted text-foreground rounded-bl-md"
                             }`}>
                               {msg.message}
                             </div>
                             <span className="text-[0.6rem] text-muted-foreground mt-1 px-1">
-                              {msg.sender?.firstName || "Candidate"} · {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              {msg.sender?.first_name || "Candidate"} · {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </span>
                           </div>
                         ))
@@ -335,21 +335,21 @@ export default function DashboardApplicationDetail() {
                 <Mail className="w-4 h-4 shrink-0" />
                 <span className="truncate">{app.employee_email}</span>
               </a>
-              {(app.guestPhone || app.user?.phone) && (
-                <a href={`tel:${app.guestPhone || app.user.phone}`} className="flex items-center gap-3 text-sm text-muted-foreground hover:text-accent transition-colors">
+              {(app.guest_phone || app.user?.phone) && (
+                <a href={`tel:${app.guest_phone || app.user.phone}`} className="flex items-center gap-3 text-sm text-muted-foreground hover:text-accent transition-colors">
                   <Phone className="w-4 h-4 shrink-0" />
-                  <span>{app.guestPhone || app.user.phone}</span>
+                  <span>{app.guest_phone || app.user.phone}</span>
                 </a>
               )}
-              {(app.guestCounty || app.job?.location) && (
+              {(app.guest_county || app.job?.location) && (
                 <div className="flex items-center gap-3 text-sm text-muted-foreground">
                   <MapPin className="w-4 h-4 shrink-0" />
-                  <span>{app.guestCounty || app.job?.location}</span>
+                  <span>{app.guest_county || app.job?.location}</span>
                 </div>
               )}
               <div className="flex items-center gap-3 text-sm text-muted-foreground">
                 <Calendar className="w-4 h-4 shrink-0" />
-                <span>Applied {new Date(app.createdAt).toLocaleDateString("en-IE", { day: "numeric", month: "short", year: "numeric" })}</span>
+                <span>Applied {new Date(app.created_at).toLocaleDateString("en-IE", { day: "numeric", month: "short", year: "numeric" })}</span>
               </div>
             </div>
           </div>

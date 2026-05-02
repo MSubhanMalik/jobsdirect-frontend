@@ -1,8 +1,10 @@
 import {
   COMPANY_FIELDS,
   JOB_FIELDS,
+  EMPLOYEE_FIELDS,
   EMPLOYER_EDITOR_DEFAULTS,
   JOB_EDITOR_DEFAULTS,
+  EMPLOYEE_EDITOR_DEFAULTS,
   buildEntityFormValues,
 } from "@/lib/siteSettings";
 
@@ -25,19 +27,11 @@ export function createEmployerForm(employer = {}) {
 }
 
 export function createEmployeeForm(employee = {}) {
+  const formValues = buildEntityFormValues(EMPLOYEE_EDITOR_DEFAULTS, EMPLOYEE_FIELDS, employee);
   return {
-    first_name: employee.first_name || "",
-    last_name: employee.last_name || "",
+    ...formValues,
     user_email: employee.user_email || "",
-    phone: employee.phone || "",
-    title: employee.title || "",
-    location: employee.location || employee.desired_location || "",
-    bio: employee.bio || "",
-    skills: Array.isArray(employee.skills) ? employee.skills.join(", ") : employee.skills || "",
-    desired_job_type: employee.desired_job_type || "full_time",
-    availability: employee.availability || "negotiable",
     profile_completed: Boolean(employee.profile_completed),
-    is_searchable: employee.is_searchable !== false,
   };
 }
 

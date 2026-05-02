@@ -40,7 +40,7 @@ class PaymentService {
 
   async syncCheckoutSession(sessionId: string): Promise<any> {
     const res = await axiosInstance.post(api.endpoints.PAYMENT_SYNC_SESSION, {
-      sessionId,
+      session_id: sessionId,
     });
     return res.data;
   }
@@ -61,7 +61,7 @@ class PaymentService {
   }
 
   async getBalance(employerId?: string): Promise<CreditBalance> {
-    const qs = employerId ? `?employerId=${employerId}` : "";
+    const qs = employerId ? `?employer_id=${employerId}` : "";
     const res = await axiosInstance.get<CreditBalance>(
       `${api.endpoints.PAYMENT_BALANCE}${qs}`,
     );
@@ -70,7 +70,7 @@ class PaymentService {
 
   async getTransactions(employerId?: string, page = 1): Promise<any> {
     const params = new URLSearchParams();
-    if (employerId) params.set("employerId", employerId);
+    if (employerId) params.set("employer_id", employerId);
     params.set("page", String(page));
     params.set("pageSize", "20");
     const res = await axiosInstance.get(

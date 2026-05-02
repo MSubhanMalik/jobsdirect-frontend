@@ -1,15 +1,15 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import employeeService from "@/services/employee";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "react-toastify";
 import { getAdultDateMax, isAtLeast18 } from "@/lib/age";
-import { EMPLOYEE_FIELD_GROUPS } from "@/lib/siteSettings";
+import { EMPLOYEE_FIELD_GROUPS, hasFieldValue } from "@/lib/siteSettings";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Save, Plus, Trash2 } from "lucide-react";
 
@@ -215,15 +215,38 @@ function RepeaterField({ field, value = [], onChange }) {
 export default function EmployeeProfile({ employee, setEmployee, excludeGroups = [] }) {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(() => createFormState(employee));
+  const { settings: appSettings } = useSiteSettings();
+  const formConfig = appSettings?.employee_profile_form_config || {};
 
   useEffect(() => {
     setForm(createFormState(employee));
   }, [employee]);
 
+  const visibleGroups = useMemo(
+    () =>
+      EMPLOYEE_FIELD_GROUPS
+        .filter((g) => !excludeGroups.includes(g.id))
+        .map((group) => ({
+          ...group,
+          fields: group.fields.filter((field) => formConfig?.[field.key]?.visible !== false),
+        }))
+        .filter((group) => group.fields.length),
+    [formConfig, excludeGroups],
+  );
+
   const handleSave = async () => {
-    if (!isAtLeast18(form.date_of_birth)) {
+    if (form.date_of_birth && !isAtLeast18(form.date_of_birth)) {
       toast.error("Invalid Date of Birth — Employee profile users must be at least 18 years old.");
       return;
+    }
+
+    for (const group of visibleGroups) {
+      for (const field of group.fields) {
+        if (formConfig?.[field.key]?.required && !hasFieldValue(field, form[field.key])) {
+          toast.error(`Missing required field — ${field.label} is required before saving.`);
+          return;
+        }
+      }
     }
 
     setSaving(true);
@@ -241,8 +264,6 @@ export default function EmployeeProfile({ employee, setEmployee, excludeGroups =
   const updateField = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
-
-  const visibleGroups = EMPLOYEE_FIELD_GROUPS.filter((g) => !excludeGroups.includes(g.id));
 
   return (
     <div className="space-y-6">
@@ -276,7 +297,7 @@ export default function EmployeeProfile({ employee, setEmployee, excludeGroups =
                   }
                   return (
                     <div key={f.key} className={`space-y-2 ${f.span === 2 ? "sm:col-span-2" : ""}`}>
-                      <Label className="text-sm font-medium">{f.label}</Label>
+                      <Label className="text-sm font-medium">{f.label}{formConfig?.[f.key]?.required && <span className="text-destructive ml-0.5">*</span>}</Label>
                       <FieldRenderer field={f} value={form[f.key]} onChange={(val) => updateField(f.key, val)} />
                     </div>
                   );

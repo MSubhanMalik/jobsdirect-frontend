@@ -5,20 +5,20 @@ export type ApplicationStatus = "pending" | "reviewed" | "shortlisted" | "reject
 
 export interface Application {
   id: string;
-  jobId: string;
-  userId: string;
-  employerId?: string;
+  job_id: string;
+  user_id: string;
+  employer_id?: string;
   status: ApplicationStatus;
-  coverLetter?: string;
-  createdAt: string;
-  updatedAt: string;
+  cover_letter?: string;
+  created_at: string;
+  updated_at: string;
   job?: Job;
   user?: User;
 }
 
 export interface ApplicationCreatePayload {
-  jobId: string;
-  coverLetter?: string;
+  job_id: string;
+  cover_letter?: string;
 }
 
 export interface ApplicationUpdatePayload {

@@ -22,20 +22,20 @@ export function getSocket(): Socket {
   return socket;
 }
 
-export function joinRoom(roomId: string) {
-  getSocket().emit("joinRoom", roomId);
+export function joinRoom(room_id: string) {
+  getSocket().emit("joinRoom", room_id);
 }
 
-export function joinNotificationRoom(userId: string) {
-  getSocket().emit("joinNotificationRoom", userId);
+export function joinNotificationRoom(user_id: string) {
+  getSocket().emit("joinNotificationRoom", user_id);
 }
 
-export function sendMessage(roomId: string, senderId: string, message: string) {
-  getSocket().emit("sendMessage", { roomId, senderId, message });
+export function sendMessage(room_id: string, sender_id: string, message: string) {
+  getSocket().emit("sendMessage", { room_id, sender_id, message });
 }
 
-export function emitTyping(roomId: string, userId: string, isTyping: boolean) {
-  getSocket().emit("typing", { roomId, userId, isTyping });
+export function emitTyping(room_id: string, user_id: string, is_typing: boolean) {
+  getSocket().emit("typing", { room_id, user_id, is_typing });
 }
 
 export function onReceiveMessage(callback: (data: any) => void) {

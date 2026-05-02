@@ -35,7 +35,7 @@ export default function DashboardJobAlerts() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
-  const [form, setForm] = useState({ keyword: "", location: "any", category: "any", jobType: "any", frequency: "daily" });
+  const [form, setForm] = useState({ keyword: "", location: "any", category: "any", job_type: "any", frequency: "daily" });
 
   const { data: alerts = [], isLoading } = useQuery({
     queryKey: ["job-alerts"],
@@ -48,7 +48,7 @@ export default function DashboardJobAlerts() {
       queryClient.invalidateQueries({ queryKey: ["job-alerts"] });
       toast.success("Job alert created");
       setShowCreate(false);
-      setForm({ keyword: "", location: "any", category: "any", jobType: "any", frequency: "daily" });
+      setForm({ keyword: "", location: "any", category: "any", job_type: "any", frequency: "daily" });
     },
     onError: (err) => toast.error(err.message || "Failed to create alert"),
   });
@@ -68,9 +68,9 @@ export default function DashboardJobAlerts() {
       ...form,
       location: form.location === "any" ? null : form.location,
       category: form.category === "any" ? null : form.category,
-      jobType: form.jobType === "any" ? null : form.jobType,
+      job_type: form.job_type === "any" ? null : form.job_type,
     };
-    if (!payload.keyword && !payload.location && !payload.category && !payload.jobType) {
+    if (!payload.keyword && !payload.location && !payload.category && !payload.job_type) {
       toast.error("Add at least one filter");
       return;
     }
@@ -112,10 +112,10 @@ export default function DashboardJobAlerts() {
       ) : (
         <div className="rounded-xl border border-border/50 bg-card overflow-hidden divide-y divide-border/30">
           {alerts.map((alert) => (
-            <div key={alert.id} className={`flex items-center justify-between gap-4 px-5 py-4 ${!alert.isActive ? "opacity-50" : ""}`}>
+            <div key={alert.id} className={`flex items-center justify-between gap-4 px-5 py-4 ${!alert.is_active ? "opacity-50" : ""}`}>
               <div className="flex items-center gap-3 flex-wrap min-w-0">
-                <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${alert.isActive ? "bg-accent/[0.08]" : "bg-muted"}`}>
-                  <Bell className={`w-4 h-4 ${alert.isActive ? "text-accent" : "text-muted-foreground"}`} />
+                <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${alert.is_active ? "bg-accent/[0.08]" : "bg-muted"}`}>
+                  <Bell className={`w-4 h-4 ${alert.is_active ? "text-accent" : "text-muted-foreground"}`} />
                 </div>
                 <div className="flex items-center gap-1.5 flex-wrap">
                   {alert.keyword && (
@@ -133,9 +133,9 @@ export default function DashboardJobAlerts() {
                       {categoryOptions.find((c) => c.value === alert.category)?.label || alert.category}
                     </Badge>
                   )}
-                  {alert.jobType && (
+                  {alert.job_type && (
                     <Badge variant="outline" className="text-[0.7rem] rounded-md px-2.5 py-1">
-                      {jobTypeOptions.find((j) => j.value === alert.jobType)?.label || alert.jobType}
+                      {jobTypeOptions.find((j) => j.value === alert.job_type)?.label || alert.job_type}
                     </Badge>
                   )}
                   <span className="text-[0.65rem] text-muted-foreground capitalize font-medium">{alert.frequency}</span>
@@ -145,9 +145,9 @@ export default function DashboardJobAlerts() {
                 <Button
                   variant="ghost" size="icon" className="h-8 w-8 rounded-lg"
                   onClick={() => toggleMutation.mutate(alert.id)}
-                  title={alert.isActive ? "Pause" : "Resume"}
+                  title={alert.is_active ? "Pause" : "Resume"}
                 >
-                  {alert.isActive ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                  {alert.is_active ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                 </Button>
                 <Button
                   variant="outline" size="sm" className="h-8 text-xs px-3 rounded-lg font-medium"
@@ -156,7 +156,7 @@ export default function DashboardJobAlerts() {
                     if (alert.keyword) params.set("keyword", alert.keyword);
                     if (alert.location) params.set("location", alert.location);
                     if (alert.category) params.set("category", alert.category);
-                    if (alert.jobType) params.set("type", alert.jobType);
+                    if (alert.job_type) params.set("type", alert.job_type);
                     navigate(`/jobs?${params.toString()}`);
                   }}
                 >
@@ -208,7 +208,7 @@ export default function DashboardJobAlerts() {
               </div>
               <div className="space-y-1.5">
                 <Label className="text-sm font-medium">Job Type</Label>
-                <Select value={form.jobType} onValueChange={(v) => setForm({ ...form, jobType: v })}>
+                <Select value={form.job_type} onValueChange={(v) => setForm({ ...form, job_type: v })}>
                   <SelectTrigger className="h-11"><SelectValue placeholder="Any" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="any">Any type</SelectItem>

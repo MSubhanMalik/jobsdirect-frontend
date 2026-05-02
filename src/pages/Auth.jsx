@@ -60,7 +60,7 @@ export default function Auth() {
   const initialResetToken = useMemo(() => new URLSearchParams(location.search).get('token') || '', [location.search]);
 
   const [mode, setMode] = useState('login');
-  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', password: '' });
+  const [form, setForm] = useState({ first_name: '', last_name: '', email: '', password: '' });
   const [forgotEmail, setForgotEmail] = useState('');
   const [resetForm, setResetForm] = useState({ token: initialResetToken, password: '' });
   const [submitting, setSubmitting] = useState(false);
@@ -93,8 +93,10 @@ export default function Auth() {
       }
       if (mode === 'login') {
         const result = await authService.login(form);
-        if (result.user?.emailVerified === false) { navigate('/verify-email', { replace: true }); return; }
-        if (result.user) useAuthStore.getState().setUser(result.user);
+        if (result.user?.email_verified === false) { navigate('/verify-email', { replace: true }); return; }
+        if (result.user) {
+          useAuthStore.getState().setUser(result.user);
+        }
         navigate(redirectTo, { replace: true });
         return;
       }
@@ -169,17 +171,17 @@ export default function Auth() {
             {mode === 'register' && (
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="firstName" className="text-sm font-medium">First name</Label>
+                  <Label htmlFor="first_name" className="text-sm font-medium">First name</Label>
                   <div className="relative">
                     <User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/40" />
-                    <Input id="firstName" value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} placeholder="John" className="h-11 pl-10 rounded-xl" required />
+                    <Input id="first_name" value={form.first_name} onChange={(e) => setForm({ ...form, first_name: e.target.value })} placeholder="John" className="h-11 pl-10 rounded-xl" required />
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="lastName" className="text-sm font-medium">Last name</Label>
+                  <Label htmlFor="last_name" className="text-sm font-medium">Last name</Label>
                   <div className="relative">
                     <User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/40" />
-                    <Input id="lastName" value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} placeholder="Doe" className="h-11 pl-10 rounded-xl" required />
+                    <Input id="last_name" value={form.last_name} onChange={(e) => setForm({ ...form, last_name: e.target.value })} placeholder="Doe" className="h-11 pl-10 rounded-xl" required />
                   </div>
                 </div>
               </div>

@@ -3,9 +3,9 @@ export interface Product {
   name: string;
   description: string;
   type: "listing" | "addon" | "credit_bundle" | "subscription";
-  creditCost?: number;
+  credit_cost?: number;
   credits?: number;
-  stripeProductId?: string;
+  stripe_product_id?: string;
   icon?: string;
   appliesTo?: string;
   duration?: number;
@@ -14,6 +14,6 @@ export interface Product {
 
 export interface CostEstimate {
   total: number;
-  listing: { id: string; name: string; creditCost: number };
-  addons: { id: string; name: string; creditCost: number }[];
+  listing: { id: string; name: string; credit_cost: number };
+  addons: { id: string; name: string; credit_cost: number }[];
 }

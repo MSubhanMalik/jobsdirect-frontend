@@ -63,7 +63,7 @@ export default function DashboardTeam() {
   });
 
   const activeMembers = members.filter((m) => m.status !== "removed");
-  const currentMember = members.find((m) => m.userId === user.id);
+  const currentMember = members.find((m) => m.user_id === user.id);
   const isOwnerOrAdmin = currentMember?.role === "owner" || currentMember?.role === "admin";
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Loading team...</p>;
@@ -103,7 +103,7 @@ export default function DashboardTeam() {
                     <div>
                       <div className="flex items-center gap-2">
                         <p className="font-medium text-sm">
-                          {member.user ? `${member.user.firstName} ${member.user.lastName}` : member.email}
+                          {member.user ? `${member.user.first_name} ${member.user.last_name}` : member.email}
                         </p>
                         <Badge className={`text-[10px] ${roleBadge.color} border-none`}>{roleBadge.label}</Badge>
                         {member.status === "pending" && (

@@ -9,13 +9,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { CheckCircle2, Loader2, Plus, Trash2 } from "lucide-react";
 import FormFieldRenderer from "@/components/forms/FormFieldRenderer";
 import { Field } from "@/components/admin/shared/UIComponents";
 import { humanize, toNumber, splitList } from "@/components/admin/shared/helpers";
 import { createJobForm, createEmployerForm, createEmployeeForm, createUserForm } from "@/components/admin/shared/forms";
 import { queryKeys } from "@/components/admin/shared/constants";
-import { COMPANY_FIELD_GROUPS, JOB_FIELD_GROUPS, JOB_TYPE_OPTIONS } from "@/lib/siteSettings";
+import { COMPANY_FIELD_GROUPS, JOB_FIELD_GROUPS, EMPLOYEE_FIELD_GROUPS } from "@/lib/siteSettings";
 import jobService from "@/services/job";
 import employerService from "@/services/employer";
 import employeeService from "@/services/employee";
@@ -148,7 +148,7 @@ export default function AdminEditor({ editor, setEditor }) {
               <p className="text-xs text-muted-foreground mt-0.5">Toggle addons for this listing.</p>
             </div>
             <div className="space-y-2">
-              {addonProducts.filter((a) => a.appliesTo === "job").map((addon) => (
+              {addonProducts.filter((a) => a.appliesTo === "job" && a.id !== "addon_import" && a.id !== "addon_duplicate").map((addon) => (
                 <label key={addon.id} className={`flex items-center gap-3 cursor-pointer rounded-xl border p-3.5 transition-colors ${
                   selectedAddons.includes(addon.id) ? "border-accent/30 bg-accent/[0.03]" : "border-border/40 hover:bg-muted/30"
                 }`}>
@@ -194,35 +194,104 @@ export default function AdminEditor({ editor, setEditor }) {
       );
     }
     if (editor.entity === "employee") {
+      const requiredKeys = new Set(["first_name", "last_name"]);
+
+      const renderRepeater = (field) => {
+        const items = Array.isArray(editor.form[field.key]) ? editor.form[field.key] : [];
+        const subFields = field.subFields || [];
+        const addItem = () => {
+          const empty = subFields.reduce((acc, sf) => ({ ...acc, [sf.key]: sf.type === "boolean" ? false : "" }), {});
+          updateEditor(field.key, [...items, empty]);
+        };
+        const removeItem = (idx) => updateEditor(field.key, items.filter((_, i) => i !== idx));
+        const updateItem = (idx, key, val) => {
+          const updated = [...items];
+          updated[idx] = { ...updated[idx], [key]: val };
+          updateEditor(field.key, updated);
+        };
+        return (
+          <div className="space-y-3 sm:col-span-2">
+            {items.map((item, i) => (
+              <div key={i} className="border rounded-lg p-4 space-y-3">
+                <div className="flex justify-between">
+                  <p className="text-sm font-medium">{field.label} #{i + 1}</p>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => removeItem(i)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {subFields.map((sf) => (
+                    <div key={sf.key} className={sf.span === 2 ? "sm:col-span-2" : ""}>
+                      {sf.type === "textarea" ? (
+                        <Textarea placeholder={sf.label} value={item[sf.key] || ""} onChange={(e) => updateItem(i, sf.key, e.target.value)} />
+                      ) : sf.type === "boolean" ? (
+                        <label className="flex items-center gap-2 cursor-pointer pt-2">
+                          <Checkbox checked={Boolean(item[sf.key])} onCheckedChange={(v) => updateItem(i, sf.key, Boolean(v))} />
+                          <span className="text-sm">{sf.label}</span>
+                        </label>
+                      ) : (
+                        <Input type={sf.type === "date" ? "date" : "text"} placeholder={sf.label} value={item[sf.key] || ""} onChange={(e) => updateItem(i, sf.key, e.target.value)} />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+            <Button type="button" variant="outline" size="sm" onClick={addItem}><Plus className="w-4 h-4 mr-1" />Add {field.label}</Button>
+          </div>
+        );
+      };
+
+      const renderTags = (field) => {
+        const tags = Array.isArray(editor.form[field.key]) ? editor.form[field.key] : [];
+        return (
+          <div className="sm:col-span-2 space-y-2">
+            <Label>{field.label}</Label>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {tags.map((tag, i) => (
+                <span key={i} className="inline-flex items-center gap-1 px-3 py-1 bg-muted rounded-full text-sm">
+                  {tag}
+                  <button type="button" onClick={() => updateEditor(field.key, tags.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-destructive"><Trash2 className="w-3 h-3" /></button>
+                </span>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Add a skill"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    const val = e.target.value.trim();
+                    if (val) { updateEditor(field.key, [...tags, val]); e.target.value = ""; }
+                  }
+                }}
+              />
+            </div>
+          </div>
+        );
+      };
+
       return (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="First name"><Input required value={editor.form.first_name} onChange={(e) => updateEditor("first_name", e.target.value)} /></Field>
-          <Field label="Last name"><Input required value={editor.form.last_name} onChange={(e) => updateEditor("last_name", e.target.value)} /></Field>
-          <Field label="Email"><Input type="email" value={editor.form.user_email} onChange={(e) => updateEditor("user_email", e.target.value)} /></Field>
-          <Field label="Phone"><Input value={editor.form.phone} onChange={(e) => updateEditor("phone", e.target.value)} /></Field>
-          <Field label="Current title"><Input value={editor.form.title} onChange={(e) => updateEditor("title", e.target.value)} /></Field>
-          <Field label="Location"><Input value={editor.form.location} onChange={(e) => updateEditor("location", e.target.value)} /></Field>
-          <Field label="Desired job type">
-            <Select value={editor.form.desired_job_type} onValueChange={(v) => updateEditor("desired_job_type", v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{JOB_TYPE_OPTIONS.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
-            </Select>
-          </Field>
-          <Field label="Availability">
-            <Select value={editor.form.availability} onValueChange={(v) => updateEditor("availability", v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="immediately">Immediately</SelectItem>
-                <SelectItem value="two_weeks">Two weeks</SelectItem>
-                <SelectItem value="one_month">One month</SelectItem>
-                <SelectItem value="negotiable">Negotiable</SelectItem>
-              </SelectContent>
-            </Select>
-          </Field>
-          <Field label="Skills" className="sm:col-span-2"><Input value={editor.form.skills} onChange={(e) => updateEditor("skills", e.target.value)} /></Field>
-          <Field label="Bio" className="sm:col-span-2"><Textarea className="min-h-28" value={editor.form.bio} onChange={(e) => updateEditor("bio", e.target.value)} /></Field>
-          <div className="flex items-center justify-between rounded-xl border border-border/40 bg-muted/20 px-4 py-3"><Label>Profile complete</Label><Switch checked={editor.form.profile_completed} onCheckedChange={(c) => updateEditor("profile_completed", c)} /></div>
-          <div className="flex items-center justify-between rounded-xl border border-border/40 bg-muted/20 px-4 py-3"><Label>Searchable</Label><Switch checked={editor.form.is_searchable} onCheckedChange={(c) => updateEditor("is_searchable", c)} /></div>
+        <div className="space-y-6">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Email" className="sm:col-span-2"><Input type="email" value={editor.form.user_email} onChange={(e) => updateEditor("user_email", e.target.value)} /></Field>
+          </div>
+          {EMPLOYEE_FIELD_GROUPS.map((group) => (
+            <section key={group.id} className="space-y-4">
+              <div className="border-b border-border/30 pb-2">
+                <h3 className="text-sm font-display font-semibold text-foreground">{group.title}</h3>
+                {group.description && <p className="text-xs text-muted-foreground mt-0.5">{group.description}</p>}
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {group.fields.map((field) => {
+                  if (field.type === "repeater") return <React.Fragment key={field.key}>{renderRepeater(field)}</React.Fragment>;
+                  if (field.type === "tags") return <React.Fragment key={field.key}>{renderTags(field)}</React.Fragment>;
+                  return <FormFieldRenderer key={field.key} field={field} value={editor.form[field.key]} onChange={(v) => updateEditor(field.key, v)} required={requiredKeys.has(field.key)} />;
+                })}
+              </div>
+            </section>
+          ))}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="flex items-center justify-between rounded-xl border border-border/40 bg-muted/20 px-4 py-3"><Label>Profile complete</Label><Switch checked={editor.form.profile_completed} onCheckedChange={(c) => updateEditor("profile_completed", c)} /></div>
+          </div>
         </div>
       );
     }

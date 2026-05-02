@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
+import PageNotFound from '@/lib/PageNotFound';
 
 const ProtectedRoute = ({ allowedRoles = [] }) => {
   const { user, isAuthenticated, isLoading } = useAuthStore();
@@ -15,17 +16,15 @@ const ProtectedRoute = ({ allowedRoles = [] }) => {
   }
 
   if (!isAuthenticated) {
-    // Redirect to login but save the current location to redirect back after login
     return <Navigate to={`/auth?redirect=${encodeURIComponent(location.pathname)}`} replace />;
   }
 
-  if (user && !user.emailVerified && location.pathname !== '/verify-email') {
+  if (user && !user.email_verified && location.pathname !== '/verify-email') {
     return <Navigate to="/verify-email" replace />;
   }
 
   if (allowedRoles.length > 0 && user && !allowedRoles.includes(user.role)) {
-    // User role not authorized
-    return <Navigate to="/dashboard" replace />;
+    return <PageNotFound />;
   }
 
   return <Outlet />;

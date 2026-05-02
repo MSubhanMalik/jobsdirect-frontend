@@ -21,13 +21,13 @@ export default function ChatWindow({ room, currentUserId, isEmployer }) {
     });
 
     const unsubMsg = onReceiveMessage((msg) => {
-      if (msg.roomId === room.id) {
+      if (msg.room_id === room.id) {
         setMessages((prev) => [...prev, msg]);
       }
     });
     const unsubTyping = onUserTyping((data) => {
-      if (data.userId !== currentUserId) {
-        setTyping(data.isTyping ? data.userId : null);
+      if (data.user_id !== currentUserId) {
+        setTyping(data.is_typing ? data.user_id : null);
       }
     });
 
@@ -67,9 +67,9 @@ export default function ChatWindow({ room, currentUserId, isEmployer }) {
   const applicationId = room.application?.id || room.applicationId;
   const otherParty = isEmployer
     ? (room.application 
-        ? `${room.application.user?.firstName || "Candidate"} ${room.application.user?.lastName || ""}`.trim()
-        : `${room.candidate?.firstName || "Candidate"} ${room.candidate?.lastName || ""}`.trim())
-    : (room.application?.job?.companyName || "Employer");
+        ? `${room.application.user?.first_name || "Candidate"} ${room.application.user?.last_name || ""}`.trim()
+        : `${room.candidate?.first_name || "Candidate"} ${room.candidate?.last_name || ""}`.trim())
+    : (room.application?.job?.company_name || "Employer");
 
   return (
     <div className="flex flex-col h-full">
@@ -114,13 +114,13 @@ export default function ChatWindow({ room, currentUserId, isEmployer }) {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.map((msg) => {
-          const isMe = msg.senderId === currentUserId;
+          const isMe = msg.sender_id === currentUserId;
           return (
             <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
               <div className={`max-w-[70%] rounded-lg px-3 py-2 text-sm ${isMe ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
                 <p>{msg.message}</p>
                 <p className={`text-[10px] mt-1 ${isMe ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
-                  {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  {new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </p>
               </div>
             </div>

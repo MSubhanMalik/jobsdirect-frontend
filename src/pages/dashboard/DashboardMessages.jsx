@@ -20,17 +20,17 @@ export default function DashboardMessages() {
     if (!hasProPlan) { setLoading(false); return; }
 
     const params = new URLSearchParams(window.location.search);
-    const candidateId = params.get("candidateId");
+    const candidate_id = params.get("candidateId");
 
     const fetchRooms = async () => {
       try {
         let data = await messageApiService.getRooms();
-        if (candidateId) {
-          const existing = data.find(r => r.candidateId === candidateId && !r.applicationId);
+        if (candidate_id) {
+          const existing = data.find(r => r.candidate_id === candidate_id && !r.application_id);
           if (existing) {
             navigate(`/dashboard/messages/${existing.id}`, { replace: true });
           } else {
-            const newRoom = await messageApiService.createRoom({ candidateId });
+            const newRoom = await messageApiService.createRoom({ candidate_id });
             data = [newRoom, ...data];
             navigate(`/dashboard/messages/${newRoom.id}`, { replace: true });
           }
@@ -114,9 +114,9 @@ export default function DashboardMessages() {
                 const jobTitle = room.application?.job?.title || "Direct Outreach";
                 const otherParty = isEmployer
                   ? (room.application
-                      ? `${room.application.user?.firstName || "Candidate"} ${room.application.user?.lastName || ""}`.trim()
-                      : `${room.candidate?.firstName || "Candidate"} ${room.candidate?.lastName || ""}`.trim())
-                  : (room.application?.job?.companyName || "Employer");
+                      ? `${room.application.user?.first_name || "Candidate"} ${room.application.user?.last_name || ""}`.trim()
+                      : `${room.candidate?.first_name || "Candidate"} ${room.candidate?.last_name || ""}`.trim())
+                  : (room.application?.job?.company_name || "Employer");
                 const isActive = selectedRoom?.id === room.id;
 
                 return (
@@ -141,7 +141,7 @@ export default function DashboardMessages() {
                             {jobTitle}
                           </p>
                           <span className="text-[0.6rem] text-muted-foreground shrink-0">
-                            {new Date(room.updatedAt).toLocaleDateString("en-IE", { day: "numeric", month: "short" })}
+                            {new Date(room.updated_at).toLocaleDateString("en-IE", { day: "numeric", month: "short" })}
                           </span>
                         </div>
                         <p className="text-xs text-muted-foreground truncate mt-0.5">{otherParty}</p>

@@ -206,16 +206,16 @@ export default function DashboardCVs() {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-medium text-foreground truncate">{cv.name}</p>
-                    {cv.isDefault && <Badge className="text-[0.6rem] h-4 px-1.5">Default</Badge>}
+                    {cv.is_default && <Badge className="text-[0.6rem] h-4 px-1.5">Default</Badge>}
                   </div>
                   <p className="text-xs text-muted-foreground truncate mt-0.5">
-                    {cv.type === "uploaded" ? cv.fileName : `Generated · ${TEMPLATE_INFO[cv.templateId]?.label || "Basic"}`}
-                    {cv.fileSize ? ` · ${(cv.fileSize / 1024).toFixed(0)} KB` : ""}
+                    {cv.type === "uploaded" ? cv.file_name : `Generated · ${TEMPLATE_INFO[cv.template_id]?.label || "Basic"}`}
+                    {cv.file_size ? ` · ${(cv.file_size / 1024).toFixed(0)} KB` : ""}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-1 shrink-0">
-                {!cv.isDefault && (
+                {!cv.is_default && (
                   <Button variant="ghost" size="sm" className="h-8 text-xs rounded-lg" onClick={() => handleSetDefault(cv.id)}>
                     <Star className="w-3.5 h-3.5 mr-1" /> Default
                   </Button>
@@ -225,7 +225,7 @@ export default function DashboardCVs() {
                     <Wand2 className="w-3.5 h-3.5" />
                   </Button>
                 )}
-                {(cv.fileKey || cv.filePath) && (
+                {(cv.file_key || cv.file_path) && (
                   <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => handleDownload(cv)}>
                     <Download className="w-3.5 h-3.5" />
                   </Button>

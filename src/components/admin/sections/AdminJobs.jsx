@@ -128,11 +128,18 @@ export default function AdminJobs() {
 
                 {/* Addons */}
                 <div className="hidden md:flex items-center gap-1 shrink-0">
-                  {(job.active_addons || []).slice(0, 3).map((a) => (
-                    <Badge key={a.id} variant="secondary" className="text-[0.6rem] rounded-md px-2 py-0.5 capitalize">
-                      {a.id.replace("addon_", "").replace("_", " ")}
-                    </Badge>
-                  ))}
+                  {job.is_featured && (
+                    <Badge variant="secondary" className="text-[0.6rem] rounded-md px-2 py-0.5 capitalize">Featured</Badge>
+                  )}
+                  {job.is_highlighted && (
+                    <Badge variant="secondary" className="text-[0.6rem] rounded-md px-2 py-0.5 capitalize">Highlighted</Badge>
+                  )}
+                  {job.is_urgent && (
+                    <Badge variant="secondary" className="text-[0.6rem] rounded-md px-2 py-0.5 capitalize">Urgent</Badge>
+                  )}
+                  {job.is_auto_renew && (
+                    <Badge variant="secondary" className="text-[0.6rem] rounded-md px-2 py-0.5 capitalize">Auto Renew</Badge>
+                  )}
                 </div>
 
                 {/* Status label */}

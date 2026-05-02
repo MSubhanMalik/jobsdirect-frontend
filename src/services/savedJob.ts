@@ -8,12 +8,12 @@ class SavedJobService {
   }
 
   async toggle(jobId: string): Promise<{ saved: boolean }> {
-    const res = await axiosInstance.post(api.endpoints.SAVED_JOBS_TOGGLE, { jobId });
+    const res = await axiosInstance.post(api.endpoints.SAVED_JOBS_TOGGLE, { job_id: jobId });
     return res.data;
   }
 
   async check(jobId: string): Promise<{ saved: boolean }> {
-    const res = await axiosInstance.get(`${api.endpoints.SAVED_JOBS_CHECK}?jobId=${jobId}`);
+    const res = await axiosInstance.get(`${api.endpoints.SAVED_JOBS_CHECK}?job_id=${jobId}`);
     return res.data;
   }
 }

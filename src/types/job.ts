@@ -2,60 +2,60 @@ export type JobStatus = "draft" | "pending_review" | "approved" | "rejected";
 
 export interface Job {
   id: string;
-  employerId?: string;
+  employer_id?: string;
   title: string;
-  shortDescription?: string;
+  short_description?: string;
   description?: string;
   location?: string;
-  locationFull?: string;
-  cityTown?: string;
+  location_full?: string;
+  city_town?: string;
   country: string;
-  jobType?: string;
+  job_type?: string;
   category?: string;
-  salaryMin?: number;
-  salaryMax?: number;
-  salaryPeriod?: string;
-  salaryType?: string;
+  salary_min?: number;
+  salary_max?: number;
+  salary_period?: string;
+  salary_type?: string;
   benefits?: string;
-  companyName?: string;
+  company_name?: string;
   status: JobStatus;
-  isFeatured: boolean;
+  is_featured: boolean;
   source: string;
-  sourceUrl?: string;
-  applicationEmail?: string;
-  applicationMethod?: string;
-  applicationUrl?: string;
-  hoursPerWeek?: number;
-  positionsCount?: number;
-  careerLevel?: string;
-  createdBy?: string;
-  expiresAt?: string;
-  listingType: string;
-  listingDuration: number;
-  creditsCharged: number;
-  isDuplicate: boolean;
-  duplicateOf?: string;
-  isImported: boolean;
-  createdAt: string;
-  updatedAt: string;
+  source_url?: string;
+  application_email?: string;
+  application_method?: string;
+  application_url?: string;
+  hours_per_week?: number;
+  positions_count?: number;
+  career_level?: string;
+  created_by?: string;
+  expires_at?: string;
+  listing_type: string;
+  listing_duration: number;
+  credits_charged: number;
+  is_duplicate: boolean;
+  duplicate_of?: string;
+  is_imported: boolean;
+  created_at: string;
+  updated_at: string;
   employer?: import("./employer").Employer;
 }
 
 export interface JobCreatePayload {
   title: string;
   description?: string;
-  shortDescription?: string;
+  short_description?: string;
   location?: string;
-  jobType?: string;
+  job_type?: string;
   category?: string;
-  salaryMin?: number;
-  salaryMax?: number;
-  salaryPeriod?: string;
+  salary_min?: number;
+  salary_max?: number;
+  salary_period?: string;
   benefits?: string;
-  applicationMethod?: string;
-  applicationEmail?: string;
-  applicationUrl?: string;
-  isFeatured?: boolean;
+  application_method?: string;
+  application_email?: string;
+  application_url?: string;
+  is_featured?: boolean;
   [key: string]: any;
 }
 
@@ -67,18 +67,18 @@ export interface JobFilters {
   status?: string;
   keyword?: string;
   location?: string;
-  jobType?: string;
+  job_type?: string;
   category?: string;
-  employerId?: string;
+  employer_id?: string;
   page?: number;
-  pageSize?: number;
+  page_size?: number;
   order?: string;
   limit?: number;
 }
 
 export interface JobCostEstimate {
-  totalCredits: number;
-  totalAmount: number;
+  total_credits: number;
+  total_amount: number;
   breakdown: Record<string, number>;
-  canPostFree: boolean;
+  can_post_free: boolean;
 }

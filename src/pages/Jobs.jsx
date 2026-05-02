@@ -19,12 +19,15 @@ export default function Jobs() {
     location: searchParams.get("location") || "",
     type: searchParams.get("type") || "",
     category: searchParams.get("category") || "",
+    is_featured: searchParams.get("is_featured") === "true",
+    is_highlighted: searchParams.get("is_highlighted") === "true",
+    is_urgent: searchParams.get("is_urgent") === "true",
   });
   const [page, setPage] = useState(1);
   const [allJobs, setAllJobs] = useState([]);
 
   const { data, isLoading, isFetching } = useQuery({
-    queryKey: ["jobs", filters.keyword, filters.location, filters.type, filters.category, page],
+    queryKey: ["jobs", filters.keyword, filters.location, filters.type, filters.category, filters.is_featured, filters.is_highlighted, filters.is_urgent, page],
     queryFn: async () => {
       const result = await jobService.list({
         status: "approved",
@@ -32,6 +35,9 @@ export default function Jobs() {
         locationSearch: filters.location || undefined,
         job_type: filters.type || undefined,
         category: filters.category || undefined,
+        is_featured: filters.is_featured ? "true" : undefined,
+        is_highlighted: filters.is_highlighted ? "true" : undefined,
+        is_urgent: filters.is_urgent ? "true" : undefined,
         page,
         pageSize: PAGE_SIZE,
       });
@@ -61,11 +67,14 @@ export default function Jobs() {
     if (newFilters.location) params.set("location", newFilters.location);
     if (newFilters.type) params.set("type", newFilters.type);
     if (newFilters.category) params.set("category", newFilters.category);
+    if (newFilters.is_featured) params.set("is_featured", "true");
+    if (newFilters.is_highlighted) params.set("is_highlighted", "true");
+    if (newFilters.is_urgent) params.set("is_urgent", "true");
     setSearchParams(params, { replace: true });
   };
 
   const handleClear = () => {
-    setFilters({ keyword: "", location: "", type: "", category: "" });
+    setFilters({ keyword: "", location: "", type: "", category: "", is_featured: false, is_highlighted: false, is_urgent: false });
     setPage(1);
     setAllJobs([]);
     setSearchParams({}, { replace: true });

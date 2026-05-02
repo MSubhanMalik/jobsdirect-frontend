@@ -27,7 +27,7 @@ export default function JobPaymentModal({ open, onOpenChange, employer, inputMet
     }
   }, [open, employer?.id]);
 
-  const canPostFree = balance?.canPostFree && inputMethod !== "import";
+  const canPostFree = balance?.can_post_free && inputMethod !== "import";
 
   useEffect(() => {
     if (inputMethod === "import") setListingType("paid");

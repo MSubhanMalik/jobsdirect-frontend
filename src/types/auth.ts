@@ -3,16 +3,16 @@ export type UserStatus = "active" | "suspended";
 
 export interface User {
   id: string;
-  firstName: string;
-  lastName: string;
+  first_name: string;
+  last_name: string;
   email: string;
   phone?: string;
   role: UserRole;
   status: UserStatus;
-  emailVerified: boolean;
-  googleId?: string;
-  createdAt: string;
-  updatedAt: string;
+  email_verified: boolean;
+  google_id?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface LoginPayload {
@@ -21,8 +21,8 @@ export interface LoginPayload {
 }
 
 export interface RegisterPayload {
-  firstName: string;
-  lastName: string;
+  first_name: string;
+  last_name: string;
   email: string;
   password: string;
   role: UserRole;

@@ -8,24 +8,24 @@ import { motion } from "framer-motion";
 export default function RoleSelector({ user, onCreated }) {
   const [creating, setCreating] = useState(false);
 
-  const firstName = user?.firstName || user?.first_name || "";
-  const lastName = user?.lastName || user?.last_name || "";
+  const first_name = user?.first_name || "";
+  const last_name = user?.last_name || "";
 
   const handleSelect = async (role) => {
     setCreating(true);
     try {
       if (role === "employer") {
         const employer = await employerService.create({
-          first_name: firstName,
-          last_name: lastName,
+          first_name: first_name,
+          last_name: last_name,
           company_name: "",
           verification_status: "draft",
         });
         onCreated("employer", employer);
       } else {
         const employee = await employeeService.create({
-          first_name: firstName,
-          last_name: lastName,
+          first_name: first_name,
+          last_name: last_name,
         });
         onCreated("employee", employee);
       }
@@ -48,7 +48,7 @@ export default function RoleSelector({ user, onCreated }) {
       <div className="max-w-2xl w-full">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-display font-bold mb-2">
-            Welcome{firstName ? `, ${firstName}` : ''}!
+            Welcome{first_name ? `, ${first_name}` : ''}!
           </h1>
           <p className="text-muted-foreground">How would you like to use the platform?</p>
         </div>

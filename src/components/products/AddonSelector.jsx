@@ -25,7 +25,7 @@ export default function AddonSelector({ addons, selected, onToggle, disabled = f
             </span>
             <span className="text-xs text-muted-foreground">{addon.description}</span>
           </div>
-          <span className="text-xs font-semibold">{formatCredits(addon.creditCost)}</span>
+          <span className="text-xs font-semibold">{formatCredits(addon.credit_cost)}</span>
         </label>
       ))}
     </div>

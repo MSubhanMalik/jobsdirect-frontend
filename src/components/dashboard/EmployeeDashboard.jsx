@@ -42,8 +42,8 @@ export default function EmployeeDashboard({ user, employee, setEmployee }) {
   const applications = appsData?.items || [];
 
   const shortlisted = applications.filter((a) => a.status === "shortlisted").length;
-  const displayName = user.firstName || employee.first_name || "there";
-  const initials = `${(user.firstName || employee.first_name || "U")[0]}${(user.lastName || employee.last_name || "")[0] || ""}`.toUpperCase();
+  const displayName = user.first_name || employee.first_name || "there";
+  const initials = `${(user.first_name || employee.first_name || "U")[0]}${(user.last_name || employee.last_name || "")[0] || ""}`.toUpperCase();
 
   return (
     <div className="min-h-screen bg-muted/30">

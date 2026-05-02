@@ -57,7 +57,7 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
     paymentService.getBalance(employer?.id).then(setBalance).catch(() => {});
   }, [employer?.id]);
 
-  const canPostFree = balance?.canPostFree && !isEditing && inputMethod !== "import";
+  const canPostFree = balance?.can_post_free && !isEditing && inputMethod !== "import";
 
 
 
@@ -156,9 +156,9 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
         await jobService.update(initialJob.id, payload);
       } else {
         const result = await jobService.create(payload);
-        if (result.needsCheckout && result.checkoutUrl) {
+        if (result.needs_checkout && result.checkout_url) {
           toast.info("Redirecting to payment...");
-          window.location.assign(result.checkoutUrl);
+          window.location.assign(result.checkout_url);
           return;
         }
       }

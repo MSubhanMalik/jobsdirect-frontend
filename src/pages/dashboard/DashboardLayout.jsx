@@ -98,9 +98,9 @@ export default function DashboardLayout() {
       if (!balance) return;
       const updates = {};
       if (balance.credits !== undefined && balance.credits !== employer.credits) updates.credits = balance.credits;
-      if (balance.candidateDatabaseAccess !== undefined && balance.candidateDatabaseAccess !== employer.candidate_database_access) updates.candidate_database_access = balance.candidateDatabaseAccess;
-      if (balance.candidateDatabaseStatus && balance.candidateDatabaseStatus !== employer.candidate_database_status) updates.candidate_database_status = balance.candidateDatabaseStatus;
-      if (balance.creditsExpiringSoon !== undefined) updates.creditsExpiringSoon = balance.creditsExpiringSoon;
+      if (balance.candidate_database_access !== undefined && balance.candidate_database_access !== employer.candidate_database_access) updates.candidate_database_access = balance.candidate_database_access;
+      if (balance.candidate_database_status && balance.candidate_database_status !== employer.candidate_database_status) updates.candidate_database_status = balance.candidate_database_status;
+      if (balance.credits_expiring_soon !== undefined) updates.credits_expiring_soon = balance.credits_expiring_soon;
       if (Object.keys(updates).length) setEmployer((prev) => ({ ...prev, ...updates }));
     }).catch(() => {});
   }, [employer?.id]);
@@ -174,8 +174,8 @@ export default function DashboardLayout() {
     }} />;
   }
 
-  const initials = `${(user.firstName || "U")[0]}${(user.lastName || "")[0] || ""}`.toUpperCase();
-  const displayName = `${user.firstName || ""} ${user.lastName || ""}`.trim();
+  const initials = `${(user.first_name || "U")[0]}${(user.last_name || "")[0] || ""}`.toUpperCase();
+  const displayName = `${user.first_name || ""} ${user.last_name || ""}`.trim();
 
   return (
     <div className="min-h-screen bg-muted/30">

@@ -77,7 +77,7 @@ export default function DashboardOverview() {
     } finally { setSubmittingVerification(false); }
   };
 
-  const displayName = user.firstName || "there";
+  const displayName = user.first_name || "there";
 
   return (
     <div className="space-y-6">
@@ -246,7 +246,7 @@ function EmployeeOverview({ user, employee }) {
   });
   const applications = appsData?.items || [];
   const shortlisted = applications.filter((a) => a.status === "shortlisted").length;
-  const displayName = user.firstName || "there";
+  const displayName = user.first_name || "there";
 
   return (
     <div className="space-y-6">
