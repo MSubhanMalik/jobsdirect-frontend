@@ -25,17 +25,19 @@ export interface ApiResponse<T = any> {
 const ACCESS_TOKEN_KEY = "jd_access";
 
 function getAccessToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return window.localStorage.getItem(ACCESS_TOKEN_KEY);
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(new RegExp(`(?:^|; )${ACCESS_TOKEN_KEY}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : null;
 }
 
 function setAccessToken(token: string | null) {
-  if (typeof window === "undefined") return;
+  if (typeof document === "undefined") return;
   if (!token) {
-    window.localStorage.removeItem(ACCESS_TOKEN_KEY);
+    document.cookie = `${ACCESS_TOKEN_KEY}=; path=/; max-age=0; SameSite=Lax`;
     return;
   }
-  window.localStorage.setItem(ACCESS_TOKEN_KEY, token);
+  // Set cookie with 1 hour expiry (matches typical access token lifetime)
+  document.cookie = `${ACCESS_TOKEN_KEY}=${encodeURIComponent(token)}; path=/; max-age=3600; SameSite=Lax`;
 }
 
 // ---------------------------------------------------------------------------
@@ -57,6 +59,15 @@ class AxiosService {
       withCredentials: true,
       headers: { "Content-Type": "application/json" },
     });
+
+    // Migrate old localStorage token to cookie
+    if (typeof window !== "undefined") {
+      const oldToken = window.localStorage.getItem(ACCESS_TOKEN_KEY);
+      if (oldToken) {
+        setAccessToken(oldToken);
+        window.localStorage.removeItem(ACCESS_TOKEN_KEY);
+      }
+    }
 
     this.setupRequestInterceptor();
     this.setupResponseInterceptor();
