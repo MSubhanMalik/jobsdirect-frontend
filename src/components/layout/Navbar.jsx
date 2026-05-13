@@ -35,13 +35,8 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-[4.25rem]">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group">
-            <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${isHome ? "bg-white/10" : "bg-foreground/5"}`}>
-              <svg viewBox="0 0 24 24" className={`w-5 h-5 ${isHome ? "text-[#4eca8b]" : "text-accent"}`} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
-              </svg>
-            </div>
-            <span className={`text-[1.25rem] font-display font-bold tracking-tight ${isHome ? "text-white" : "text-foreground"}`}>
+          <Link to="/" className="flex items-center group">
+            <span className={`text-[1.3rem] font-display font-bold tracking-tight ${isHome ? "text-white" : "text-foreground"}`}>
               Jobs<span className="font-extrabold">Direct</span><span className="text-[#4eca8b]">.ie</span>
             </span>
           </Link>

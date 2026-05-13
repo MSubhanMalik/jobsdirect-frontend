@@ -375,23 +375,16 @@ export default function JobDetail() {
                   <p className="text-sm text-muted-foreground">Employer accounts cannot apply to jobs</p>
                 </div>
               ) : (
-                <>
-                  <Button
-                    className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold rounded-xl h-12 text-[0.95rem]"
-                    onClick={() => {
-                      if (!user) { window.location.assign(`/auth?redirect=${encodeURIComponent(`/jobs/${jobId}`)}`); return; }
-                      setShowApply(true);
-                    }}
-                  >
-                    <Send className="w-4 h-4 mr-2" />
-                    Apply Now
-                  </Button>
-                  {!user && (
-                    <p className="text-center text-xs text-muted-foreground mt-3">
-                      No account? <button type="button" onClick={() => setShowGuestApply(true)} className="text-accent font-semibold hover:underline">Quick apply as guest</button>
-                    </p>
-                  )}
-                </>
+                <Button
+                  className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold rounded-xl h-12 text-[0.95rem]"
+                  onClick={() => {
+                    if (!user) { setShowGuestApply(true); return; }
+                    setShowApply(true);
+                  }}
+                >
+                  <Send className="w-4 h-4 mr-2" />
+                  Apply Now
+                </Button>
               )}
 
               <div className="flex gap-2">
