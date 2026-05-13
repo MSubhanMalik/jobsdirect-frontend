@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, MapPin, ArrowRight, Sparkles } from "lucide-react";
+import { Search, MapPin, ArrowRight, Building2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { LOCATION_OPTIONS } from "@/lib/siteSettings";
@@ -26,57 +26,28 @@ export default function HeroSection() {
   };
 
   return (
-    <section className="relative min-h-[92vh] flex items-center overflow-hidden">
-      {/* Background image */}
+    <section className="relative min-h-[94vh] flex items-center overflow-hidden bg-[#1a2332]">
+      {/* Background effects */}
       <div className="absolute inset-0">
-        <img
-          src="https://picsum.photos/id/1031/2400/1600"
-          alt=""
-          className="w-full h-full object-cover"
-        />
-        {/* Overlay — gradient keeps left text readable, right side shows the image */}
-        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/90 to-background/40" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#1a2332] via-[#1e2a3a] to-[#162030]" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1200px] h-[600px] bg-[#4eca8b]/[0.04] rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 right-0 w-[600px] h-[400px] bg-[#4eca8b]/[0.03] rounded-full blur-[100px]" />
+        {/* Grid pattern */}
+        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "radial-gradient(circle at 1px 1px, white 1px, transparent 0)", backgroundSize: "40px 40px" }} />
       </div>
-
-      {/* Decorative elements — desktop only */}
-      <motion.div
-        animate={{ y: [0, -20, 0] }}
-        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        className="hidden lg:block absolute right-[6%] top-[12%] w-[22rem] h-[22rem] rounded-full border-[1.5px] border-accent/[0.08]"
-      />
-      <motion.div
-        animate={{ y: [0, 16, 0] }}
-        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-        className="hidden lg:block absolute right-[16%] top-[32%] w-44 h-44 rounded-full bg-accent/[0.04]"
-      />
-      <motion.div
-        animate={{ y: [0, -12, 0] }}
-        transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-        className="hidden lg:block absolute right-[9%] bottom-[18%] w-24 h-24 rounded-full bg-accent/[0.06]"
-      />
-      <motion.div
-        animate={{ y: [0, 10, 0] }}
-        transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-        className="hidden lg:block absolute right-[22%] top-[18%] w-3 h-3 rounded-full bg-accent/20"
-      />
-      <motion.div
-        animate={{ y: [0, -8, 0] }}
-        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 3 }}
-        className="hidden lg:block absolute right-[12%] bottom-[35%] w-2 h-2 rounded-full bg-accent/30"
-      />
 
       {/* Content */}
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-20 sm:py-28">
-        <div className="max-w-3xl">
+        <div className="text-center max-w-4xl mx-auto">
           {/* Eyebrow */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-accent/20 text-accent text-sm font-medium mb-8">
-              <Sparkles className="w-3.5 h-3.5" />
-              {settings.hero_eyebrow || "Ireland's #1 Job Platform"}
+            <span className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-[#4eca8b]/10 border border-[#4eca8b]/20 text-[#4eca8b] text-sm font-medium mb-8">
+              <Building2 className="w-4 h-4" />
+              {settings.hero_eyebrow || "Ireland's Leading Job Platform"}
             </span>
           </motion.div>
 
@@ -85,11 +56,11 @@ export default function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-5xl sm:text-6xl lg:text-7xl xl:text-[5.25rem] font-display font-bold tracking-tight leading-[0.95] text-foreground mb-7"
+            className="text-5xl sm:text-6xl lg:text-7xl font-display font-bold tracking-tight leading-[1.05] text-white mb-7"
           >
-            {settings.hero_title || "Find work that"}{" "}
-            <span className="text-accent">{settings.hero_highlight || "matters"}</span>
-            <span className="text-accent">.</span>
+            {settings.hero_title || "Find Your Dream Job"}{" "}
+            <span className="text-[#4eca8b]">{settings.hero_highlight || "or Hire Top Talent"}</span>
+            {" "}in Ireland
           </motion.h1>
 
           {/* Subtitle */}
@@ -97,34 +68,34 @@ export default function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-lg sm:text-xl text-muted-foreground leading-relaxed mb-12 max-w-xl"
+            className="text-lg sm:text-xl text-[#8899aa] leading-relaxed mb-14 max-w-2xl mx-auto"
           >
-            {settings.hero_subtitle || "Connect with Ireland's top employers and discover opportunities that match your ambition."}
+            {settings.hero_subtitle || "Connect with thousands of employers and job seekers across Ireland. Your next opportunity is just a search away."}
           </motion.p>
 
-          {/* Search Bar */}
+          {/* Search Bar — frosted glass */}
           <motion.form
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
             onSubmit={handleSearch}
-            className="bg-card border border-border rounded-2xl p-2.5 shadow-[0_2px_20px_rgba(0,0,0,0.04)]"
+            className="bg-white/[0.07] backdrop-blur-md border border-white/[0.1] rounded-2xl p-2 shadow-[0_8px_40px_rgba(0,0,0,0.2)] max-w-3xl mx-auto"
           >
             <div className="flex flex-col sm:flex-row items-stretch gap-0">
               {/* Keyword */}
               <div className="relative flex-1 flex items-center">
-                <Search className="absolute left-4 w-[1.1rem] h-[1.1rem] text-muted-foreground/50" />
+                <Search className="absolute left-4 w-[1.1rem] h-[1.1rem] text-white/30" />
                 <Input
                   placeholder="Job title or keyword"
                   value={keyword}
                   onChange={(e) => setKeyword(e.target.value)}
-                  className="border-0 bg-transparent shadow-none focus-visible:ring-0 h-12 pl-11 text-[0.95rem] placeholder:text-muted-foreground/50"
+                  className="border-0 bg-transparent shadow-none focus-visible:ring-0 h-12 pl-11 text-[0.95rem] text-white placeholder:text-white/30"
                 />
               </div>
 
               {/* Divider */}
               <div className="hidden sm:flex items-center">
-                <div className="w-px h-7 bg-border" />
+                <div className="w-px h-7 bg-white/10" />
               </div>
 
               {/* Location */}
@@ -133,21 +104,21 @@ export default function HeroSection() {
                   options={[{ value: "", label: "All Locations" }, ...LOCATION_OPTIONS]}
                   value={location || ""}
                   onValueChange={(v) => setLocation(v)}
-                  placeholder="All Locations"
+                  placeholder="Location"
                   searchPlaceholder="Search location..."
-                  className="border-0 bg-transparent shadow-none focus:ring-0 h-12 text-[0.95rem]"
+                  className="border-0 bg-transparent shadow-none focus:ring-0 h-12 text-[0.95rem] text-white/70"
                 />
               </div>
 
               {/* Divider */}
               <div className="hidden sm:flex items-center">
-                <div className="w-px h-7 bg-border" />
+                <div className="w-px h-7 bg-white/10" />
               </div>
 
               {/* Job Type */}
               <div className="hidden sm:block">
                 <Select value={jobType} onValueChange={setJobType}>
-                  <SelectTrigger className="border-0 bg-transparent shadow-none focus:ring-0 h-12 w-40 text-[0.95rem] text-muted-foreground/70">
+                  <SelectTrigger className="border-0 bg-transparent shadow-none focus:ring-0 h-12 w-36 text-[0.95rem] text-white/40">
                     <SelectValue placeholder="Job Type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -155,7 +126,6 @@ export default function HeroSection() {
                     <SelectItem value="part_time">Part Time</SelectItem>
                     <SelectItem value="contract">Contract</SelectItem>
                     <SelectItem value="temporary">Temporary</SelectItem>
-                    <SelectItem value="remote">Remote</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -163,7 +133,7 @@ export default function HeroSection() {
               {/* Search Button */}
               <Button
                 type="submit"
-                className="bg-accent hover:bg-accent/90 text-accent-foreground h-12 px-7 rounded-xl font-semibold text-[0.95rem] shrink-0"
+                className="bg-[#4eca8b] hover:bg-[#45b87e] text-white h-12 px-7 rounded-xl font-semibold text-[0.95rem] shrink-0"
               >
                 <Search className="w-4 h-4 mr-2 sm:mr-0 lg:mr-2" />
                 <span className="sm:hidden lg:inline">{settings.primary_cta || "Search"}</span>
@@ -176,27 +146,34 @@ export default function HeroSection() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.5 }}
-            className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mt-8"
+            className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-10"
           >
             <Button
-              variant="ghost"
-              className="text-foreground font-medium group h-auto p-0 hover:bg-transparent"
-              onClick={() => navigate("/employers")}
+              variant="outline"
+              className="border-white/20 text-white hover:bg-white/5 font-medium rounded-full px-6 h-11 group"
+              onClick={() => navigate("/auth")}
             >
               {settings.employer_cta || "Post a Job"}
               <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
             </Button>
-            <span className="hidden sm:block text-border">|</span>
+            <span className="text-white/20">or</span>
             <Button
-              variant="ghost"
-              className="text-foreground font-medium group h-auto p-0 hover:bg-transparent"
-              onClick={() => navigate("/employees")}
+              variant="outline"
+              className="border-white/20 text-white hover:bg-white/5 font-medium rounded-full px-6 h-11 group"
+              onClick={() => navigate("/auth")}
             >
               Create Your Profile
               <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
             </Button>
           </motion.div>
         </div>
+      </div>
+
+      {/* Bottom wave */}
+      <div className="absolute bottom-0 left-0 right-0">
+        <svg viewBox="0 0 1440 60" fill="none" className="w-full">
+          <path d="M0 60L60 52C120 44 240 28 360 24C480 20 600 28 720 32C840 36 960 36 1080 32C1200 28 1320 20 1380 16L1440 12V60H1380C1320 60 1200 60 1080 60C960 60 840 60 720 60C600 60 480 60 360 60C240 60 120 60 60 60H0Z" fill="hsl(var(--background))"/>
+        </svg>
       </div>
     </section>
   );

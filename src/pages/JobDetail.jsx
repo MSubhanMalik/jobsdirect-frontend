@@ -208,13 +208,14 @@ export default function JobDetail() {
   return (
     <div className="min-h-screen bg-background">
       {/* ── Header ── */}
-      <div className="relative bg-muted/40 border-b border-border/50 pt-8 pb-10">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative bg-[#1a2332] pt-8 pb-12 overflow-hidden">
+        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "radial-gradient(circle at 1px 1px, white 1px, transparent 0)", backgroundSize: "40px 40px" }} />
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           {/* Back */}
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <button
               onClick={() => navigate("/jobs")}
-              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
+              className="flex items-center gap-1.5 text-sm text-white/40 hover:text-white transition-colors mb-6"
             >
               <ArrowLeft className="w-4 h-4" />
               Back to Jobs
@@ -224,20 +225,14 @@ export default function JobDetail() {
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
             {/* Badges row */}
             <div className="flex items-center gap-2 mb-3">
-              {job.is_featured && (
-                <span className="inline-flex items-center gap-1 text-accent text-xs font-semibold uppercase tracking-wider">
-                  <Star className="w-3 h-3 fill-accent" />
-                  Featured
-                </span>
-              )}
               {job.is_urgent && (
-                <span className="inline-flex items-center gap-1 text-red-500 text-xs font-semibold uppercase tracking-wider">
+                <span className="inline-flex items-center gap-1 text-red-400 text-xs font-bold uppercase tracking-wider">
                   <AlertTriangle className="w-3 h-3" />
                   Urgent
                 </span>
               )}
               {job.is_highlighted && (
-                <span className="inline-flex items-center gap-1 text-amber-600 text-xs font-semibold uppercase tracking-wider">
+                <span className="inline-flex items-center gap-1 text-amber-400 text-xs font-bold uppercase tracking-wider">
                   <Sparkles className="w-3 h-3" />
                   Highlighted
                 </span>
@@ -245,17 +240,17 @@ export default function JobDetail() {
             </div>
 
             {/* Title */}
-            <h1 className="text-3xl sm:text-4xl font-display font-bold text-foreground tracking-tight mb-2">
+            <h1 className="text-3xl sm:text-4xl font-display font-bold text-white tracking-tight mb-2">
               {job.title}
             </h1>
 
             {/* Company */}
             <div className="flex items-center gap-3 mb-5">
-              <div className="w-8 h-8 rounded-lg bg-card border border-border/60 flex items-center justify-center">
-                <Building2 className="w-4 h-4 text-muted-foreground" />
+              <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
+                <Building2 className="w-4 h-4 text-white/60" />
               </div>
               <div>
-                <span className="text-sm font-medium text-foreground">{job.company_name}</span>
+                <span className="text-sm font-medium text-white">{job.company_name}</span>
                 {job.employer_slug && (
                   <Link to={`/employers/${job.employer_slug}`} className="text-xs text-accent ml-2 hover:underline">
                     View Company
@@ -266,44 +261,56 @@ export default function JobDetail() {
 
             {/* Meta tags */}
             <div className="flex flex-wrap gap-2">
-              <Badge variant="secondary" className="text-xs font-medium rounded-full px-3 py-1">
+              <Badge className="text-xs font-medium rounded-full px-3 py-1 bg-white/10 text-white/80 border-0">
                 <MapPin className="w-3 h-3 mr-1.5" />
                 {job.location}
               </Badge>
-              <Badge variant="secondary" className="text-xs font-medium rounded-full px-3 py-1">
+              <Badge className="text-xs font-medium rounded-full px-3 py-1 bg-white/10 text-white/80 border-0">
                 <Clock className="w-3 h-3 mr-1.5" />
                 {jobTypeLabels[job.job_type] || job.job_type}
               </Badge>
               {job.contract_type && (
-                <Badge variant="secondary" className="text-xs font-medium rounded-full px-3 py-1">
+                <Badge className="text-xs font-medium rounded-full px-3 py-1 bg-white/10 text-white/80 border-0">
                   <FileText className="w-3 h-3 mr-1.5" />
                   {contractTypeLabels[job.contract_type] || job.contract_type}
                 </Badge>
               )}
               {job.category && (
-                <Badge variant="secondary" className="text-xs font-medium rounded-full px-3 py-1">
+                <Badge className="text-xs font-medium rounded-full px-3 py-1 bg-white/10 text-white/80 border-0">
                   <Briefcase className="w-3 h-3 mr-1.5" />
                   {categoryLabels[job.category] || job.category}
                 </Badge>
               )}
               {job.career_level && job.career_level !== "not_required" && (
-                <Badge variant="secondary" className="text-xs font-medium rounded-full px-3 py-1">
+                <Badge className="text-xs font-medium rounded-full px-3 py-1 bg-white/10 text-white/80 border-0">
                   <ArrowUpRight className="w-3 h-3 mr-1.5" />
                   {careerLevelLabels[job.career_level] || job.career_level}
                 </Badge>
               )}
               {hasSalary && (
-                <Badge className="bg-accent/10 text-accent border-0 text-xs font-semibold rounded-full px-3 py-1">
+                <Badge className="bg-[#4eca8b]/20 text-[#4eca8b] border-0 text-xs font-semibold rounded-full px-3 py-1">
                   <Euro className="w-3 h-3 mr-1" />
                   {job.salary_min && `€${job.salary_min.toLocaleString()}`}
                   {job.salary_max ? ` – €${job.salary_max.toLocaleString()}` : (job.salary_min ? "+" : "")}
                   {job.salary_period && <span className="font-normal ml-1">/{job.salary_period}</span>}
                 </Badge>
               )}
-              {job.cv_required && (
-                <Badge variant="outline" className="text-xs font-medium rounded-full px-3 py-1 border-accent/30 text-accent">
-                  <FileText className="w-3 h-3 mr-1.5" />
-                  CV Required
+              {job.remote_work_mode && (
+                <Badge className="text-xs font-medium rounded-full px-3 py-1 bg-white/10 text-white/80 border-0">
+                  <MapPin className="w-3 h-3 mr-1.5" />
+                  {remoteModeLabels[job.remote_work_mode] || job.remote_work_mode}
+                </Badge>
+              )}
+              {job.sector && (
+                <Badge className="text-xs font-medium rounded-full px-3 py-1 bg-white/10 text-white/80 border-0">
+                  <Briefcase className="w-3 h-3 mr-1.5" />
+                  {job.sector.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())}
+                </Badge>
+              )}
+              {job.expires_at && (
+                <Badge className="text-xs font-medium rounded-full px-3 py-1 bg-white/10 text-white/80 border-0">
+                  <Calendar className="w-3 h-3 mr-1.5" />
+                  Closes {new Date(job.expires_at).toLocaleDateString("en-IE", { day: "numeric", month: "short", year: "numeric" })}
                 </Badge>
               )}
             </div>
@@ -413,122 +420,6 @@ export default function JobDetail() {
                   <Share2 className="w-4 h-4 mr-1.5" />
                   Share
                 </Button>
-              </div>
-            </div>
-
-            {/* Details card */}
-            <div className="rounded-xl border border-border/50 bg-card p-5">
-              <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground mb-4">Job Details</h3>
-              <div className="space-y-4">
-                {hasSalary && (
-                  <div className="flex items-start gap-3">
-                    <Euro className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-sm font-medium text-foreground">
-                        {job.salary_min && `€${job.salary_min.toLocaleString()}`}
-                        {job.salary_max ? ` – €${job.salary_max.toLocaleString()}` : (job.salary_min ? "+" : "")}
-                      </p>
-                      <p className="text-xs text-muted-foreground">per {job.salary_period || "year"}</p>
-                    </div>
-                  </div>
-                )}
-                <div className="flex items-start gap-3">
-                  <MapPin className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{job.location_full || job.location}</p>
-                    {job.location_full && job.location && <p className="text-xs text-muted-foreground">{job.location}</p>}
-                    {!job.location_full && <p className="text-xs text-muted-foreground">Location</p>}
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Clock className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{jobTypeLabels[job.job_type] || job.job_type}</p>
-                    {job.hours_per_week && <p className="text-sm text-foreground mt-0.5">{job.hours_per_week} hours/week</p>}
-                    <p className="text-xs text-muted-foreground">Employment type</p>
-                  </div>
-                </div>
-                {job.contract_type && (
-                  <div className="flex items-start gap-3">
-                    <FileText className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{contractTypeLabels[job.contract_type] || job.contract_type}</p>
-                      <p className="text-xs text-muted-foreground">Contract type</p>
-                    </div>
-                  </div>
-                )}
-                {job.remote_work_mode && (
-                  <div className="flex items-start gap-3">
-                    <MapPin className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{remoteModeLabels[job.remote_work_mode] || job.remote_work_mode}</p>
-                      <p className="text-xs text-muted-foreground">Work mode</p>
-                    </div>
-                  </div>
-                )}
-                {job.category && (
-                  <div className="flex items-start gap-3">
-                    <Briefcase className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{categoryLabels[job.category] || job.category}</p>
-                      <p className="text-xs text-muted-foreground">Category</p>
-                    </div>
-                  </div>
-                )}
-                {job.sector && (
-                  <div className="flex items-start gap-3">
-                    <Briefcase className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{job.sector}</p>
-                      <p className="text-xs text-muted-foreground">Sector</p>
-                    </div>
-                  </div>
-                )}
-                {job.branch_name && (
-                  <div className="flex items-start gap-3">
-                    <Building2 className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{job.branch_name}</p>
-                      <p className="text-xs text-muted-foreground">Hiring Team / Branch</p>
-                    </div>
-                  </div>
-                )}
-                {job.career_level && job.career_level !== "not_required" && (
-                  <div className="flex items-start gap-3">
-                    <ArrowUpRight className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{careerLevelLabels[job.career_level] || job.career_level}</p>
-                      <p className="text-xs text-muted-foreground">Career level</p>
-                    </div>
-                  </div>
-                )}
-                {job.positions_count > 1 && (
-                  <div className="flex items-start gap-3">
-                    <Users className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{job.positions_count} positions</p>
-                      <p className="text-xs text-muted-foreground">Available roles</p>
-                    </div>
-                  </div>
-                )}
-                {job.job_start_date && (
-                  <div className="flex items-start gap-3">
-                    <Calendar className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{new Date(job.job_start_date).toLocaleDateString("en-IE", { day: "numeric", month: "short", year: "numeric" })}</p>
-                      <p className="text-xs text-muted-foreground">Start date</p>
-                    </div>
-                  </div>
-                )}
-                {job.expires_at && (
-                  <div className="flex items-start gap-3">
-                    <Calendar className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{new Date(job.expires_at).toLocaleDateString("en-IE", { day: "numeric", month: "short", year: "numeric" })}</p>
-                      <p className="text-xs text-muted-foreground">Closing date</p>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
 

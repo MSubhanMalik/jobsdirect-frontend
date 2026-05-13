@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import jobService from "@/services/job";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, Search, Loader2 } from "lucide-react";
+import { ChevronDown, Search, Loader2, Briefcase } from "lucide-react";
 import { motion } from "framer-motion";
 import JobCard from "../components/jobs/JobCard";
 import JobFilters from "../components/jobs/JobFilters";
@@ -44,7 +44,6 @@ export default function Jobs() {
         pageSize: PAGE_SIZE,
       });
 
-      // Append new page results to accumulated list
       setAllJobs((prev) => {
         if (page === 1) return result.items || [];
         const existingIds = new Set(prev.map((j) => j.id));
@@ -63,7 +62,6 @@ export default function Jobs() {
     setFilters(newFilters);
     setPage(1);
     setAllJobs([]);
-
     const params = new URLSearchParams();
     if (newFilters.keyword) params.set("keyword", newFilters.keyword);
     if (newFilters.location) params.set("location", newFilters.location);
@@ -77,87 +75,75 @@ export default function Jobs() {
   };
 
   const handleClear = () => {
-    setFilters({ keyword: "", location: "", type: "", category: "", is_featured: false, is_highlighted: false, is_urgent: false });
+    setFilters({ keyword: "", location: "", type: "", category: "", work_type: "", date_posted: "", is_highlighted: false, is_urgent: false });
     setPage(1);
     setAllJobs([]);
     setSearchParams({}, { replace: true });
   };
 
-  const handleLoadMore = () => {
-    setPage((prev) => prev + 1);
-  };
-
   return (
     <div className="min-h-screen bg-background">
-      {/* Page header — light, editorial */}
-      <div className="relative bg-muted/40 border-b border-border/50 pt-12 sm:pt-16 pb-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-            className="max-w-2xl"
-          >
-            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-accent mb-4 block">
-              Opportunities
-            </span>
-            <h1 className="text-4xl sm:text-5xl font-display font-bold tracking-tight text-foreground mb-3">
-              Browse Jobs
-            </h1>
-            <p className="text-muted-foreground text-lg">
-              {total > 0
-                ? `${total.toLocaleString()} active opportunit${total === 1 ? "y" : "ies"} across Ireland`
-                : "Search for your next opportunity"}
-            </p>
+      {/* Dark header with search */}
+      <div className="relative bg-[#1a2332] pt-14 pb-24 overflow-hidden">
+        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "radial-gradient(circle at 1px 1px, white 1px, transparent 0)", backgroundSize: "40px 40px" }} />
+        <div className="absolute top-0 right-0 w-[500px] h-[300px] bg-[#4eca8b]/[0.04] rounded-full blur-[100px]" />
+
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-[#4eca8b]/10 flex items-center justify-center">
+                <Briefcase className="w-5 h-5 text-[#4eca8b]" />
+              </div>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-display font-bold text-white">
+                  Browse Jobs
+                </h1>
+                <p className="text-sm text-white/40">
+                  {total > 0 ? `${total.toLocaleString()} opportunities across Ireland` : "Search for your next opportunity"}
+                </p>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Search bar embedded in dark header */}
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }}>
+            <JobFilters filters={filters} onChange={handleFilterChange} onClear={handleClear} variant="dark" />
           </motion.div>
         </div>
       </div>
 
-      {/* Filter bar — overlapping the header */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-9 relative z-10">
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-        >
-          <JobFilters filters={filters} onChange={handleFilterChange} onClear={handleClear} />
-        </motion.div>
-      </div>
-
       {/* Results */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16">
         {isLoading && page === 1 ? (
           <div className="space-y-3">
             {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="bg-card rounded-xl border border-border/60 p-6">
-                <div className="flex items-center gap-4 mb-4">
-                  <Skeleton className="w-11 h-11 rounded-xl" />
+              <div key={i} className="bg-card rounded-xl border border-border/60 p-5">
+                <div className="flex items-center gap-4 mb-3">
+                  <Skeleton className="w-12 h-12 rounded-xl" />
                   <div className="flex-1">
-                    <Skeleton className="h-4 w-32 mb-2" />
-                    <Skeleton className="h-3 w-20" />
+                    <Skeleton className="h-4 w-40 mb-2" />
+                    <Skeleton className="h-3 w-24" />
                   </div>
-                  <Skeleton className="h-5 w-24" />
+                  <Skeleton className="h-6 w-28 rounded-full" />
                 </div>
                 <Skeleton className="h-5 w-2/3 mb-2" />
                 <Skeleton className="h-4 w-full mb-1" />
-                <Skeleton className="h-4 w-4/5" />
-                <div className="flex gap-2 mt-4 pt-4 border-t border-border/40">
-                  <Skeleton className="h-7 w-28 rounded-md" />
-                  <Skeleton className="h-7 w-24 rounded-md" />
+                <div className="flex gap-2 mt-3">
+                  <Skeleton className="h-7 w-24 rounded-full" />
+                  <Skeleton className="h-7 w-20 rounded-full" />
+                  <Skeleton className="h-7 w-20 rounded-full" />
                 </div>
               </div>
             ))}
           </div>
         ) : allJobs.length > 0 ? (
           <>
-            {/* Results count */}
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-5">
               <p className="text-sm text-muted-foreground">
-                Showing <span className="font-medium text-foreground">{allJobs.length}</span> of {total} job{total !== 1 ? "s" : ""}
+                Showing <span className="font-semibold text-foreground">{allJobs.length}</span> of {total} result{total !== 1 ? "s" : ""}
               </p>
             </div>
 
-            {/* Job list */}
             <div className="space-y-3">
               {allJobs.map((job, index) => (
                 <motion.div
@@ -171,53 +157,23 @@ export default function Jobs() {
               ))}
             </div>
 
-            {/* Load More */}
             {hasMore && (
               <div className="text-center mt-12">
-                <Button
-                  variant="outline"
-                  onClick={handleLoadMore}
-                  disabled={isFetching}
-                  className="rounded-full px-8 h-12 font-medium text-[0.95rem] gap-2"
-                >
-                  {isFetching ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Loading...
-                    </>
-                  ) : (
-                    <>
-                      <ChevronDown className="w-4 h-4" />
-                      Load More Jobs
-                    </>
-                  )}
+                <Button variant="outline" onClick={() => setPage((p) => p + 1)} disabled={isFetching} className="rounded-full px-8 h-11 font-medium gap-2">
+                  {isFetching ? <><Loader2 className="w-4 h-4 animate-spin" />Loading...</> : <><ChevronDown className="w-4 h-4" />Load More Jobs</>}
                 </Button>
-                <p className="text-xs text-muted-foreground mt-3">
-                  {total - allJobs.length} more job{total - allJobs.length !== 1 ? "s" : ""} available
-                </p>
+                <p className="text-xs text-muted-foreground mt-3">{total - allJobs.length} more available</p>
               </div>
             )}
           </>
         ) : (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center py-24"
-          >
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="text-center py-24">
             <div className="w-20 h-20 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-6">
               <Search className="w-8 h-8 text-muted-foreground/30" />
             </div>
             <h3 className="text-xl font-display font-bold text-foreground mb-2">No jobs found</h3>
-            <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
-              Try adjusting your search filters or browse all available positions.
-            </p>
-            <Button
-              variant="outline"
-              onClick={handleClear}
-              className="rounded-full px-6 h-10 font-medium"
-            >
-              Clear Filters
-            </Button>
+            <p className="text-muted-foreground mb-6 max-w-sm mx-auto">Try adjusting your search filters or browse all available positions.</p>
+            <Button variant="outline" onClick={handleClear} className="rounded-full px-6 h-10 font-medium">Clear Filters</Button>
           </motion.div>
         )}
       </div>

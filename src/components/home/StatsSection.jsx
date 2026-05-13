@@ -31,7 +31,7 @@ export default function StatsSection() {
   ];
 
   return (
-    <section className="py-24 bg-foreground text-primary-foreground">
+    <section className="py-24 bg-[#1a2332]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-16">
           {stats.map((stat, i) => (
@@ -43,13 +43,13 @@ export default function StatsSection() {
               transition={{ duration: 0.5, delay: i * 0.08 }}
               className="text-center"
             >
-              <div className="w-12 h-12 rounded-2xl bg-primary-foreground/[0.06] flex items-center justify-center mx-auto mb-5">
-                <stat.icon className="w-5 h-5 text-accent" />
+              <div className="w-12 h-12 rounded-2xl bg-white/[0.05] flex items-center justify-center mx-auto mb-5">
+                <stat.icon className="w-5 h-5 text-[#4eca8b]" />
               </div>
-              <p className="text-4xl sm:text-5xl font-display font-bold text-primary-foreground mb-2 tracking-tight">
+              <p className="text-4xl sm:text-5xl font-display font-bold text-white mb-2 tracking-tight">
                 {typeof stat.value === "number" ? stat.value.toLocaleString() : stat.value}
               </p>
-              <p className="text-sm uppercase tracking-[0.15em] text-primary-foreground/40 font-medium">
+              <p className="text-sm uppercase tracking-[0.15em] text-white/30 font-medium">
                 {stat.label}
               </p>
             </motion.div>

@@ -13,36 +13,36 @@ export default function CTASection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="relative overflow-hidden rounded-[2rem] bg-accent p-14 sm:p-20 text-center"
+          className="relative overflow-hidden rounded-[2rem] bg-[#1a2332] p-14 sm:p-20 text-center"
         >
           {/* Subtle decorative rings */}
-          <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full border border-accent-foreground/[0.08]" />
-          <div className="absolute -bottom-16 -left-16 w-48 h-48 rounded-full border border-accent-foreground/[0.08]" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[40rem] h-[40rem] rounded-full border border-accent-foreground/[0.04]" />
+          <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full border border-white/[0.05]" />
+          <div className="absolute -bottom-16 -left-16 w-48 h-48 rounded-full border border-white/[0.05]" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[40rem] h-[40rem] rounded-full border border-[#4eca8b]/[0.06]" />
 
           <div className="relative">
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-accent-foreground mb-5 leading-tight">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-white mb-5 leading-tight">
               Ready to get started?
             </h2>
-            <p className="text-accent-foreground/70 max-w-lg mx-auto mb-10 text-lg">
+            <p className="text-white/50 max-w-lg mx-auto mb-10 text-lg">
               Join thousands of employers and job seekers already connecting on Ireland's premier job platform.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link to="/employers">
+              <Link to="/auth">
                 <Button
                   size="lg"
-                  className="bg-accent-foreground text-accent hover:bg-accent-foreground/90 font-semibold rounded-full px-8 h-12 group"
+                  className="bg-[#4eca8b] hover:bg-[#45b87e] text-white font-semibold rounded-full px-8 h-12 group"
                 >
                   <Building2 className="w-4 h-4 mr-2" />
                   Register as Employer
                   <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
                 </Button>
               </Link>
-              <Link to="/employees">
+              <Link to="/auth">
                 <Button
                   size="lg"
                   variant="outline"
-                  className="border-accent-foreground/25 text-accent-foreground hover:bg-accent-foreground/10 font-semibold rounded-full px-8 h-12 group"
+                  className="border-white/20 text-white hover:bg-white/5 font-semibold rounded-full px-8 h-12 group"
                 >
                   <User className="w-4 h-4 mr-2" />
                   Register as Employee
