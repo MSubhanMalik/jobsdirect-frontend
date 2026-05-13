@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -79,7 +79,9 @@ export default function FormFieldRenderer({ field, value, onChange, required = f
         />
       ) : null}
 
-      {field.type !== "textarea" && field.type !== "select" && field.type !== "phone" ? (
+      {field.type === "tags" ? (
+        <TagsInput value={value} onChange={onChange} placeholder={field.placeholder} disabled={disabled} />
+      ) : field.type !== "textarea" && field.type !== "select" && field.type !== "phone" ? (
         <Input
           ref={inputRef}
           type={field.type === "email" || field.type === "number" || field.type === "date" || field.type === "url" ? field.type : "text"}
@@ -93,6 +95,50 @@ export default function FormFieldRenderer({ field, value, onChange, required = f
       ) : null}
 
       {field.description ? <p className="text-xs text-muted-foreground">{field.description}</p> : null}
+    </div>
+  );
+}
+
+function TagsInput({ value, onChange, placeholder, disabled }) {
+  const [input, setInput] = useState("");
+  const tags = Array.isArray(value) ? value : (typeof value === "string" && value ? value.split(",").map(s => s.trim()).filter(Boolean) : []);
+
+  const addTag = () => {
+    const tag = input.trim();
+    if (!tag || tags.includes(tag)) return;
+    const updated = [...tags, tag];
+    onChange(updated);
+    setInput("");
+  };
+
+  const removeTag = (idx) => {
+    onChange(tags.filter((_, i) => i !== idx));
+  };
+
+  return (
+    <div>
+      <div className="flex flex-wrap gap-1.5 mb-2">
+        {tags.map((tag, i) => (
+          <span key={i} className="inline-flex items-center gap-1 bg-muted text-sm px-2.5 py-1 rounded-md">
+            {tag}
+            <button type="button" onClick={() => removeTag(i)} className="text-muted-foreground hover:text-destructive ml-0.5" disabled={disabled}>
+              &times;
+            </button>
+          </span>
+        ))}
+      </div>
+      <Input
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            addTag();
+          }
+        }}
+        placeholder={placeholder || "Type and press Enter to add"}
+        disabled={disabled}
+      />
     </div>
   );
 }
