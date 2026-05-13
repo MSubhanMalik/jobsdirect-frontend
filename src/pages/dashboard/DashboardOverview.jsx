@@ -121,7 +121,6 @@ export default function DashboardOverview() {
         {[
           { label: "My Jobs", desc: "Manage your listings", icon: FileText, to: "/dashboard/jobs", primary: true },
           { label: "Applications", desc: "Review candidates", icon: Send, to: "/dashboard/applications" },
-          { label: "CV Database", desc: "Search candidates", icon: Eye, to: "/dashboard/cv-search" },
         ].map((action) => (
           <Link key={action.label} to={action.to}>
             <div className={`rounded-xl border p-5 flex items-center gap-4 transition-all duration-200 group cursor-pointer hover:-translate-y-0.5 ${
