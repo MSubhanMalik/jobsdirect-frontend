@@ -8,6 +8,7 @@ import PageNotFound from './lib/PageNotFound';
 import AuthInitializer from '@/components/layout/AuthInitializer';
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import { Features } from '@/config/features';
+import CookieConsent from '@/components/layout/CookieConsent';
 
 // Layout (always loaded)
 import AppLayout from './components/layout/AppLayout';
@@ -133,6 +134,7 @@ function App() {
           </Suspense>
         </Router>
         <ToastContainer position="top-right" autoClose={4000} hideProgressBar={false} newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover theme="light" />
+        <CookieConsent />
       </AuthInitializer>
     </QueryClientProvider>
   )

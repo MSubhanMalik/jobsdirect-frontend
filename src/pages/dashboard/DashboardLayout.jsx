@@ -41,7 +41,7 @@ export default function DashboardLayout() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (!authLoading && !isAuthenticated) authService.redirectToLogin("/dashboard");
+    if (!authLoading && !isAuthenticated) authService.redirectToLogin(location.pathname + location.search);
     if (!authLoading && user?.role === "admin") navigate("/admin");
   }, [authLoading, isAuthenticated, user, navigate]);
 
@@ -70,6 +70,26 @@ export default function DashboardLayout() {
       navigate(location.pathname, { replace: true });
     }
   }, [location.search, navigate, location.pathname, user?.email, queryClient]);
+
+  // Handle team invite token
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const inviteToken = params.get("invite");
+    if (inviteToken && user) {
+      import("@/services/team").then(({ default: teamService }) => {
+        teamService.acceptInvite(inviteToken)
+          .then(() => {
+            toast.success("Team invitation accepted!");
+            queryClient.invalidateQueries({ queryKey: ["my-employer"] });
+            navigate("/dashboard", { replace: true });
+          })
+          .catch((err) => {
+            toast.error(err.message || "Failed to accept invitation. Please try again.");
+            navigate("/dashboard", { replace: true });
+          });
+      });
+    }
+  }, [location.search, user]);
 
   const { data: employerData, isLoading: employerLoading } = useQuery({
     queryKey: ["my-employer", user?.email],

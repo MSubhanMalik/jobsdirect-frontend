@@ -274,13 +274,13 @@ function CROCompanySearch({ employer, setEmployer, disabled }) {
 
   const handleSelect = async (company) => {
     try {
+      const address = [company.address, company.eircode].filter(Boolean).join(", ");
       await employerService.update(employer.id, {
         company_name: company.company_name,
         cro_number: company.company_num,
-        address_building: company.address,
-        address_eircode: company.eircode || "",
+        business_address: address,
       });
-      setEmployer({ ...employer, company_name: company.company_name, cro_number: company.company_num });
+      setEmployer({ ...employer, company_name: company.company_name, cro_number: company.company_num, business_address: address });
       setSelected(true);
       setResults([]);
       setQuery("");
@@ -296,7 +296,7 @@ function CROCompanySearch({ employer, setEmployer, disabled }) {
           <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
           <div>
             <p className="text-sm font-medium text-emerald-800">{employer.company_name}</p>
-            <p className="text-xs text-emerald-600">CRO Number: {employer.cro_number}</p>
+            <p className="text-xs text-emerald-600">CRO: {employer.cro_number}{employer.business_address ? ` · ${employer.business_address}` : ""}</p>
           </div>
         </div>
       </section>
@@ -317,7 +317,7 @@ function CROCompanySearch({ employer, setEmployer, disabled }) {
               <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
               <div>
                 <p className="text-sm font-medium text-emerald-800">{employer.company_name}</p>
-                <p className="text-xs text-emerald-600">CRO Number: {employer.cro_number}</p>
+                <p className="text-xs text-emerald-600">CRO: {employer.cro_number}{employer.business_address ? ` · ${employer.business_address}` : ""}</p>
               </div>
             </div>
             <Button variant="ghost" size="sm" className="text-xs" onClick={() => setSelected(false)}>Change</Button>

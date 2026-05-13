@@ -173,9 +173,30 @@ export default function AdminEditor({ editor, setEditor }) {
       );
     }
     if (editor.entity === "employer") {
-      const requiredKeys = new Set(["company_name", "first_name", "last_name"]);
+      const requiredKeys = new Set(["first_name", "last_name"]);
       return (
         <div className="space-y-6">
+          {/* CRO details — read only, set by CRO search */}
+          <section className="space-y-3">
+            <div className="border-b border-border/30 pb-2">
+              <h3 className="text-sm font-display font-semibold text-foreground">Company (from CRO)</h3>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <p className="text-xs text-muted-foreground">Company Name</p>
+                <p className="text-sm font-medium">{editor.form.company_name || "—"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">CRO Number</p>
+                <p className="text-sm font-medium">{editor.form.cro_number || "—"}</p>
+              </div>
+              <div className="sm:col-span-2">
+                <p className="text-xs text-muted-foreground">Business Address</p>
+                <p className="text-sm font-medium">{editor.form.business_address || "—"}</p>
+              </div>
+            </div>
+          </section>
+
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Email" className="sm:col-span-2"><Input type="email" value={editor.form.user_email} onChange={(e) => updateEditor("user_email", e.target.value)} /></Field>
           </div>

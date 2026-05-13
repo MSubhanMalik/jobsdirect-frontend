@@ -94,6 +94,10 @@ export default function DashboardCVs() {
   const handleUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (!window.confirm("By uploading your CV, you consent to JobsDirect.ie storing and processing your CV data for recruitment purposes in accordance with our Privacy Policy and GDPR regulations.")) {
+      if (fileRef.current) fileRef.current.value = "";
+      return;
+    }
     setUploading(true);
     try { await cvService.upload(file); toast.success("CV uploaded."); refresh(); }
     catch (err) { toast.error(err.message || "Upload failed."); }

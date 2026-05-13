@@ -22,6 +22,10 @@ export function createEmployerForm(employer = {}) {
   const formValues = buildEntityFormValues(EMPLOYER_EDITOR_DEFAULTS, COMPANY_FIELDS, employer);
   return {
     ...formValues,
+    // Preserve CRO-sourced fields (not in form fields but must not be overwritten)
+    company_name: employer.company_name || "",
+    cro_number: employer.cro_number || "",
+    business_address: employer.business_address || "",
     user_email: employer.user_email || "",
     verification_doc_url: employer.verification_doc_url || "",
   };

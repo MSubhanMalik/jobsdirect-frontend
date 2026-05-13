@@ -128,21 +128,8 @@ export const COMPANY_FIELD_GROUPS = [
     title: "Company Details",
     description: "Required for verification and publishing jobs.",
     fields: [
-      field("company_name", { label: "Company Name", type: "text", defaultValue: "", employerDefaultVisible: true, employerDefaultRequired: true }),
-      field("employer_number", { label: "Employer Registration No.", type: "text", defaultValue: "", employerDefaultVisible: true, employerDefaultRequired: true, placeholder: "Required for verification" }),
-      field("cro_number", { label: "Company Registration No.", type: "text", defaultValue: "", employerDefaultVisible: true, placeholder: "Optional" }),
+      field("employer_number", { label: "Employer Registration No. (Revenue)", type: "text", defaultValue: "", employerDefaultVisible: true, employerDefaultRequired: true, placeholder: "Required for verification" }),
       field("website", { label: "Website", type: "url", defaultValue: "", employerDefaultVisible: true, placeholder: "https://company.ie" }),
-    ],
-  },
-  {
-    id: "address",
-    title: "Business Address",
-    description: "Registered or main business address.",
-    fields: [
-      field("address_building", { label: "Building / Street", type: "text", defaultValue: "", employerDefaultVisible: true, span: 2 }),
-      field("address_town", { label: "Town / City", type: "text", defaultValue: "", employerDefaultVisible: true }),
-      field("address_county", { label: "County", type: "text", defaultValue: "", employerDefaultVisible: true }),
-      field("address_eircode", { label: "Eircode", type: "text", defaultValue: "", employerDefaultVisible: true }),
     ],
   },
   {
