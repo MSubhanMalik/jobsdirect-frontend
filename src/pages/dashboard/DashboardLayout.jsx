@@ -144,15 +144,8 @@ export default function DashboardLayout() {
     items = items.filter(item => !item.feature || Features[item.feature]);
     // Owner-only tabs (Team, Billing)
     if (!isOwner) items = items.filter(item => !item.ownerOnly);
-    if (isEmployer) {
-      if (!isApproved) {
-        items = items.filter(item => item.id === "overview" || item.id === "profile");
-      } else {
-        const hasCVAccess = employer.candidate_database_access;
-        if (!hasCVAccess) {
-          items = items.filter(item => item.id !== "cv-search");
-        }
-      }
+    if (isEmployer && !isApproved) {
+      items = items.filter(item => item.id === "overview" || item.id === "profile");
     }
     return items;
   }, [isEmployer, isApproved, isOwner, employer?.candidate_database_access]);
@@ -178,9 +171,6 @@ export default function DashboardLayout() {
       if (!isApproved && currentId && currentId !== "overview" && currentId !== "profile") {
         navigate("/dashboard", { replace: true });
         toast.warning("Profile Verification Required — Please upload your documents and wait for approval to access all features.");
-      } else if (isApproved && currentId === "cv-search" && !employer.candidate_database_access) {
-        navigate("/dashboard", { replace: true });
-        toast.info("Subscription Required — You need an active CV Database plan to access this feature.");
       }
     }
   }, [isEmployer, isApproved, employer?.candidate_database_access, location.pathname, navigate]);

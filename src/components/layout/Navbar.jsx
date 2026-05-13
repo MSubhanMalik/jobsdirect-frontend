@@ -78,7 +78,7 @@ export default function Navbar() {
                 </Button>
                 <Button
                   className="bg-[#4eca8b] hover:bg-[#45b87e] text-white font-medium rounded-full px-6 h-10"
-                  onClick={() => authService.redirectToLogin()}
+                  onClick={() => window.location.assign("/auth?mode=register")}
                 >
                   Register
                 </Button>

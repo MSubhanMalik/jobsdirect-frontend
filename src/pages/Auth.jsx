@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AlertCircle, KeyRound, Lock, Mail, User, Loader2, Building2, Briefcase, ArrowLeft } from 'lucide-react';
+// Building2 kept for role selection card icon
 import authService from "@/services/auth";
 import { useAuthStore } from "@/stores/authStore";
 import { Button } from '@/components/ui/button';
@@ -59,12 +60,12 @@ export default function Auth() {
   const redirectTo = useMemo(() => new URLSearchParams(location.search).get('redirect') || '/dashboard', [location.search]);
   const initialResetToken = useMemo(() => new URLSearchParams(location.search).get('token') || '', [location.search]);
 
-  const [mode, setMode] = useState('login');
+  const initialMode = new URLSearchParams(location.search).get('mode') || 'login';
+  const [mode, setMode] = useState(initialMode === 'register' ? 'register' : 'login');
   const [signupStep, setSignupStep] = useState('role'); // 'role' | 'form'
   const [selectedRole, setSelectedRole] = useState(null); // 'employer' | 'employee'
   const [form, setForm] = useState({
     first_name: '', last_name: '', email: '', password: '',
-    company_name: '', // employer only
   });
   const [forgotEmail, setForgotEmail] = useState('');
   const [resetForm, setResetForm] = useState({ token: initialResetToken, password: '' });
@@ -117,9 +118,6 @@ export default function Auth() {
           password: form.password,
           role: selectedRole,
         };
-        if (selectedRole === 'employer') {
-          payload.company_name = form.company_name;
-        }
         const result = await authService.register(payload);
         if (result.user) useAuthStore.getState().setUser(result.user);
         navigate('/verify-email', { replace: true });
@@ -275,15 +273,6 @@ export default function Auth() {
                       </div>
                     </div>
 
-                    {selectedRole === 'employer' && (
-                      <div className="space-y-1.5">
-                        <Label htmlFor="company_name" className="text-sm font-medium">Company Name</Label>
-                        <div className="relative">
-                          <Building2 className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/40" />
-                          <Input id="company_name" {...f('company_name')} placeholder="Acme Ltd" className="h-11 pl-10 rounded-xl" required />
-                        </div>
-                      </div>
-                    )}
                   </>
                 )}
 
