@@ -32,7 +32,8 @@ export default function FeaturedJobs() {
   });
   const latestJobs = latestData?.items || [];
 
-  const displayJobs = jobs.length > 0 ? jobs : latestJobs;
+  const isFeatured = jobs.length > 0;
+  const displayJobs = isFeatured ? jobs : latestJobs;
 
   return (
     <section className="py-24 bg-background">
@@ -47,7 +48,7 @@ export default function FeaturedJobs() {
         >
           <div className="h-px flex-1 bg-border" />
           <h2 className="text-sm font-medium uppercase tracking-[0.2em] text-muted-foreground whitespace-nowrap">
-            Featured Opportunities
+            {isFeatured ? "Featured Opportunities" : "Latest Opportunities"}
           </h2>
           <div className="h-px flex-1 bg-border" />
         </motion.div>
