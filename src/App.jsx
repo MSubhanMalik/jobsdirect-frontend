@@ -23,6 +23,7 @@ const Employees = lazy(() => import('./pages/Employees'));
 const Contact = lazy(() => import('./pages/Contact'));
 const Auth = lazy(() => import('./pages/Auth'));
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
+const JoinTeam = lazy(() => import('./pages/JoinTeam'));
 const Privacy = lazy(() => import('./pages/legal/Privacy'));
 const Terms = lazy(() => import('./pages/legal/Terms'));
 const Cookies = lazy(() => import('./pages/legal/Cookies'));
@@ -129,6 +130,7 @@ function App() {
               {/* Auth */}
               <Route path="/auth" element={<Auth />} />
               <Route path="/verify-email" element={<VerifyEmail />} />
+              <Route path="/join" element={<JoinTeam />} />
               <Route path="*" element={<PageNotFound />} />
             </Routes>
           </Suspense>

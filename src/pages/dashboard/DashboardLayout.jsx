@@ -19,8 +19,8 @@ const employerNav = [
   { id: "profile", label: "Profile", path: "/dashboard/profile", icon: Settings },
   { id: "jobs", label: "My Jobs", path: "/dashboard/jobs", icon: FileText },
   { id: "applications", label: "Applications", path: "/dashboard/applications", icon: Send },
-  { id: "team", label: "Team", path: "/dashboard/team", icon: Users },
-  { id: "billing", label: "Billing", path: "/dashboard/billing", icon: CreditCard },
+  { id: "team", label: "Team", path: "/dashboard/team", icon: Users, ownerOnly: true },
+  { id: "billing", label: "Billing", path: "/dashboard/billing", icon: CreditCard, ownerOnly: true },
   { id: "cv-search", label: "CV Database", path: "/dashboard/cv-search", icon: Search, feature: "cvDatabase" },
   { id: "messages", label: "Messages", path: "/dashboard/messages", icon: MessageSquare, feature: "fullMessaging" },
 ];
@@ -136,10 +136,14 @@ export default function DashboardLayout() {
   const isEmployer = !!employer;
   const isApproved = isEmployer ? employer.verification_status === "approved" : true;
   
+  const isOwner = isEmployer && employer.user_id === user?.id;
+
   const navItems = useMemo(() => {
     let items = isEmployer ? employerNav : employeeNav;
-    // Feature flags — hide items whose feature is disabled
+    // Feature flags
     items = items.filter(item => !item.feature || Features[item.feature]);
+    // Owner-only tabs (Team, Billing)
+    if (!isOwner) items = items.filter(item => !item.ownerOnly);
     if (isEmployer) {
       if (!isApproved) {
         items = items.filter(item => item.id === "overview" || item.id === "profile");
@@ -151,7 +155,7 @@ export default function DashboardLayout() {
       }
     }
     return items;
-  }, [isEmployer, isApproved, employer?.candidate_database_access]);
+  }, [isEmployer, isApproved, isOwner, employer?.candidate_database_access]);
 
   // Enforce access control for unapproved or non-subscribed employers
   useEffect(() => {
