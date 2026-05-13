@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -217,6 +217,9 @@ export default function AdminEditor({ editor, setEditor }) {
               </div>
             </section>
           )}
+
+          {/* Document Requests */}
+          {editor.mode === "edit" && <DocumentRequestsSection employerId={editor.item?.id} />}
         </div>
       );
     }
@@ -379,5 +382,101 @@ export default function AdminEditor({ editor, setEditor }) {
         </form>
       </SheetContent>
     </Sheet>
+  );
+}
+
+function DocumentRequestsSection({ employerId }) {
+  const [newDocs, setNewDocs] = useState([{ title: "", description: "" }]);
+  const [sending, setSending] = useState(false);
+  const queryClient = useQueryClient();
+
+  const { data: requests = [], isLoading } = useQuery({
+    queryKey: ["document-requests", employerId],
+    queryFn: () => employerService.getDocumentRequests(employerId),
+    enabled: !!employerId,
+  });
+
+  const addRow = () => setNewDocs([...newDocs, { title: "", description: "" }]);
+  const removeRow = (i) => setNewDocs(newDocs.filter((_, idx) => idx !== i));
+  const updateRow = (i, key, val) => { const u = [...newDocs]; u[i] = { ...u[i], [key]: val }; setNewDocs(u); };
+
+  const handleSend = async () => {
+    const valid = newDocs.filter(d => d.title.trim());
+    if (!valid.length) return;
+    setSending(true);
+    try {
+      await employerService.createDocumentRequests(employerId, valid);
+      setNewDocs([{ title: "", description: "" }]);
+      queryClient.invalidateQueries({ queryKey: ["document-requests", employerId] });
+      toast.success("Document request sent to employer");
+    } catch (err) { toast.error(err.message || "Failed to send request"); }
+    finally { setSending(false); }
+  };
+
+  const handleReview = async (requestId, status) => {
+    try {
+      await employerService.reviewDocument(employerId, requestId, status);
+      queryClient.invalidateQueries({ queryKey: ["document-requests", employerId] });
+      toast.success(`Document ${status}`);
+    } catch (err) { toast.error(err.message || "Failed to review"); }
+  };
+
+  const statusColors = { pending: "bg-amber-100 text-amber-800", uploaded: "bg-blue-100 text-blue-800", approved: "bg-emerald-100 text-emerald-800", rejected: "bg-red-100 text-red-800" };
+
+  return (
+    <section className="space-y-4">
+      <div className="border-b border-border/30 pb-2">
+        <h3 className="text-sm font-display font-semibold text-foreground">Document Requests</h3>
+        <p className="text-xs text-muted-foreground mt-0.5">Request documents from this employer for verification.</p>
+      </div>
+
+      {/* Existing requests */}
+      {isLoading ? <p className="text-xs text-muted-foreground">Loading...</p> : requests.length > 0 && (
+        <div className="space-y-2">
+          {requests.map((req) => (
+            <div key={req.id} className="rounded-lg border border-border/40 p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">{req.title}</p>
+                  {req.description && <p className="text-xs text-muted-foreground">{req.description}</p>}
+                </div>
+                <span className={`text-[0.6rem] font-semibold px-2 py-0.5 rounded-full ${statusColors[req.status] || ""}`}>{req.status?.toUpperCase()}</span>
+              </div>
+              {req.file_url && (
+                <div className="flex items-center gap-2">
+                  <Button asChild variant="outline" size="sm" className="rounded-lg h-7 text-xs">
+                    <a href={req.file_url} target="_blank" rel="noopener noreferrer"><ExternalLink className="w-3 h-3 mr-1" />View File</a>
+                  </Button>
+                  {req.status === "uploaded" && (
+                    <>
+                      <Button size="sm" className="rounded-lg h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => handleReview(req.id, "approved")}>Approve</Button>
+                      <Button size="sm" variant="outline" className="rounded-lg h-7 text-xs text-destructive" onClick={() => handleReview(req.id, "rejected")}>Reject</Button>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* New request form */}
+      <div className="space-y-2 pt-2">
+        <p className="text-xs font-semibold text-muted-foreground">Request New Documents</p>
+        {newDocs.map((doc, i) => (
+          <div key={i} className="flex gap-2">
+            <Input placeholder="Document title (e.g. Employer Registration Cert)" value={doc.title} onChange={(e) => updateRow(i, "title", e.target.value)} className="h-8 text-xs flex-1" />
+            <Input placeholder="Description (optional)" value={doc.description} onChange={(e) => updateRow(i, "description", e.target.value)} className="h-8 text-xs flex-1" />
+            {newDocs.length > 1 && <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => removeRow(i)}><Trash2 className="w-3 h-3" /></Button>}
+          </div>
+        ))}
+        <div className="flex gap-2">
+          <Button type="button" variant="outline" size="sm" className="rounded-lg h-7 text-xs" onClick={addRow}><Plus className="w-3 h-3 mr-1" />Add Document</Button>
+          <Button type="button" size="sm" className="rounded-lg h-7 text-xs bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handleSend} disabled={sending || !newDocs.some(d => d.title.trim())}>
+            {sending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}Send Request
+          </Button>
+        </div>
+      </div>
+    </section>
   );
 }

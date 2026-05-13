@@ -296,13 +296,13 @@ export default function DashboardApplicationDetail() {
 
           {/* Employer request message — shown if asked for info */}
           {app.employer_request_message && (
-            <div className="rounded-xl border border-blue-200 bg-blue-50/50 overflow-hidden">
-              <div className="px-6 py-4 border-b border-blue-200">
-                <h2 className="text-sm font-semibold text-blue-800 flex items-center gap-2">
-                  <Info className="w-4 h-4" /> Information Requested by Employer
+            <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
+              <div className="px-6 py-3 border-b border-border/40">
+                <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <Info className="w-4 h-4 text-muted-foreground" /> Information Requested
                 </h2>
               </div>
-              <div className="px-6 py-4 text-sm text-blue-900 italic">"{app.employer_request_message}"</div>
+              <div className="px-6 py-4 text-sm text-muted-foreground">{app.employer_request_message}</div>
             </div>
           )}
 

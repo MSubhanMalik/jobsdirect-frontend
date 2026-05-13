@@ -48,6 +48,7 @@ const DashboardJobs = lazy(() => import('./pages/dashboard/DashboardJobs'));
 const DashboardApplications = lazy(() => import('./pages/dashboard/DashboardApplications'));
 const DashboardApplicationDetail = lazy(() => import('./pages/dashboard/DashboardApplicationDetail'));
 const DashboardBilling = lazy(() => import('./pages/dashboard/DashboardBilling'));
+const DashboardTeam = lazy(() => import('./pages/dashboard/DashboardTeam'));
 const DashboardMessages = lazy(() => import('./pages/dashboard/DashboardMessages'));
 const DashboardSavedJobs = lazy(() => import('./pages/dashboard/DashboardSavedJobs'));
 const DashboardCVs = lazy(() => import('./pages/dashboard/DashboardCVs'));
@@ -95,6 +96,7 @@ function App() {
                   <Route path="applications" element={<DashboardApplications />} />
                   <Route path="applications/:id" element={<DashboardApplicationDetail />} />
                   <Route path="billing" element={<DashboardBilling />} />
+                  <Route path="team" element={<DashboardTeam />} />
                   {Features.fullMessaging && <Route path="messages" element={<DashboardMessages />} />}
                   {Features.fullMessaging && <Route path="messages/:roomId" element={<DashboardMessages />} />}
                   <Route path="saved" element={<DashboardSavedJobs />} />

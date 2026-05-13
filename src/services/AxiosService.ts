@@ -109,8 +109,7 @@ class AxiosService {
           originalRequest.url?.includes("/auth/login") ||
           originalRequest.url?.includes("/auth/register") ||
           originalRequest.url?.includes("/auth/google") ||
-          originalRequest.url?.includes("/auth/logout") ||
-          originalRequest.url?.includes("/auth/user-info");
+          originalRequest.url?.includes("/auth/logout");
 
         if (
           error.response?.status === 401 &&

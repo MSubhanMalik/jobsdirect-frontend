@@ -26,7 +26,12 @@ export const api = {
 
     // Employers
     EMPLOYERS: "/api/employers",
+    EMPLOYER_CRO_SEARCH: "/api/employers/cro/search",
+    EMPLOYER_CRO_COMPANY: "/api/employers/cro/:num",
     EMPLOYER_DETAIL: "/api/employers/:id",
+    EMPLOYER_DOCUMENT_REQUESTS: "/api/employers/:id/document-requests",
+    EMPLOYER_DOCUMENT_UPLOAD: "/api/employers/:id/document-requests/:requestId/upload",
+    EMPLOYER_DOCUMENT_REVIEW: "/api/employers/:id/document-requests/:requestId/review",
 
     // Employees
     EMPLOYEES: "/api/employees",

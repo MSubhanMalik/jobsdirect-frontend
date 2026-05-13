@@ -11,68 +11,57 @@ import type {
 } from "@/types/auth";
 
 class AuthService {
+  // Backend wraps all responses in { data, message, status, success }
+  private unwrap(resData: any): any {
+    return resData?.data !== undefined ? resData.data : resData;
+  }
+
   async login(payload: LoginPayload): Promise<AuthResponse> {
-    const res = await axiosInstance.post<AuthResponse>(
-      api.endpoints.LOGIN,
-      payload,
-    );
-    if (res.data.accessToken) {
-      setAccessToken(res.data.accessToken);
-    }
-    return res.data;
+    const res = await axiosInstance.post<AuthResponse>(api.endpoints.LOGIN, payload);
+    const result = this.unwrap(res.data);
+    if (result.accessToken) setAccessToken(result.accessToken);
+    return result;
   }
 
   async register(payload: RegisterPayload): Promise<AuthResponse> {
-    const res = await axiosInstance.post<AuthResponse>(
-      api.endpoints.REGISTER,
-      payload,
-    );
-    if (res.data.accessToken) {
-      setAccessToken(res.data.accessToken);
-    }
-    return res.data;
+    const res = await axiosInstance.post<AuthResponse>(api.endpoints.REGISTER, payload);
+    const result = this.unwrap(res.data);
+    if (result.accessToken) setAccessToken(result.accessToken);
+    return result;
   }
 
   async googleAuth(credential: string, role?: string): Promise<AuthResponse> {
-    const res = await axiosInstance.post<AuthResponse>(
-      api.endpoints.GOOGLE_AUTH,
-      { credential, role },
-    );
-    if (res.data.accessToken) {
-      setAccessToken(res.data.accessToken);
-    }
-    return res.data;
+    const res = await axiosInstance.post<AuthResponse>(api.endpoints.GOOGLE_AUTH, { credential, role });
+    const result = this.unwrap(res.data);
+    if (result.accessToken) setAccessToken(result.accessToken);
+    return result;
   }
 
   async getUserInfo(): Promise<User> {
     const res = await axiosInstance.get<User>(api.endpoints.USER_INFO);
-    return res.data;
+    return this.unwrap(res.data);
   }
 
   async updateUserInfo(updates: Partial<User>): Promise<User> {
     const res = await axiosInstance.put<User>(api.endpoints.USER_INFO, updates);
-    return res.data;
+    return this.unwrap(res.data);
   }
 
   async verifyEmail(payload: VerifyEmailPayload): Promise<{ user: User }> {
-    const res = await axiosInstance.post<AuthResponse>(
-      api.endpoints.VERIFY_EMAIL,
-      payload,
-    );
-    if (res.data.accessToken) {
-      setAccessToken(res.data.accessToken);
-    }
-    return { user: (res.data as any).user || res.data };
+    const res = await axiosInstance.post<AuthResponse>(api.endpoints.VERIFY_EMAIL, payload);
+    const result = this.unwrap(res.data);
+    if (result.accessToken) setAccessToken(result.accessToken);
+    return { user: result.user || result };
   }
 
   async resendVerification(): Promise<any> {
     const res = await axiosInstance.post(api.endpoints.RESEND_VERIFICATION);
-    return res.data;
+    return this.unwrap(res.data);
   }
 
   async forgotPassword(payload: ForgotPasswordPayload): Promise<any> {
     const res = await axiosInstance.post(api.endpoints.FORGOT_PASSWORD, payload);
-    return res.data;
+    return this.unwrap(res.data);
   }
 
   async resetPassword(payload: ResetPasswordPayload): Promise<void> {

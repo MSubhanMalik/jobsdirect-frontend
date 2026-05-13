@@ -9,7 +9,7 @@ import employeeService from "@/services/employee";
 import paymentService from "@/services/payment";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LogOut, Home, Briefcase, User, CreditCard, FileText, Send, Settings, MessageSquare, Bookmark, File, Bell, Search } from "lucide-react";
+import { LogOut, Home, Briefcase, User, CreditCard, FileText, Send, Settings, MessageSquare, Bookmark, File, Bell, Search, Users } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import NotificationBell from "@/components/dashboard/NotificationBell";
 import { Features } from "@/config/features";
@@ -18,9 +18,10 @@ const employerNav = [
   { id: "overview", label: "Overview", path: "/dashboard", icon: Briefcase },
   { id: "profile", label: "Profile", path: "/dashboard/profile", icon: Settings },
   { id: "jobs", label: "My Jobs", path: "/dashboard/jobs", icon: FileText },
-  { id: "cv-search", label: "CV Database", path: "/dashboard/cv-search", icon: Search, feature: "cvDatabase" },
   { id: "applications", label: "Applications", path: "/dashboard/applications", icon: Send },
+  { id: "team", label: "Team", path: "/dashboard/team", icon: Users },
   { id: "billing", label: "Billing", path: "/dashboard/billing", icon: CreditCard },
+  { id: "cv-search", label: "CV Database", path: "/dashboard/cv-search", icon: Search, feature: "cvDatabase" },
   { id: "messages", label: "Messages", path: "/dashboard/messages", icon: MessageSquare, feature: "fullMessaging" },
 ];
 

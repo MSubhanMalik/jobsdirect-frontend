@@ -25,7 +25,7 @@ const STATUS_BADGES = {
 };
 
 export default function DashboardTeam() {
-  const { user } = useOutletContext();
+  const { user, employer } = useOutletContext();
   const queryClient = useQueryClient();
   const [showInvite, setShowInvite] = useState(false);
   const [inviteForm, setInviteForm] = useState({ email: "", role: "recruiter" });
@@ -64,7 +64,9 @@ export default function DashboardTeam() {
 
   const activeMembers = members.filter((m) => m.status !== "removed");
   const currentMember = members.find((m) => m.user_id === user.id);
-  const isOwnerOrAdmin = currentMember?.role === "owner" || currentMember?.role === "admin";
+  // If no team member record but user owns the employer directly, treat as owner
+  const isOwner = currentMember?.role === "owner" || (!currentMember && employer);
+  const isOwnerOrAdmin = isOwner || currentMember?.role === "admin";
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Loading team...</p>;
 
@@ -117,7 +119,7 @@ export default function DashboardTeam() {
                   </div>
                   {isOwnerOrAdmin && member.role !== "owner" && (
                     <div className="flex items-center gap-2">
-                      {currentMember?.role === "owner" && member.status === "active" && (
+                      {isOwner && member.status === "active" && (
                         <Select
                           value={member.role}
                           onValueChange={(role) => roleMutation.mutate({ id: member.id, role })}
