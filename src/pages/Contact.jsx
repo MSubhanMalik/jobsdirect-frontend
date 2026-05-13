@@ -37,21 +37,22 @@ export default function Contact() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="relative bg-muted/40 border-b border-border/50 pt-12 sm:pt-16 pb-12 sm:pb-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative bg-[#1a2332] pt-14 pb-14 overflow-hidden">
+        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "radial-gradient(circle at 1px 1px, white 1px, transparent 0)", backgroundSize: "40px 40px" }} />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
             className="max-w-2xl"
           >
-            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-accent mb-4 block">
+            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#4eca8b] mb-4 block">
               Get in Touch
             </span>
-            <h1 className="text-4xl sm:text-5xl font-display font-bold tracking-tight text-foreground mb-3">
+            <h1 className="text-3xl sm:text-4xl font-display font-bold tracking-tight text-white mb-3">
               Contact Us
             </h1>
-            <p className="text-muted-foreground text-lg">
+            <p className="text-white/50 text-lg">
               Have a question or need help? We'd love to hear from you.
             </p>
           </motion.div>

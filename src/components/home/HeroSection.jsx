@@ -56,7 +56,7 @@ export default function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-5xl sm:text-6xl lg:text-7xl font-display font-bold tracking-tight leading-[1.05] text-white mb-7"
+            className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold tracking-tight leading-[1.1] text-white mb-7"
           >
             {settings.hero_title || "Find Your Dream Job"}{" "}
             <span className="text-[#4eca8b]">{settings.hero_highlight || "or Hire Top Talent"}</span>

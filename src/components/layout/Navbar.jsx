@@ -27,16 +27,12 @@ export default function Navbar() {
   const isHome = location.pathname === "/";
 
   return (
-    <header className={`sticky top-0 z-50 w-full border-b transition-colors duration-300 ${
-      isHome
-        ? "bg-[#1a2332]/80 backdrop-blur-xl border-white/[0.06]"
-        : "bg-background/80 backdrop-blur-xl border-border/40"
-    }`}>
+    <header className="sticky top-0 z-50 w-full border-b bg-white/90 backdrop-blur-xl border-border/40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-[4.25rem]">
           {/* Logo */}
           <Link to="/" className="flex items-center group">
-            <span className={`text-[1.3rem] font-display font-bold tracking-tight ${isHome ? "text-white" : "text-foreground"}`}>
+            <span className="text-[1.3rem] font-display font-bold tracking-tight text-foreground">
               Jobs<span className="font-extrabold">Direct</span><span className="text-[#4eca8b]">.ie</span>
             </span>
           </Link>
@@ -49,8 +45,8 @@ export default function Navbar() {
                 to={link.path}
                 className={`relative px-4 py-2 rounded-lg text-[0.9rem] font-medium transition-colors duration-200 ${
                   isActive(link.path)
-                    ? isHome ? "text-white bg-white/10" : "text-foreground bg-muted"
-                    : isHome ? "text-white/60 hover:text-white hover:bg-white/5" : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                    ? "text-foreground bg-muted"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
                 }`}
               >
                 {link.label}
@@ -71,7 +67,7 @@ export default function Navbar() {
               <>
                 <Button
                   variant="ghost"
-                  className={`font-medium h-10 ${isHome ? "text-white/70 hover:text-white hover:bg-white/5" : "text-muted-foreground"}`}
+                  className="font-medium h-10 text-muted-foreground"
                   onClick={() => authService.redirectToLogin()}
                 >
                   Login
@@ -89,7 +85,7 @@ export default function Navbar() {
           {/* Mobile Menu */}
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild className="lg:hidden">
-              <Button variant="ghost" size="icon" className={isHome ? "text-white" : "text-foreground"}>
+              <Button variant="ghost" size="icon" className="text-foreground">
                 <Menu className="w-5 h-5" />
               </Button>
             </SheetTrigger>

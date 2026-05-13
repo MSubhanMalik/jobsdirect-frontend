@@ -30,28 +30,13 @@ export default function Employees() {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero */}
-      <section className="relative overflow-hidden pt-16 sm:pt-24 pb-24 sm:pb-32">
-        {/* Decorative */}
-        <motion.div
-          animate={{ y: [0, -14, 0] }}
-          transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
-          className="hidden lg:block absolute right-[6%] top-[14%] w-56 h-56 rounded-full border border-accent/[0.07]"
-        />
-        <motion.div
-          animate={{ y: [0, 10, 0] }}
-          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
-          className="hidden lg:block absolute right-[14%] top-[45%] w-28 h-28 rounded-full bg-accent/[0.04]"
-        />
-        <motion.div
-          animate={{ y: [0, -8, 0] }}
-          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 3 }}
-          className="hidden lg:block absolute right-[10%] bottom-[15%] w-3 h-3 rounded-full bg-accent/20"
-        />
+      <section className="relative overflow-hidden pt-16 sm:pt-24 pb-24 sm:pb-32 bg-[#1a2332]">
+        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "radial-gradient(circle at 1px 1px, white 1px, transparent 0)", backgroundSize: "40px 40px" }} />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-2xl">
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-accent/20 text-accent text-sm font-medium mb-8">
+              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#4eca8b]/10 border border-[#4eca8b]/20 text-[#4eca8b] text-sm font-medium mb-8">
                 <Sparkles className="w-3.5 h-3.5" />
                 For Job Seekers
               </span>
@@ -61,17 +46,17 @@ export default function Employees() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-4xl sm:text-5xl lg:text-6xl font-display font-bold tracking-tight leading-[0.95] text-foreground mb-6"
+              className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold tracking-tight leading-[1.1] text-white mb-6"
             >
               Your next career move{" "}
-              <span className="text-accent">starts here.</span>
+              <span className="text-[#4eca8b]">starts here.</span>
             </motion.h1>
 
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-lg sm:text-xl text-muted-foreground leading-relaxed mb-10 max-w-lg"
+              className="text-lg sm:text-xl text-white/50 leading-relaxed mb-10 max-w-lg"
             >
               Create your profile, build your CV, and apply to hundreds of opportunities across Ireland — completely free.
             </motion.p>
@@ -84,7 +69,7 @@ export default function Employees() {
             >
               <Button
                 size="lg"
-                className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold rounded-full px-8 h-12 group"
+                className="bg-[#4eca8b] hover:bg-[#45b87e] text-white font-semibold rounded-full px-8 h-12 group"
                 onClick={() => authService.redirectToLogin()}
               >
                 Create Free Account
@@ -93,7 +78,7 @@ export default function Employees() {
               <Button
                 size="lg"
                 variant="ghost"
-                className="text-foreground font-medium h-12 group"
+                className="text-white/70 hover:text-white font-medium h-12 group"
                 onClick={() => document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" })}
               >
                 Learn More
