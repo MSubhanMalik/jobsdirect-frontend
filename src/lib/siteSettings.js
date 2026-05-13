@@ -89,10 +89,7 @@ export const SALARY_PERIOD_OPTIONS = [
 ];
 
 export const APPLICATION_METHOD_OPTIONS = [
-  { value: "platform", label: "Platform" },
-  { value: "email", label: "Email" },
-  { value: "phone", label: "Phone" },
-  { value: "postal", label: "Postal" },
+  { value: "platform", label: "Apply on Platform" },
   { value: "external", label: "External URL" },
 ];
 
@@ -119,73 +116,33 @@ export const COMPANY_FIELD_GROUPS = [
   {
     id: "contact_person",
     title: "Contact Person",
-    description: "Primary account owner details.",
+    description: "Primary contact for this employer account.",
     fields: [
-      field("first_name", { label: "First Name", type: "text", defaultValue: "", employerDefaultVisible: true, employerDefaultRequired: true }),
-      field("last_name", { label: "Last Name", type: "text", defaultValue: "", employerDefaultVisible: true, employerDefaultRequired: true }),
-      field("date_of_birth", { label: "Date of Birth", type: "date", defaultValue: "", employerDefaultVisible: true, employerDefaultRequired: true }),
+      field("first_name", { label: "Contact Name (First)", type: "text", defaultValue: "", employerDefaultVisible: true, employerDefaultRequired: true }),
+      field("last_name", { label: "Contact Name (Last)", type: "text", defaultValue: "", employerDefaultVisible: true, employerDefaultRequired: true }),
+      field("phone", { label: "Phone", type: "phone", defaultValue: "", employerDefaultVisible: true, employerDefaultRequired: true }),
     ],
   },
   {
-    id: "business_identity",
-    title: "Business Identity",
-    description: "Core company details used across your platform.",
+    id: "company_details",
+    title: "Company Details",
+    description: "Required for verification and publishing jobs.",
     fields: [
       field("company_name", { label: "Company Name", type: "text", defaultValue: "", employerDefaultVisible: true, employerDefaultRequired: true }),
-      field("trading_name", { label: "Trading Name", type: "text", defaultValue: "", employerDefaultVisible: false }),
-      field("company_logo_url", { label: "Company Logo URL", type: "url", defaultValue: "", employerDefaultVisible: false, span: 2 }),
-      field("business_type", { label: "Business Type", type: "select", options: BUSINESS_TYPE_OPTIONS, defaultValue: "limited_company", employerDefaultVisible: false }),
-      field("registered_in_ireland", { label: "Registered In Ireland", type: "boolean", defaultValue: true, employerDefaultVisible: false }),
-      field("cro_number", { label: "Business Registration Number", type: "text", defaultValue: "", employerDefaultVisible: true, employerDefaultRequired: true }),
-      field("employer_number", { label: "Employer Number", type: "text", defaultValue: "", employerDefaultVisible: true, employerDefaultRequired: true }),
-      field("company_size", { label: "Company Size", type: "select", options: COMPANY_SIZE_OPTIONS, defaultValue: "micro_0_10", employerDefaultVisible: false }),
-      field("business_activity_description", { label: "Business Activity Description", type: "textarea", defaultValue: "", employerDefaultVisible: false, span: 2 }),
-    ],
-  },
-  {
-    id: "economic_activity",
-    title: "Economic Activity",
-    description: "Use these free-text fields now and refine them into coded classifications later.",
-    fields: [
-      field("economic_activity_1", { label: "Economic Activity 1", type: "text", defaultValue: "", employerDefaultVisible: false }),
-      field("economic_activity_2", { label: "Economic Activity 2", type: "text", defaultValue: "", employerDefaultVisible: false }),
-      field("economic_activity_3", { label: "Economic Activity 3", type: "text", defaultValue: "", employerDefaultVisible: false }),
+      field("employer_number", { label: "Employer Registration No.", type: "text", defaultValue: "", employerDefaultVisible: true, employerDefaultRequired: true, placeholder: "Required for verification" }),
+      field("cro_number", { label: "Company Registration No.", type: "text", defaultValue: "", employerDefaultVisible: true, placeholder: "Optional" }),
+      field("website", { label: "Website", type: "url", defaultValue: "", employerDefaultVisible: true, placeholder: "https://company.ie" }),
     ],
   },
   {
     id: "address",
-    title: "Address",
+    title: "Business Address",
     description: "Registered or main business address.",
     fields: [
-      field("address_building", { label: "Building / House", type: "text", defaultValue: "", employerDefaultVisible: false }),
-      field("address_street", { label: "Street", type: "text", defaultValue: "", employerDefaultVisible: false }),
-      field("address_town", { label: "Town / City", type: "text", defaultValue: "", employerDefaultVisible: false }),
-      field("address_county", { label: "County", type: "text", defaultValue: "", employerDefaultVisible: false }),
-      field("address_country", { label: "Country", type: "text", defaultValue: "Ireland", employerDefaultVisible: false }),
-      field("address_eircode", { label: "Eircode", type: "text", defaultValue: "", employerDefaultVisible: false }),
-    ],
-  },
-  {
-    id: "communications",
-    title: "Contact Channels",
-    description: "Public-facing and internal contact options.",
-    fields: [
-      field("phone", { label: "Main Phone", type: "phone", defaultValue: "", employerDefaultVisible: true, employerDefaultRequired: true }),
-      field("website", { label: "Website", type: "url", defaultValue: "", employerDefaultVisible: true, employerDefaultRequired: true }),
-      field("primary_phone_type", { label: "Primary Phone Type", type: "select", options: PHONE_TYPE_OPTIONS, defaultValue: "landline", employerDefaultVisible: false }),
-      field("primary_phone", { label: "Primary Phone", type: "phone", defaultValue: "", employerDefaultVisible: false }),
-      field("secondary_phone_type", { label: "Secondary Phone Type", type: "select", options: PHONE_TYPE_OPTIONS, defaultValue: "mobile", employerDefaultVisible: false }),
-      field("secondary_phone", { label: "Secondary Phone", type: "phone", defaultValue: "", employerDefaultVisible: false }),
-      field("fax", { label: "Fax", type: "text", defaultValue: "", employerDefaultVisible: false }),
-    ],
-  },
-  {
-    id: "preferences",
-    title: "Business Flags",
-    description: "Optional flags and preferences managed by the employer.",
-    fields: [
-      field("is_recruitment_agency", { label: "Recruitment Agency", type: "boolean", defaultValue: false, employerDefaultVisible: false }),
-      field("newsletter_opt_in", { label: "Newsletter Opt-In", type: "boolean", defaultValue: false, employerDefaultVisible: false }),
+      field("address_building", { label: "Building / Street", type: "text", defaultValue: "", employerDefaultVisible: true, span: 2 }),
+      field("address_town", { label: "Town / City", type: "text", defaultValue: "", employerDefaultVisible: true }),
+      field("address_county", { label: "County", type: "text", defaultValue: "", employerDefaultVisible: true }),
+      field("address_eircode", { label: "Eircode", type: "text", defaultValue: "", employerDefaultVisible: true }),
     ],
   },
   {
@@ -205,42 +162,54 @@ export const COMPANY_FIELD_GROUPS = [
   },
 ];
 
+export const SECTOR_OPTIONS = [
+  { value: "agriculture", label: "Agriculture & Farming" },
+  { value: "construction", label: "Construction & Trades" },
+  { value: "education", label: "Education & Training" },
+  { value: "engineering", label: "Engineering" },
+  { value: "finance", label: "Finance & Accounting" },
+  { value: "healthcare", label: "Healthcare & Medical" },
+  { value: "hospitality", label: "Hospitality & Tourism" },
+  { value: "it", label: "IT & Technology" },
+  { value: "legal", label: "Legal" },
+  { value: "logistics", label: "Logistics & Transport" },
+  { value: "manufacturing", label: "Manufacturing" },
+  { value: "marketing", label: "Marketing & PR" },
+  { value: "media", label: "Media & Creative" },
+  { value: "pharma", label: "Pharmaceutical & Science" },
+  { value: "property", label: "Property & Real Estate" },
+  { value: "public_sector", label: "Public Sector & Government" },
+  { value: "retail", label: "Retail & Sales" },
+  { value: "social_care", label: "Social Care & Community" },
+  { value: "telecoms", label: "Telecoms & Utilities" },
+  { value: "other", label: "Other" },
+];
+
 export const JOB_FIELD_GROUPS = [
-  {
-    id: "basic_details",
-    title: "Basic Details",
-    description: "Core vacancy information shown across the platform.",
-    fields: [
-      field("title", { label: "Job Title", type: "text", defaultValue: "", employerDefaultVisible: true, employerDefaultRequired: true, span: 2 }),
-      field("short_description", { label: "Short Description", type: "text", defaultValue: "", employerDefaultVisible: true, span: 2 }),
-      field("description", { label: "Full Description", type: "textarea", defaultValue: "", employerDefaultVisible: true, employerDefaultRequired: true, span: 2 }),
-    ],
-  },
   {
     id: "classification",
     title: "Classification",
     description: "How the role should be categorized.",
     fields: [
+      field("location", { label: "Location", type: "select", options: LOCATION_OPTIONS, defaultValue: "", employerDefaultVisible: true, employerDefaultRequired: true, searchable: true }),
+      field("sector", { label: "Sector", type: "select", options: SECTOR_OPTIONS, defaultValue: "", employerDefaultVisible: true }),
       field("job_type", { label: "Job Type", type: "select", options: JOB_TYPE_OPTIONS, defaultValue: "full_time", employerDefaultVisible: true }),
-      field("category", { label: "Category", type: "select", options: CATEGORY_OPTIONS, defaultValue: "other", employerDefaultVisible: true }),
+      field("remote_work_mode", { label: "Work Type", type: "select", options: REMOTE_WORK_MODE_OPTIONS, defaultValue: "on_site", employerDefaultVisible: true }),
     ],
   },
   {
-    id: "location_schedule",
-    title: "Location And Schedule",
-    description: "Where and how the role is worked.",
+    id: "basic_details",
+    title: "Job Information",
+    description: "Core details about the role.",
     fields: [
-      field("location", { label: "County / City", type: "select", options: LOCATION_OPTIONS, defaultValue: "", employerDefaultVisible: true, employerDefaultRequired: true, searchable: true }),
-      field("location_full", { label: "Full Address", type: "text", defaultValue: "", employerDefaultVisible: true, placeholder: "e.g. Unit 52, Porters Road, Coolmine, Dublin 15" }),
-      field("remote_work_mode", { label: "Work Type", type: "select", options: REMOTE_WORK_MODE_OPTIONS, defaultValue: "on_site", employerDefaultVisible: true }),
-      field("hours_per_week", { label: "Hours Per Week", type: "number", defaultValue: "", employerDefaultVisible: true }),
-      field("positions_count", { label: "Number Of Positions", type: "number", defaultValue: "", employerDefaultVisible: true }),
+      field("title", { label: "Job Title", type: "text", defaultValue: "", employerDefaultVisible: true, employerDefaultRequired: true, span: 2 }),
+      field("description", { label: "Job Description", type: "textarea", defaultValue: "", employerDefaultVisible: true, employerDefaultRequired: true, span: 2 }),
     ],
   },
   {
     id: "compensation",
     title: "Compensation",
-    description: "Salary details.",
+    description: "Salary details in EUR.",
     fields: [
       field("salary_min", { label: "Salary Min (EUR)", type: "number", defaultValue: "", employerDefaultVisible: true }),
       field("salary_max", { label: "Salary Max (EUR)", type: "number", defaultValue: "", employerDefaultVisible: true }),
@@ -248,21 +217,20 @@ export const JOB_FIELD_GROUPS = [
     ],
   },
   {
-    id: "applications",
-    title: "Applications",
-    description: "How candidates apply.",
+    id: "requirements",
+    title: "Requirements",
+    description: "Skills and qualifications needed.",
     fields: [
-      field("application_method", { label: "Application Method", type: "select", options: APPLICATION_METHOD_OPTIONS, defaultValue: "platform", employerDefaultVisible: true }),
-      field("application_email", { label: "Application Email", type: "email", defaultValue: "", employerDefaultVisible: false }),
-      field("application_url", { label: "External Application URL", type: "url", defaultValue: "", employerDefaultVisible: false }),
+      field("requirements", { label: "Required Skills", type: "tags", defaultValue: [], employerDefaultVisible: true, span: 2, placeholder: "Type a skill and press Enter" }),
     ],
   },
   {
-    id: "extras",
-    title: "Extras",
-    description: "Additional details.",
+    id: "applications",
+    title: "Application Method",
+    description: "How candidates apply for this role.",
     fields: [
-      field("benefits", { label: "Benefits", type: "textarea", defaultValue: "", employerDefaultVisible: true, span: 2 }),
+      field("application_method", { label: "Application Method", type: "select", options: APPLICATION_METHOD_OPTIONS, defaultValue: "platform", employerDefaultVisible: true }),
+      field("application_url", { label: "External Application URL", type: "url", defaultValue: "", employerDefaultVisible: true, placeholder: "https://company.ie/careers/apply", showWhen: { field: "application_method", value: "external" } }),
     ],
   },
   {
@@ -273,12 +241,12 @@ export const JOB_FIELD_GROUPS = [
       field("status", { label: "Status", type: "select", options: [
         { value: "approved", label: "Live" },
         { value: "pending_review", label: "Pending" },
+        { value: "flagged", label: "Flagged" },
         { value: "rejected", label: "Rejected" },
         { value: "draft", label: "Draft" },
         { value: "archived", label: "Archived" },
       ], defaultValue: "pending_review", adminOnly: true, manageInEmployerForm: false }),
       field("source", { label: "Source", type: "text", defaultValue: "manual", adminOnly: true, manageInEmployerForm: false }),
-      field("jobsireland_ref", { label: "JobsIreland Reference", type: "text", defaultValue: "", adminOnly: true, manageInEmployerForm: false }),
     ],
   },
 ];
@@ -324,27 +292,10 @@ export const EMPLOYEE_FIELD_GROUPS = [
       field("first_name", { label: "First Name", type: "text", defaultValue: "", employerDefaultVisible: true, employerDefaultRequired: true }),
       field("last_name", { label: "Last Name", type: "text", defaultValue: "", employerDefaultVisible: true, employerDefaultRequired: true }),
       field("phone", { label: "Phone", type: "phone", defaultValue: "", employerDefaultVisible: true }),
-      field("date_of_birth", { label: "Date of Birth", type: "date", defaultValue: "", employerDefaultVisible: true }),
-      field("title", { label: "Job Title / Role", type: "text", defaultValue: "", employerDefaultVisible: true, placeholder: "e.g. Software Developer" }),
-      field("gender", { label: "Gender", type: "select", options: GENDER_OPTIONS, defaultValue: "", employerDefaultVisible: true }),
-      field("nationality", { label: "Nationality", type: "text", defaultValue: "", employerDefaultVisible: true, placeholder: "e.g. Irish" }),
       field("county", { label: "County", type: "select", options: COUNTY_OPTIONS, defaultValue: "", employerDefaultVisible: true, searchable: true }),
-      field("address", { label: "Address", type: "text", defaultValue: "", employerDefaultVisible: true, span: 2 }),
       field("right_to_work", { label: "Right to Work", type: "select", options: RIGHT_TO_WORK_OPTIONS, defaultValue: "", employerDefaultVisible: true }),
       field("driving_licence", { label: "Driving Licence", type: "select", options: DRIVING_LICENCE_OPTIONS, defaultValue: "none", employerDefaultVisible: true }),
       field("languages", { label: "Languages", type: "text", defaultValue: "", employerDefaultVisible: true, span: 2, placeholder: "e.g. English (fluent), Irish, Polish" }),
-      field("bio", { label: "Professional Summary", type: "textarea", defaultValue: "", employerDefaultVisible: true, span: 2 }),
-    ],
-  },
-  {
-    id: "online_presence",
-    title: "Online Presence",
-    description: "Your professional links and online profiles.",
-    fields: [
-      field("linkedin", { label: "LinkedIn URL", type: "url", defaultValue: "", employerDefaultVisible: true, placeholder: "https://linkedin.com/in/yourname" }),
-      field("github", { label: "GitHub URL", type: "url", defaultValue: "", employerDefaultVisible: true, placeholder: "https://github.com/yourname" }),
-      field("website", { label: "Personal Website", type: "url", defaultValue: "", employerDefaultVisible: true, placeholder: "https://yourwebsite.com" }),
-      field("portfolio_url", { label: "Portfolio URL", type: "url", defaultValue: "", employerDefaultVisible: true, placeholder: "https://portfolio.com/yourname" }),
     ],
   },
   {
@@ -394,49 +345,6 @@ export const EMPLOYEE_FIELD_GROUPS = [
           { key: "institution", label: "Institution", type: "text" },
           { key: "field_of_study", label: "Field of Study", type: "text" },
           { key: "grade", label: "Grade / GPA", type: "text" },
-          { key: "start_date", label: "Start Date", type: "date" },
-          { key: "end_date", label: "End Date", type: "date" },
-          { key: "description", label: "Description", type: "textarea", span: 2 },
-        ],
-      }),
-    ],
-  },
-  {
-    id: "certifications",
-    title: "Certifications & Licences",
-    description: "Professional certifications and licences you hold.",
-    fields: [
-      field("certifications", {
-        label: "Certifications",
-        type: "repeater",
-        defaultValue: [],
-        employerDefaultVisible: true,
-        span: 2,
-        subFields: [
-          { key: "name", label: "Certification Name", type: "text" },
-          { key: "issuing_organisation", label: "Issuing Organisation", type: "text" },
-          { key: "issue_date", label: "Issue Date", type: "date" },
-          { key: "expiry_date", label: "Expiry Date", type: "date" },
-          { key: "credential_id", label: "Credential ID", type: "text" },
-          { key: "credential_url", label: "Credential URL", type: "text" },
-        ],
-      }),
-    ],
-  },
-  {
-    id: "projects",
-    title: "Projects",
-    description: "Notable projects you have worked on.",
-    fields: [
-      field("projects", {
-        label: "Projects",
-        type: "repeater",
-        defaultValue: [],
-        employerDefaultVisible: true,
-        span: 2,
-        subFields: [
-          { key: "name", label: "Project Name", type: "text" },
-          { key: "url", label: "Project URL", type: "text" },
           { key: "start_date", label: "Start Date", type: "date" },
           { key: "end_date", label: "End Date", type: "date" },
           { key: "description", label: "Description", type: "textarea", span: 2 },
@@ -546,10 +454,6 @@ export const DEFAULT_SITE_SETTINGS = {
   pricing_products: DEFAULT_PRICING_PRODUCTS,
   credit_costs: DEFAULT_CREDIT_COSTS,
   payment_plans: DEFAULT_PAYMENT_PLANS,
-  employer_company_form_config: EMPLOYER_COMPANY_FORM_CONTROL_DEFAULTS,
-  employer_job_form_config: EMPLOYER_JOB_FORM_CONTROL_DEFAULTS,
-  employee_profile_form_config: EMPLOYEE_PROFILE_FORM_CONTROL_DEFAULTS,
-  employee_candidate_view_config: EMPLOYEE_CANDIDATE_VIEW_CONTROL_DEFAULTS,
 };
 
 const buildFieldMap = (fields) =>
@@ -562,17 +466,6 @@ export const COMPANY_FIELD_MAP = buildFieldMap(COMPANY_FIELDS);
 export const JOB_FIELD_MAP = buildFieldMap(JOB_FIELDS);
 export const EMPLOYEE_FIELD_MAP = buildFieldMap(EMPLOYEE_FIELDS);
 
-export function mergeFieldControlConfig(defaults, incomingConfig = {}) {
-  return Object.entries(defaults).reduce((acc, [key, value]) => {
-    const next = incomingConfig?.[key];
-    acc[key] = {
-      visible: next?.visible === undefined ? value.visible : Boolean(next.visible),
-      required: next?.required === undefined ? value.required : Boolean(next.required),
-    };
-    return acc;
-  }, {});
-}
-
 export function mergeSiteSettingsWithDefaults(settings = {}) {
   return {
     ...DEFAULT_SITE_SETTINGS,
@@ -580,22 +473,11 @@ export function mergeSiteSettingsWithDefaults(settings = {}) {
     pricing_products: { ...DEFAULT_PRICING_PRODUCTS, ...(settings?.pricing_products || {}) },
     credit_costs: { ...DEFAULT_CREDIT_COSTS, ...(settings?.credit_costs || {}) },
     payment_plans: Array.isArray(settings?.payment_plans) ? settings.payment_plans : [],
-    employer_company_form_config: mergeFieldControlConfig(
-      EMPLOYER_COMPANY_FORM_CONTROL_DEFAULTS,
-      settings?.employer_company_form_config,
-    ),
-    employer_job_form_config: mergeFieldControlConfig(
-      EMPLOYER_JOB_FORM_CONTROL_DEFAULTS,
-      settings?.employer_job_form_config,
-    ),
-    employee_profile_form_config: mergeFieldControlConfig(
-      EMPLOYEE_PROFILE_FORM_CONTROL_DEFAULTS,
-      settings?.employee_profile_form_config,
-    ),
-    employee_candidate_view_config: mergeFieldControlConfig(
-      EMPLOYEE_CANDIDATE_VIEW_CONTROL_DEFAULTS,
-      settings?.employee_candidate_view_config,
-    ),
+    // Form configs are fixed per spec — hardcoded, not from DB
+    employer_company_form_config: EMPLOYER_COMPANY_FORM_CONTROL_DEFAULTS,
+    employer_job_form_config: EMPLOYER_JOB_FORM_CONTROL_DEFAULTS,
+    employee_profile_form_config: EMPLOYEE_PROFILE_FORM_CONTROL_DEFAULTS,
+    employee_candidate_view_config: EMPLOYEE_CANDIDATE_VIEW_CONTROL_DEFAULTS,
   };
 }
 

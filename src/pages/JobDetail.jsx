@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import authService from "@/services/auth";
@@ -76,6 +76,38 @@ export default function JobDetail() {
     queryFn: () => jobService.getById(jobId),
     enabled: !!jobId,
   });
+
+  // SEO: schema.org JobPosting structured data (§6)
+  useEffect(() => {
+    if (!job) return;
+    document.title = `${job.title} at ${job.company_name} - JobsDirect.ie`;
+    const jobTypeMap = { full_time: "FULL_TIME", part_time: "PART_TIME", contract: "CONTRACTOR", temporary: "TEMPORARY", internship: "INTERN" };
+    const schema = {
+      "@context": "https://schema.org/",
+      "@type": "JobPosting",
+      title: job.title,
+      description: job.description?.replace(/<[^>]*>/g, " ").slice(0, 5000),
+      datePosted: job.created_at || job.createdAt,
+      validThrough: job.expires_at || undefined,
+      employmentType: jobTypeMap[job.job_type] || "OTHER",
+      hiringOrganization: { "@type": "Organization", name: job.company_name },
+      jobLocation: { "@type": "Place", address: { "@type": "PostalAddress", addressLocality: job.location, addressCountry: "IE" } },
+    };
+    if (job.salary_min || job.salary_max) {
+      schema.baseSalary = {
+        "@type": "MonetaryAmount", currency: "EUR",
+        value: { "@type": "QuantitativeValue", minValue: job.salary_min, maxValue: job.salary_max || job.salary_min, unitText: job.salary_period === "annual" ? "YEAR" : job.salary_period === "monthly" ? "MONTH" : "HOUR" },
+      };
+    }
+    const script = document.createElement("script");
+    script.type = "application/ld+json";
+    script.textContent = JSON.stringify(schema);
+    script.id = "job-posting-schema";
+    const existing = document.getElementById("job-posting-schema");
+    if (existing) existing.remove();
+    document.head.appendChild(script);
+    return () => { document.getElementById("job-posting-schema")?.remove(); document.title = "JobsDirect.ie"; };
+  }, [job]);
 
   useEffect(() => {
     authService.isAuthenticated().then(async (authed) => {

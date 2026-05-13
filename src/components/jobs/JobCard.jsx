@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { MapPin, Clock, Building2, Star, Sparkles, Bookmark, AlertTriangle, ArrowRight } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import savedJobService from "@/services/savedJob";
+import { Features } from "@/config/features";
 
 const jobTypeLabels = {
   full_time: "Full Time",
@@ -50,7 +51,7 @@ export default function JobCard({ job, initialSaved = false }) {
         job.is_highlighted ? "bg-amber-50/40 border-amber-200/60" : "bg-card"
       }`}>
         {/* Top accent for featured */}
-        {job.is_featured && (
+        {Features.featuredAddon && job.is_featured && (
           <div className="h-[3px] bg-gradient-to-r from-accent to-accent/50" />
         )}
 
@@ -65,7 +66,7 @@ export default function JobCard({ job, initialSaved = false }) {
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-foreground truncate">{job.company_name}</p>
                   <div className="flex items-center gap-2 mt-0.5">
-                    {job.is_featured && (
+                    {Features.featuredAddon && job.is_featured && (
                       <span className="flex items-center gap-1 text-accent text-[0.65rem] font-semibold uppercase tracking-wider">
                         <Star className="w-2.5 h-2.5 fill-accent" />
                         Featured

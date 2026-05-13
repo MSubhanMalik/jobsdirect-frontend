@@ -26,6 +26,16 @@ export interface RegisterPayload {
   email: string;
   password: string;
   role: UserRole;
+  // Employer-specific (when role = "employer")
+  company_name?: string;
+  employer_reg_no?: string;
+  company_reg_no?: string;
+  website?: string;
+  // Shared optional
+  phone?: string;
+  // Employee-specific (when role = "employee")
+  country?: string;
+  county?: string;
 }
 
 export interface AuthResponse {

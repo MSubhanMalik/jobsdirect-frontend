@@ -148,7 +148,7 @@ export default function AdminEditor({ editor, setEditor }) {
               <p className="text-xs text-muted-foreground mt-0.5">Toggle addons for this listing.</p>
             </div>
             <div className="space-y-2">
-              {addonProducts.filter((a) => a.appliesTo === "job" && a.id !== "addon_import" && a.id !== "addon_duplicate").map((addon) => (
+              {addonProducts.filter((a) => a.appliesTo === "job").map((addon) => (
                 <label key={addon.id} className={`flex items-center gap-3 cursor-pointer rounded-xl border p-3.5 transition-colors ${
                   selectedAddons.includes(addon.id) ? "border-accent/30 bg-accent/[0.03]" : "border-border/40 hover:bg-muted/30"
                 }`}>
@@ -349,7 +349,26 @@ export default function AdminEditor({ editor, setEditor }) {
             <SheetTitle className="font-display text-lg">{editor.mode === "edit" ? "Edit" : "Create"} {humanize(editor.entity)}</SheetTitle>
             <SheetDescription className="text-xs text-muted-foreground">Changes are saved directly to the database.</SheetDescription>
           </SheetHeader>
-          <ScrollArea className="flex-1"><div className="p-6">{renderFields()}</div></ScrollArea>
+          <ScrollArea className="flex-1"><div className="p-6">
+            {editor.entity === "job" && editor.item?.status === "flagged" && editor.item?.moderation_result?.issues?.length > 0 && (
+              <div className="rounded-lg border border-red-200 bg-red-50 p-4 mb-6 space-y-2">
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-semibold text-red-800">AI Moderation Issues</p>
+                  {editor.item.moderation_result.severity && (
+                    <Badge variant="destructive" className="text-[0.6rem] px-1.5 py-0">{editor.item.moderation_result.severity.toUpperCase()}</Badge>
+                  )}
+                </div>
+                {editor.item.moderation_result.issues.map((issue, idx) => (
+                  <div key={idx} className="text-sm text-red-700 pl-1">
+                    <span className="font-medium">"{issue.text}"</span>
+                    <span className="text-red-600"> — {issue.reason}</span>
+                    <span className="text-red-400 text-xs ml-1">({issue.category}{issue.severity ? ` · ${issue.severity}` : ""})</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {renderFields()}
+          </div></ScrollArea>
           <SheetFooter className="border-t border-border/40 px-6 py-4 gap-2">
             <Button type="button" variant="outline" onClick={() => setEditor(null)} className="rounded-lg">Cancel</Button>
             <Button type="submit" disabled={saving} className="bg-accent hover:bg-accent/90 text-accent-foreground rounded-lg font-medium">

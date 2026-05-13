@@ -33,10 +33,10 @@ class AuthService {
     return res.data;
   }
 
-  async googleAuth(credential: string): Promise<AuthResponse> {
+  async googleAuth(credential: string, role?: string): Promise<AuthResponse> {
     const res = await axiosInstance.post<AuthResponse>(
       api.endpoints.GOOGLE_AUTH,
-      { credential },
+      { credential, role },
     );
     if (res.data.accessToken) {
       setAccessToken(res.data.accessToken);

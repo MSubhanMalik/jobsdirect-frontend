@@ -7,6 +7,7 @@ import CostSummary from "@/components/products/CostSummary";
 import productService from "@/services/product";
 import paymentService from "@/services/payment";
 import { useProducts } from "@/hooks/useProducts";
+import { Features } from "@/config/features";
 
 export default function JobPaymentModal({ open, onOpenChange, employer, inputMethod, onConfirm, submitting }) {
   const { addons: addonProducts, listing: listingProduct } = useProducts();
@@ -27,11 +28,7 @@ export default function JobPaymentModal({ open, onOpenChange, employer, inputMet
     }
   }, [open, employer?.id]);
 
-  const canPostFree = balance?.can_post_free && inputMethod !== "import";
-
-  useEffect(() => {
-    if (inputMethod === "import") setListingType("paid");
-  }, [inputMethod]);
+  const canPostFree = balance?.can_post_free;
 
   useEffect(() => {
     if (listingType === "free") {
@@ -39,19 +36,17 @@ export default function JobPaymentModal({ open, onOpenChange, employer, inputMet
       return;
     }
     const addonIds = [...selectedAddons];
-    if (inputMethod === "import") addonIds.push("addon_import");
     productService.getCostEstimate(addonIds).then(setCostEstimate).catch(() => {});
-  }, [listingType, selectedAddons, inputMethod]);
+  }, [listingType, selectedAddons]);
 
-  const selectableAddons = addonProducts.filter((a) => a.id !== "addon_import" && a.id !== "addon_duplicate");
+  const selectableAddons = addonProducts.filter((a) => {
+    if (a.id === "addon_featured" && !Features.featuredAddon) return false;
+    return true;
+  });
   const totalCost = costEstimate?.total || 0;
 
   const handleConfirm = () => {
-    onConfirm({
-      listingType,
-      selectedAddons,
-      totalCost
-    });
+    onConfirm({ listingType, selectedAddons, totalCost });
   };
 
   return (
@@ -67,48 +62,43 @@ export default function JobPaymentModal({ open, onOpenChange, employer, inputMet
         {loading ? (
           <div className="flex flex-col items-center justify-center py-10 space-y-3">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Checking your balance...</p>
+            <p className="text-sm text-muted-foreground">Loading...</p>
           </div>
         ) : (
           <div className="space-y-6 py-4">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-muted-foreground">
                 Your Balance: <span className="font-bold text-foreground">{creditBalance} credits</span>
+                <span className="text-xs text-muted-foreground ml-1">(1 credit = €1)</span>
               </span>
             </div>
 
-            {inputMethod === "import" ? (
-              <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2">
-                <p className="text-sm font-medium text-amber-800">Imported listings are always paid</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-3">
-                <button 
-                  type="button" 
-                  className={`rounded-lg border p-3 text-left transition ${listingType === "free" ? "border-emerald-600 bg-emerald-50 shadow-[0_0_0_1px_theme(colors.emerald.600)]" : "border-slate-200 hover:border-slate-300"} ${!canPostFree ? "opacity-50 cursor-not-allowed" : ""}`} 
-                  onClick={() => canPostFree && setListingType("free")} 
-                  disabled={!canPostFree}
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    <Gift className="h-4 w-4 text-emerald-600" />
-                    <span className="text-sm font-semibold">Free Listing</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">14 days, 1 per month</p>
-                  {!canPostFree && <p className="text-xs text-amber-600 mt-1">Used this month</p>}
-                </button>
-                <button 
-                  type="button" 
-                  className={`rounded-lg border p-3 text-left transition ${listingType === "paid" ? "border-emerald-600 bg-emerald-50 shadow-[0_0_0_1px_theme(colors.emerald.600)]" : "border-slate-200 hover:border-slate-300"}`} 
-                  onClick={() => setListingType("paid")}
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    <Zap className="h-4 w-4 text-amber-500" />
-                    <span className="text-sm font-semibold">Paid Listing</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">{listingProduct ? `${listingProduct.duration} days` : "30 days"}</p>
-                </button>
-              </div>
-            )}
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                className={`rounded-lg border p-3 text-left transition ${listingType === "free" ? "border-emerald-600 bg-emerald-50 shadow-[0_0_0_1px_theme(colors.emerald.600)]" : "border-slate-200 hover:border-slate-300"} ${!canPostFree ? "opacity-50 cursor-not-allowed" : ""}`}
+                onClick={() => canPostFree && setListingType("free")}
+                disabled={!canPostFree}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <Gift className="h-4 w-4 text-emerald-600" />
+                  <span className="text-sm font-semibold">Free Listing</span>
+                </div>
+                <p className="text-xs text-muted-foreground">14 days, 1 active at a time</p>
+                {!canPostFree && <p className="text-xs text-amber-600 mt-1">You have an active free listing</p>}
+              </button>
+              <button
+                type="button"
+                className={`rounded-lg border p-3 text-left transition ${listingType === "paid" ? "border-emerald-600 bg-emerald-50 shadow-[0_0_0_1px_theme(colors.emerald.600)]" : "border-slate-200 hover:border-slate-300"}`}
+                onClick={() => setListingType("paid")}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <Zap className="h-4 w-4 text-amber-500" />
+                  <span className="text-sm font-semibold">Paid Listing</span>
+                </div>
+                <p className="text-xs text-muted-foreground">{listingProduct ? `${listingProduct.duration} days` : "30 days"}</p>
+              </button>
+            </div>
 
             {listingType === "paid" && (
               <AddonSelector
@@ -126,8 +116,8 @@ export default function JobPaymentModal({ open, onOpenChange, employer, inputMet
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button 
-            onClick={handleConfirm} 
+          <Button
+            onClick={handleConfirm}
             disabled={loading || submitting}
             className="bg-accent text-accent-foreground hover:bg-accent/90"
           >

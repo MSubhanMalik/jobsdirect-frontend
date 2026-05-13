@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, Loader2, Save, ChevronDown } from "lucide-react";
 import PhoneField from "@/components/ui/phone-input";
-import { SectionHeader, Field, FieldControlMatrix } from "../shared/UIComponents";
+import { SectionHeader, Field } from "../shared/UIComponents";
 
 function Collapsible({ title, description, children }) {
   const [open, setOpen] = React.useState(false);
@@ -31,7 +31,7 @@ function Collapsible({ title, description, children }) {
     </div>
   );
 }
-import { COMPANY_FIELD_GROUPS, JOB_FIELD_GROUPS, EMPLOYEE_FIELD_GROUPS, DEFAULT_SITE_SETTINGS, mergeSiteSettingsWithDefaults } from "@/lib/siteSettings";
+import { DEFAULT_SITE_SETTINGS, mergeSiteSettingsWithDefaults } from "@/lib/siteSettings";
 import { queryKeys } from "../shared/constants";
 import settingsService from "@/services/settings";
 import { refreshSiteSettings } from "@/hooks/useSiteSettings";
@@ -77,12 +77,6 @@ function ProductCard({ product, updateProduct, removeProduct }) {
             </Select>
           </Field>
           <Field label="Stripe Product ID"><Input placeholder="prod_xxx" value={product.stripe_product_id || ""} onChange={(e) => updateProduct("stripe_product_id", e.target.value)} className="h-9 text-sm" /></Field>
-          {(product.type === "listing" || product.type === "addon") && (
-            <Field label="Credit Cost"><Input type="number" step="0.5" min="0" value={product.credit_cost ?? ""} onChange={(e) => updateProduct("credit_cost", Number(e.target.value) || 0)} className="h-9 text-sm" /></Field>
-          )}
-          {product.type === "credit_bundle" && (
-            <Field label="Credits Granted"><Input type="number" min="0" value={product.credits ?? ""} onChange={(e) => updateProduct("credits", Number(e.target.value) || 0)} className="h-9 text-sm" /></Field>
-          )}
           {product.type === "cv_plan" && (
             <Field label="CV Plan Tier">
               <Select value={product.cv_plan_tier || "professional"} onValueChange={(v) => updateProduct("cv_plan_tier", v)}>
@@ -135,16 +129,6 @@ export default function AdminSettings() {
       setSettingsForm(mergeSiteSettingsWithDefaults(settingsQuery.data));
     }
   }, [settingsQuery.isLoading, settingsQuery.dataUpdatedAt]);
-
-  const updateSettingsFieldControl = (configKey, fieldKey, updates) => {
-    setSettingsForm((c) => ({
-      ...c,
-      [configKey]: {
-        ...(c?.[configKey] || {}),
-        [fieldKey]: { ...(c?.[configKey]?.[fieldKey] || {}), ...updates, ...(updates.visible === false ? { required: false } : {}) },
-      },
-    }));
-  };
 
   const set = (key, value) => setSettingsForm((c) => ({ ...c, [key]: value }));
 
@@ -252,37 +236,7 @@ export default function AdminSettings() {
         </div>
       </Collapsible>
 
-      {/* Field Control Matrices */}
-      <div className="grid gap-4 xl:grid-cols-2">
-        <FieldControlMatrix
-          title="Employer Company Form"
-          description="Show, hide, and require fields on the employer profile form."
-          groups={COMPANY_FIELD_GROUPS}
-          value={settingsForm.employer_company_form_config}
-          onToggle={(fieldKey, updates) => updateSettingsFieldControl("employer_company_form_config", fieldKey, updates)}
-        />
-        <FieldControlMatrix
-          title="Employer Job Post Form"
-          description="Control which fields employers see when creating or editing jobs."
-          groups={JOB_FIELD_GROUPS}
-          value={settingsForm.employer_job_form_config}
-          onToggle={(fieldKey, updates) => updateSettingsFieldControl("employer_job_form_config", fieldKey, updates)}
-        />
-        <FieldControlMatrix
-          title="Employee Profile Form"
-          description="Control which fields job seekers see on their profile form."
-          groups={EMPLOYEE_FIELD_GROUPS}
-          value={settingsForm.employee_profile_form_config}
-          onToggle={(fieldKey, updates) => updateSettingsFieldControl("employee_profile_form_config", fieldKey, updates)}
-        />
-        <FieldControlMatrix
-          title="Candidate View (Employer)"
-          description="Control which candidate fields are visible to employers in CV search."
-          groups={EMPLOYEE_FIELD_GROUPS}
-          value={settingsForm.employee_candidate_view_config}
-          onToggle={(fieldKey, updates) => updateSettingsFieldControl("employee_candidate_view_config", fieldKey, updates)}
-        />
-      </div>
+      {/* Form field configuration removed — fields are fixed per spec */}
     </form>
   );
 }

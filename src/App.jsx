@@ -7,6 +7,7 @@ import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-d
 import PageNotFound from './lib/PageNotFound';
 import AuthInitializer from '@/components/layout/AuthInitializer';
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
+import { Features } from '@/config/features';
 
 // Layout (always loaded)
 import AppLayout from './components/layout/AppLayout';
@@ -94,12 +95,12 @@ function App() {
                   <Route path="applications" element={<DashboardApplications />} />
                   <Route path="applications/:id" element={<DashboardApplicationDetail />} />
                   <Route path="billing" element={<DashboardBilling />} />
-                  <Route path="messages" element={<DashboardMessages />} />
-                  <Route path="messages/:roomId" element={<DashboardMessages />} />
+                  {Features.fullMessaging && <Route path="messages" element={<DashboardMessages />} />}
+                  {Features.fullMessaging && <Route path="messages/:roomId" element={<DashboardMessages />} />}
                   <Route path="saved" element={<DashboardSavedJobs />} />
                   <Route path="cvs" element={<DashboardCVs />} />
-                  <Route path="cv-search" element={<DashboardCVSearch />} />
-                  <Route path="cv-search/:id" element={<DashboardCandidateDetail />} />
+                  {Features.cvDatabase && <Route path="cv-search" element={<DashboardCVSearch />} />}
+                  {Features.cvDatabase && <Route path="cv-search/:id" element={<DashboardCandidateDetail />} />}
                   <Route path="alerts" element={<DashboardJobAlerts />} />
                   <Route path="notifications" element={<DashboardNotifications />} />
                 </Route>
@@ -115,7 +116,7 @@ function App() {
                   <Route path="candidates" element={<AdminEmployees />} />
                   <Route path="applications" element={<AdminApplications />} />
                   <Route path="applications/:id" element={<DashboardApplicationDetail />} />
-                  <Route path="messages" element={<AdminMessages />} />
+                  {Features.fullMessaging && <Route path="messages" element={<AdminMessages />} />}
                   <Route path="payments" element={<AdminPayments />} />
                   <Route path="users" element={<AdminUsers />} />
                   <Route path="settings" element={<AdminSettings />} />

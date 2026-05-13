@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useParams, useNavigate, useOutletContext, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import applicationService from "@/services/application";
-import messageService from "@/services/message";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,11 +9,13 @@ import { toast } from "react-toastify";
 import {
   FileText, Download, Clock, MapPin, Mail, Phone,
   CheckCircle, XCircle, Star, MessageSquare, ArrowLeft, ExternalLink,
-  Calendar, User, Briefcase, Send, Loader2, AlertCircle
+  Calendar, User, Briefcase, Send, Loader2, AlertCircle, Video, MapPinned, Info
 } from "lucide-react";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const APPLICATION_STATUSES = [
   { value: "submitted", label: "Submitted" },
@@ -42,9 +43,13 @@ export default function DashboardApplicationDetail() {
   const queryClient = useQueryClient();
   const { isEmployer, user, employer } = useOutletContext();
   const [updating, setUpdating] = useState(false);
-  const [activeRoom, setActiveRoom] = useState(null);
-  const [newMessage, setNewMessage] = useState("");
-  const [sending, setSending] = useState(false);
+  const [showAskInfo, setShowAskInfo] = useState(false);
+  const [askInfoMessage, setAskInfoMessage] = useState("");
+  const [showInterviewForm, setShowInterviewForm] = useState(false);
+  const [interviewForm, setInterviewForm] = useState({
+    interview_date: "", interview_time: "", interview_type: "physical",
+    interview_location: "", interview_meeting_link: "", interview_notes: "",
+  });
 
   const { data: app, isLoading, error } = useQuery({
     queryKey: ["application", id],
@@ -52,42 +57,43 @@ export default function DashboardApplicationDetail() {
     enabled: !!id,
   });
 
-  const { data: messagesData, refetch: refetchMessages } = useQuery({
-    queryKey: ["application-messages", activeRoom?.id],
-    queryFn: () => messageService.getMessages(activeRoom.id),
-    enabled: !!activeRoom?.id,
-    refetchInterval: 5000,
-  });
-
-  const handleStartChat = async () => {
-    if (!app) return;
-    try {
-      const room = await messageService.createRoom({ applicationId: app.id });
-      setActiveRoom(room);
-      navigate(`/dashboard/messages/${room.id}`);
-    } catch { toast.error("Failed to start chat"); }
-  };
-
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
-    if (!newMessage.trim() || !activeRoom) return;
-    setSending(true);
-    try {
-      await messageService.sendMessage(activeRoom.id, newMessage);
-      setNewMessage("");
-      refetchMessages();
-    } catch { toast.error("Failed to send message"); }
-    finally { setSending(false); }
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: ["application", id] });
+    queryClient.invalidateQueries({ queryKey: ["employer-applications", user.email] });
   };
 
   const handleStatusChange = async (newStatus) => {
     setUpdating(true);
     try {
       await applicationService.update(id, { status: newStatus });
-      queryClient.invalidateQueries({ queryKey: ["application", id] });
-      queryClient.invalidateQueries({ queryKey: ["employer-applications", user.email] });
+      invalidate();
       toast.success(`Status updated to ${newStatus}`);
     } catch { toast.error("Failed to update status"); }
+    finally { setUpdating(false); }
+  };
+
+  const handleAskForInfo = async () => {
+    if (!askInfoMessage.trim()) return;
+    setUpdating(true);
+    try {
+      await applicationService.askForInfo(id, askInfoMessage);
+      invalidate();
+      setShowAskInfo(false);
+      setAskInfoMessage("");
+      toast.success("Information request sent to candidate");
+    } catch { toast.error("Failed to send request"); }
+    finally { setUpdating(false); }
+  };
+
+  const handleInviteToInterview = async () => {
+    if (!interviewForm.interview_date || !interviewForm.interview_time) return;
+    setUpdating(true);
+    try {
+      await applicationService.inviteToInterview(id, interviewForm);
+      invalidate();
+      setShowInterviewForm(false);
+      toast.success("Interview invitation sent to candidate");
+    } catch { toast.error("Failed to send interview invite"); }
     finally { setUpdating(false); }
   };
 
@@ -261,84 +267,138 @@ export default function DashboardApplicationDetail() {
             </div>
           </div>
 
-          {/* Communication — employer only */}
+          {/* Interview details — shown if scheduled */}
+          {app.interview_date && (
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 overflow-hidden">
+              <div className="px-6 py-4 border-b border-emerald-200">
+                <h2 className="text-base font-display font-semibold text-emerald-800 flex items-center gap-2">
+                  <Calendar className="w-4 h-4" /> Interview Scheduled
+                </h2>
+              </div>
+              <div className="px-6 py-4 grid grid-cols-2 gap-4 text-sm">
+                <div><span className="text-emerald-600 font-medium">Date:</span> <span className="text-foreground">{app.interview_date}</span></div>
+                <div><span className="text-emerald-600 font-medium">Time:</span> <span className="text-foreground">{app.interview_time}</span></div>
+                <div><span className="text-emerald-600 font-medium">Type:</span> <span className="text-foreground capitalize">{app.interview_type}</span></div>
+                {app.interview_type === "physical" && app.interview_location && (
+                  <div><span className="text-emerald-600 font-medium">Location:</span> <span className="text-foreground">{app.interview_location}</span></div>
+                )}
+                {app.interview_type === "virtual" && app.interview_meeting_link && (
+                  <div className="col-span-2"><span className="text-emerald-600 font-medium">Meeting Link:</span>{" "}
+                    <a href={app.interview_meeting_link} target="_blank" rel="noopener noreferrer" className="text-accent underline">{app.interview_meeting_link}</a>
+                  </div>
+                )}
+                {app.interview_notes && (
+                  <div className="col-span-2"><span className="text-emerald-600 font-medium">Notes:</span> <span className="text-foreground">{app.interview_notes}</span></div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Employer request message — shown if asked for info */}
+          {app.employer_request_message && (
+            <div className="rounded-xl border border-blue-200 bg-blue-50/50 overflow-hidden">
+              <div className="px-6 py-4 border-b border-blue-200">
+                <h2 className="text-sm font-semibold text-blue-800 flex items-center gap-2">
+                  <Info className="w-4 h-4" /> Information Requested by Employer
+                </h2>
+              </div>
+              <div className="px-6 py-4 text-sm text-blue-900 italic">"{app.employer_request_message}"</div>
+            </div>
+          )}
+
+          {/* Employer actions — structured per §12 */}
           {isEmployer && (
             <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
               <div className="px-6 py-4 border-b border-border/40">
                 <h2 className="text-base font-display font-semibold text-foreground flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4 text-muted-foreground" /> Communication
+                  <Briefcase className="w-4 h-4 text-muted-foreground" /> Actions
                 </h2>
               </div>
-              <div className="px-6 py-5">
-                {employer?.candidate_database_status !== "cv_db_pro" && (
-                  <div className="mb-5 p-4 rounded-lg border border-blue-200 bg-blue-50 flex items-start gap-3">
-                    <MessageSquare className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-semibold text-blue-900">Pro Plan Required</p>
-                      <p className="text-xs text-blue-700">
-                        In-platform messaging requires the Pro plan.{" "}
-                        <Link to="/dashboard/billing" className="font-semibold underline">Upgrade now</Link>
-                      </p>
-                    </div>
-                  </div>
-                )}
-                {!app.user_id && (
-                  <div className="mb-5 p-4 rounded-lg border border-amber-200 bg-amber-50 flex items-start gap-3">
-                    <Mail className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-semibold text-amber-900">Guest Application</p>
-                      <p className="text-xs text-amber-700">
-                        This candidate applied as a guest. Contact via email: <span className="font-semibold">{app.employee_email}</span>
-                      </p>
-                    </div>
-                  </div>
-                )}
-                {!activeRoom ? (
-                  <div className="text-center py-8">
-                    <p className="text-sm text-muted-foreground mb-4">Start a conversation with this candidate.</p>
-                    <Button
-                      onClick={handleStartChat}
-                      disabled={!app.user_id || employer?.candidate_database_status !== "cv_db_pro"}
-                      className="bg-accent hover:bg-accent/90 text-accent-foreground rounded-full px-6 h-10 font-medium"
-                    >
-                      <Send className="w-4 h-4 mr-2" /> Message Candidate
+              <div className="px-6 py-5 space-y-4">
+                {/* Ask for Info */}
+                {!showAskInfo && !showInterviewForm && (
+                  <div className="flex flex-wrap gap-2">
+                    <Button size="sm" className="rounded-lg h-9 text-xs font-medium bg-foreground hover:bg-foreground/90 text-background" onClick={() => handleStatusChange("shortlisted")} disabled={app.status === "shortlisted" || updating}>
+                      <Star className="w-3.5 h-3.5 mr-1.5" /> Shortlist
+                    </Button>
+                    <Button size="sm" variant="outline" className="rounded-lg h-9 text-xs font-medium" onClick={() => setShowAskInfo(true)} disabled={updating}>
+                      <Info className="w-3.5 h-3.5 mr-1.5" /> Ask for Info
+                    </Button>
+                    <Button size="sm" variant="outline" className="rounded-lg h-9 text-xs font-medium" onClick={() => setShowInterviewForm(true)} disabled={updating}>
+                      <Calendar className="w-3.5 h-3.5 mr-1.5" /> Invite to Interview
+                    </Button>
+                    <Button size="sm" variant="ghost" className="rounded-lg h-9 text-xs font-medium text-destructive hover:text-destructive" onClick={() => handleStatusChange("rejected")} disabled={app.status === "rejected" || updating}>
+                      <XCircle className="w-3.5 h-3.5 mr-1.5" /> Reject
                     </Button>
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="max-h-[300px] overflow-y-auto space-y-3 pr-2">
-                      {(messagesData?.items || []).length === 0 ? (
-                        <p className="text-center text-xs text-muted-foreground py-10">No messages yet.</p>
-                      ) : (
-                        messagesData.items.map((msg) => (
-                          <div key={msg.id} className={`flex flex-col ${msg.sender_id === user.id ? "items-end" : "items-start"}`}>
-                            <div className={`px-4 py-2.5 rounded-2xl text-sm max-w-[85%] ${
-                              msg.sender_id === user.id
-                                ? "bg-foreground text-background rounded-br-md"
-                                : "bg-muted text-foreground rounded-bl-md"
-                            }`}>
-                              {msg.message}
-                            </div>
-                            <span className="text-[0.6rem] text-muted-foreground mt-1 px-1">
-                              {msg.sender?.first_name || "Candidate"} · {new Date(msg.createdAt || msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                    <form onSubmit={handleSendMessage} className="flex gap-2 pt-4 border-t border-border/40">
-                      <input
-                        type="text"
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        placeholder="Type your message..."
-                        className="flex-1 px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-1 focus:ring-accent"
-                        disabled={sending}
-                      />
-                      <Button type="submit" size="sm" disabled={sending || !newMessage.trim()} className="bg-accent hover:bg-accent/90 text-accent-foreground rounded-xl h-10 px-4">
-                        {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                )}
+
+                {/* Ask for Info Form */}
+                {showAskInfo && (
+                  <div className="space-y-3 p-4 rounded-lg border border-border bg-muted/30">
+                    <p className="text-sm font-semibold text-foreground">Request Information</p>
+                    <textarea
+                      value={askInfoMessage}
+                      onChange={(e) => setAskInfoMessage(e.target.value)}
+                      placeholder="Describe what information you need from the candidate..."
+                      className="w-full min-h-[80px] px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-1 focus:ring-accent resize-none"
+                    />
+                    <div className="flex gap-2">
+                      <Button size="sm" className="rounded-lg h-8 text-xs bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handleAskForInfo} disabled={!askInfoMessage.trim() || updating}>
+                        {updating ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Send className="w-3 h-3 mr-1" />} Send Request
                       </Button>
-                    </form>
+                      <Button size="sm" variant="ghost" className="rounded-lg h-8 text-xs" onClick={() => { setShowAskInfo(false); setAskInfoMessage(""); }}>Cancel</Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Interview Invite Form */}
+                {showInterviewForm && (
+                  <div className="space-y-3 p-4 rounded-lg border border-border bg-muted/30">
+                    <p className="text-sm font-semibold text-foreground">Schedule Interview</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Date</Label>
+                        <Input type="date" value={interviewForm.interview_date} onChange={(e) => setInterviewForm({ ...interviewForm, interview_date: e.target.value })} className="h-9 rounded-lg text-sm" required />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Time</Label>
+                        <Input type="time" value={interviewForm.interview_time} onChange={(e) => setInterviewForm({ ...interviewForm, interview_time: e.target.value })} className="h-9 rounded-lg text-sm" required />
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Interview Type</Label>
+                      <div className="flex gap-2">
+                        <Button type="button" size="sm" variant={interviewForm.interview_type === "physical" ? "default" : "outline"} className="rounded-lg h-8 text-xs flex-1" onClick={() => setInterviewForm({ ...interviewForm, interview_type: "physical", interview_meeting_link: "" })}>
+                          <MapPinned className="w-3 h-3 mr-1" /> In-Person
+                        </Button>
+                        <Button type="button" size="sm" variant={interviewForm.interview_type === "virtual" ? "default" : "outline"} className="rounded-lg h-8 text-xs flex-1" onClick={() => setInterviewForm({ ...interviewForm, interview_type: "virtual", interview_location: "" })}>
+                          <Video className="w-3 h-3 mr-1" /> Virtual
+                        </Button>
+                      </div>
+                    </div>
+                    {interviewForm.interview_type === "physical" && (
+                      <div className="space-y-1">
+                        <Label className="text-xs">Location</Label>
+                        <Input placeholder="e.g. 123 Main Street, Dublin" value={interviewForm.interview_location} onChange={(e) => setInterviewForm({ ...interviewForm, interview_location: e.target.value })} className="h-9 rounded-lg text-sm" />
+                      </div>
+                    )}
+                    {interviewForm.interview_type === "virtual" && (
+                      <div className="space-y-1">
+                        <Label className="text-xs">Meeting Link</Label>
+                        <Input type="url" placeholder="https://zoom.us/j/..." value={interviewForm.interview_meeting_link} onChange={(e) => setInterviewForm({ ...interviewForm, interview_meeting_link: e.target.value })} className="h-9 rounded-lg text-sm" />
+                      </div>
+                    )}
+                    <div className="space-y-1">
+                      <Label className="text-xs">Notes <span className="text-muted-foreground">(optional)</span></Label>
+                      <textarea value={interviewForm.interview_notes} onChange={(e) => setInterviewForm({ ...interviewForm, interview_notes: e.target.value })} placeholder="Any additional details..." className="w-full min-h-[60px] px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-1 focus:ring-accent resize-none" />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" className="rounded-lg h-8 text-xs bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handleInviteToInterview} disabled={!interviewForm.interview_date || !interviewForm.interview_time || updating}>
+                        {updating ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Calendar className="w-3 h-3 mr-1" />} Send Invitation
+                      </Button>
+                      <Button size="sm" variant="ghost" className="rounded-lg h-8 text-xs" onClick={() => setShowInterviewForm(false)}>Cancel</Button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -377,36 +437,26 @@ export default function DashboardApplicationDetail() {
             </div>
           </div>
 
-          {/* Quick actions — employer only */}
+          {/* Status summary — employer only */}
           {isEmployer && (
             <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
               <div className="px-5 py-3.5 border-b border-border/40">
-                <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Quick Actions</h3>
+                <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Status</h3>
               </div>
-              <div className="px-5 py-4 space-y-2">
-                <Button
-                  className="w-full bg-foreground hover:bg-foreground/90 text-background rounded-lg h-9 text-xs font-medium justify-start"
-                  onClick={() => handleStatusChange("shortlisted")}
-                  disabled={app.status === "shortlisted" || updating}
-                >
-                  <Star className="w-3.5 h-3.5 mr-2" /> Shortlist Candidate
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full rounded-lg h-9 text-xs font-medium justify-start"
-                  onClick={() => handleStatusChange("interview")}
-                  disabled={app.status === "interview" || updating}
-                >
-                  <Calendar className="w-3.5 h-3.5 mr-2" /> Schedule Interview
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="w-full text-destructive hover:text-destructive hover:bg-destructive/5 rounded-lg h-9 text-xs font-medium justify-start"
-                  onClick={() => handleStatusChange("rejected")}
-                  disabled={app.status === "rejected" || updating}
-                >
-                  <XCircle className="w-3.5 h-3.5 mr-2" /> Reject Application
-                </Button>
+              <div className="px-5 py-4 space-y-3">
+                <Select value={app.status} onValueChange={handleStatusChange} disabled={updating}>
+                  <SelectTrigger className="h-9 rounded-lg text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {APPLICATION_STATUSES.map((s) => (
+                      <SelectItem key={s.value} value={s.value} className="text-xs">{s.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {app.status === "interview" && app.interview_date && (
+                  <p className="text-xs text-emerald-600 font-medium">Interview: {app.interview_date} at {app.interview_time}</p>
+                )}
               </div>
             </div>
           )}

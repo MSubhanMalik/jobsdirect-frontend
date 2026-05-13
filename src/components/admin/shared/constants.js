@@ -9,6 +9,7 @@ import {
   UserCog,
   SlidersHorizontal,
 } from "lucide-react";
+import { Features } from "@/config/features";
 
 export const ADMIN_ROLES = new Set(["admin"]);
 
@@ -26,7 +27,9 @@ export const queryKeys = {
 export const statusMeta = {
   approved: { label: "Live", className: "border-emerald-200 bg-emerald-50 text-emerald-700" },
   pending_review: { label: "Pending", className: "border-amber-200 bg-amber-50 text-amber-700" },
+  flagged: { label: "Flagged", className: "border-red-200 bg-red-50 text-red-700" },
   rejected: { label: "Rejected", className: "border-red-200 bg-red-50 text-red-700" },
+  suspended: { label: "Suspended", className: "border-red-300 bg-red-100 text-red-800" },
   draft: { label: "Draft", className: "border-slate-200 bg-slate-50 text-slate-700" },
   archived: { label: "Archived", className: "border-slate-200 bg-slate-100 text-slate-600" },
   submitted: { label: "Submitted", className: "border-blue-200 bg-blue-50 text-blue-700" },
@@ -36,14 +39,16 @@ export const statusMeta = {
   read: { label: "Read", className: "border-slate-200 bg-slate-50 text-slate-700" },
 };
 
-export const navItems = [
+const allNavItems = [
   { id: "overview", label: "Overview", icon: LayoutDashboard, path: "overview" },
   { id: "jobs", label: "Jobs", icon: Briefcase, path: "jobs" },
   { id: "companies", label: "Companies", icon: Building2, path: "companies" },
   { id: "candidates", label: "Candidates", icon: Users, path: "candidates" },
   { id: "applications", label: "Applications", icon: ClipboardList, path: "applications" },
-  { id: "messages", label: "Messages", icon: MessageSquare, path: "messages" },
+  { id: "messages", label: "Messages", icon: MessageSquare, path: "messages", feature: "fullMessaging" },
   { id: "payments", label: "Payments", icon: CreditCard, path: "payments" },
   { id: "users", label: "Users", icon: UserCog },
   { id: "settings", label: "Settings", icon: SlidersHorizontal, path: "settings" },
 ];
+
+export const navItems = allNavItems.filter(item => !item.feature || Features[item.feature]);

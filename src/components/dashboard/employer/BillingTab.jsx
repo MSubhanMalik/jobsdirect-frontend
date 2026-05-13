@@ -5,6 +5,7 @@ import paymentService from "@/services/payment";
 import CreditBundles from "@/components/products/CreditBundles";
 import SubscriptionPlans from "@/components/products/SubscriptionPlans";
 import TransactionHistory from "@/components/products/TransactionHistory";
+import { Features } from "@/config/features";
 
 export default function BillingTab({ employer, setEmployer, checkoutPlanId, onCheckout, onBillingPortal }) {
   const { data: plans = [] } = useQuery({
@@ -58,26 +59,28 @@ export default function BillingTab({ employer, setEmployer, checkoutPlanId, onCh
             </div>
           </div>
         </div>
-        <div className="rounded-xl border border-border/50 bg-card p-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Candidate Database</p>
-              <p className="mt-2 text-lg font-display font-semibold text-foreground">
-                {employer.candidate_database_access ? (
-                  <span className="text-emerald-600">Active</span>
-                ) : (
-                  <span className="text-muted-foreground">Not active</span>
+        {Features.cvDatabase && (
+          <div className="rounded-xl border border-border/50 bg-card p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Candidate Database</p>
+                <p className="mt-2 text-lg font-display font-semibold text-foreground">
+                  {employer.candidate_database_access ? (
+                    <span className="text-emerald-600">Active</span>
+                  ) : (
+                    <span className="text-muted-foreground">Not active</span>
+                  )}
+                </p>
+                {employer.candidate_database_status && (
+                  <p className="text-xs text-muted-foreground mt-0.5 capitalize">{employer.candidate_database_status.replace(/_/g, " ")}</p>
                 )}
-              </p>
-              {employer.candidate_database_status && (
-                <p className="text-xs text-muted-foreground mt-0.5 capitalize">{employer.candidate_database_status.replace(/_/g, " ")}</p>
-              )}
-            </div>
-            <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center">
-              <Database className="w-5 h-5 text-muted-foreground" />
+              </div>
+              <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center">
+                <Database className="w-5 h-5 text-muted-foreground" />
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Expiring credits warning */}
@@ -102,14 +105,16 @@ export default function BillingTab({ employer, setEmployer, checkoutPlanId, onCh
         onCheckout={onCheckout}
       />
 
-      {/* Subscriptions */}
-      <SubscriptionPlans
-        plans={subscriptions}
-        employer={employer}
-        checkoutPlanId={checkoutPlanId}
-        onCheckout={onCheckout}
-        onBillingPortal={onBillingPortal}
-      />
+      {/* Subscriptions — hidden when CV Database feature is off */}
+      {Features.cvDatabase && (
+        <SubscriptionPlans
+          plans={subscriptions}
+          employer={employer}
+          checkoutPlanId={checkoutPlanId}
+          onCheckout={onCheckout}
+          onBillingPortal={onBillingPortal}
+        />
+      )}
 
       {/* Transaction history */}
       <TransactionHistory employerId={employer.id} />

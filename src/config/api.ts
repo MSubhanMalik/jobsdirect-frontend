@@ -18,6 +18,9 @@ export const api = {
     JOB_DETAIL: "/api/jobs/:id",
     JOB_DUPLICATE: "/api/jobs/:id/duplicate",
     JOB_ACTIVATE_ADDON: "/api/jobs/:id/addon",
+    JOB_SCAN_CONTENT: "/api/jobs/scan-content",
+    JOB_RESUBMIT: "/api/jobs/:id/resubmit",
+    JOB_REPORT: "/api/jobs/:id/report",
     JOB_COST_ESTIMATE: "/api/jobs/cost-estimate",
     JOB_SCRAPE_JOBSIRELAND: "/api/jobs/scrape/jobsireland",
 
@@ -33,6 +36,8 @@ export const api = {
     APPLICATIONS: "/api/applications",
     APPLICATION_GUEST: "/api/applications/guest",
     APPLICATION_DETAIL: "/api/applications/:id",
+    APPLICATION_ASK_INFO: "/api/applications/:id/ask-info",
+    APPLICATION_INVITE_INTERVIEW: "/api/applications/:id/invite-interview",
 
     // Payments
     PAYMENTS: "/api/payments",
@@ -43,6 +48,7 @@ export const api = {
     PAYMENT_PRICING: "/api/payments/pricing",
     PAYMENT_BALANCE: "/api/payments/balance",
     PAYMENT_TRANSACTIONS: "/api/payments/transactions",
+    PAYMENT_INVOICES: "/api/payments/invoices",
 
     // CVs
     CVS: "/api/cvs",

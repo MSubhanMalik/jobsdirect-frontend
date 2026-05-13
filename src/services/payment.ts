@@ -78,6 +78,12 @@ class PaymentService {
     );
     return res.data;
   }
+  async getInvoices(page = 1): Promise<any> {
+    const res = await axiosInstance.get(
+      `${api.endpoints.PAYMENT_INVOICES}?page=${page}&pageSize=20`,
+    );
+    return res.data;
+  }
 }
 
 export default new PaymentService();

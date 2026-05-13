@@ -47,6 +47,18 @@ class ApplicationService {
     return res.data;
   }
 
+  async askForInfo(id: string, message: string): Promise<Application> {
+    const url = api.endpoints.APPLICATION_ASK_INFO.replace(":id", id);
+    const res = await axiosInstance.post<Application>(url, { message });
+    return res.data;
+  }
+
+  async inviteToInterview(id: string, data: Record<string, any>): Promise<Application> {
+    const url = api.endpoints.APPLICATION_INVITE_INTERVIEW.replace(":id", id);
+    const res = await axiosInstance.post<Application>(url, data);
+    return res.data;
+  }
+
   async remove(id: string): Promise<void> {
     const url = api.endpoints.APPLICATION_DETAIL.replace(":id", id);
     await axiosInstance.delete(url);

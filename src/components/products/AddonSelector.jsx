@@ -2,10 +2,6 @@ import React from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import ProductIcon from "./ProductIcon";
 
-function formatCredits(n) {
-  return `${n} credit${n !== 1 ? "s" : ""}`;
-}
-
 export default function AddonSelector({ addons, selected, onToggle, disabled = false }) {
   if (!addons.length) return null;
 
@@ -25,7 +21,9 @@ export default function AddonSelector({ addons, selected, onToggle, disabled = f
             </span>
             <span className="text-xs text-muted-foreground">{addon.description}</span>
           </div>
-          <span className="text-xs font-semibold">{formatCredits(addon.credit_cost)}</span>
+          <span className="text-xs font-semibold">
+            {addon.stripe_price != null ? `€${(addon.stripe_price / 100).toFixed(0)}` : addon.credit_cost ? `${addon.credit_cost} credits` : ""}
+          </span>
         </label>
       ))}
     </div>

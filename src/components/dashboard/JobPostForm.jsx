@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import jobService from "@/services/job";
 import paymentService from "@/services/payment";
 import productService from "@/services/product";
@@ -17,7 +18,7 @@ import {
   buildEntityFormValues,
   hasFieldValue,
 } from "@/lib/siteSettings";
-import { CheckCircle2, ExternalLink, Loader2, Send, X } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ExternalLink, Loader2, Send, X } from "lucide-react";
 import JobPaymentModal from "./JobPaymentModal";
 
 const EMPLOYER_JOB_FIELDS = JOB_FIELDS.filter((field) => !field.adminOnly && field.manageInEmployerForm !== false);
@@ -31,6 +32,7 @@ function formatCredits(n) {
 }
 
 export default function JobPostForm({ employer, user, initialJob = null, autoFocusTitle = false, onClose, onSuccess }) {
+  const queryClient = useQueryClient();
   const { settings: publicSettings } = useSiteSettings();
   const { addons: addonProducts, listing: listingProduct } = useProducts();
   const approvalRequired = publicSettings.job_approval_required !== false;
@@ -86,7 +88,8 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
         ...group,
         fields: group.fields.filter((field) => {
           if (field.adminOnly || field.manageInEmployerForm === false) return false;
-          return jobFormConfig?.[field.key]?.visible !== false;
+          if (jobFormConfig?.[field.key]?.visible === false) return false;
+          return true;
         }),
       })).filter((group) => group.fields.length),
     [jobFormConfig],
@@ -109,16 +112,42 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
 
 
 
-  const handleSubmit = (event) => {
+  const [scanning, setScanning] = useState(false);
+  const [moderationIssues, setModerationIssues] = useState(null);
+
+  const handleSubmit = async (event) => {
     event.preventDefault();
     if (!validateVisibleRequiredFields()) return;
+
+    // AI content scan before proceeding
+    setScanning(true);
+    setModerationIssues(null);
+    try {
+      const result = await jobService.scanContent(form.title, form.description, initialJob?.id);
+      if (!result.approved && result.issues?.length > 0) {
+        if (result.severity === "critical" && initialJob?.id) {
+          // Critical on existing job = instant flag, admin notified, form closes
+          toast.error("This listing has been flagged for serious compliance violations. An admin has been notified.");
+          setScanning(false);
+          queryClient.invalidateQueries({ queryKey: ["employer-jobs"] });
+          onClose?.();
+          return;
+        }
+        // New job OR warning/violation = show inline, let them fix
+        setModerationIssues(result.issues);
+        setScanning(false);
+        return;
+      }
+    } catch {
+      // If scan fails, proceed anyway — backend will catch it
+    }
+    setScanning(false);
 
     if (isEditing) {
       executeSubmit();
       return;
     }
 
-    // New job — show plan/addon selection modal
     setShowPaymentModal(true);
   };
 
@@ -132,7 +161,6 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
       const currentTotalCost = selections ? selections.totalCost : 0;
 
       const addonIds = [...currentAddons];
-      if (inputMethod === "import" && scraped) addonIds.push("addon_import");
 
       const payload = {
         ...form,
@@ -340,31 +368,53 @@ export default function JobPostForm({ employer, user, initialJob = null, autoFoc
                     {group.description && <p className="text-xs text-muted-foreground">{group.description}</p>}
                   </div>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    {group.fields.map((field) => (
-                      <FormFieldRenderer
+                    {group.fields.map((field) => {
+                      if (field.showWhen && form[field.showWhen.field] !== field.showWhen.value) return null;
+                      return (<FormFieldRenderer
                         key={field.key}
                         field={field}
                         value={form[field.key]}
                         onChange={(value) => update(field.key, value)}
                         required={Boolean(jobFormConfig?.[field.key]?.required)}
                         inputRef={field.key === "title" ? titleInputRef : undefined}
-                      />
-                    ))}
+                      />);
+                    })}
                   </div>
                 </section>
               ))}
 
+              {/* ─── Moderation Issues ─── */}
+              {moderationIssues && (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-4 space-y-2">
+                  <p className="text-sm font-semibold text-red-800 flex items-center gap-1.5">
+                    <AlertTriangle className="w-4 h-4" />
+                    Your listing contains language that may not comply with Irish employment equality law. Please revise:
+                  </p>
+                  {moderationIssues.map((issue, idx) => (
+                    <div key={idx} className="text-sm text-red-700 pl-5">
+                      <span className="font-medium">"{issue.text}"</span>
+                      <span className="text-red-600"> — {issue.reason}</span>
+                    </div>
+                  ))}
+                  <p className="text-xs text-red-600 pl-5">Update the flagged text above and submit again.</p>
+                </div>
+              )}
+
               {/* ─── Submit ─── */}
               <div className="flex gap-3 pt-2">
                 <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-                <Button type="submit" className="bg-accent text-accent-foreground hover:bg-accent/90" disabled={submitting}>
-                  <Send className="mr-2 h-4 w-4" />
-                  {submitting
-                    ? (isEditing ? "Saving..." : "Submitting...")
-                    : isEditing
-                      ? "Save Changes"
-                      : "Submit Job"
-                  }
+                <Button type="submit" className="bg-accent text-accent-foreground hover:bg-accent/90" disabled={submitting || scanning}>
+                  {scanning ? (
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Checking compliance...</>
+                  ) : (
+                    <><Send className="mr-2 h-4 w-4" />
+                    {submitting
+                      ? (isEditing ? "Saving..." : "Submitting...")
+                      : isEditing
+                        ? "Save Changes"
+                        : "Submit Job"
+                    }</>
+                  )}
                 </Button>
               </div>
             </>

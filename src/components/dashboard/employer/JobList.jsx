@@ -7,18 +7,21 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "react-toastify";
 import {
   Briefcase, Plus, FileText, Clock, CheckCircle, XCircle, Eye, Trash2,
-  Star, Sparkles, Send, Zap, AlertTriangle, RefreshCw, ChevronRight, MapPin, Pencil, Copy
+  Star, Sparkles, Send, Zap, AlertTriangle, RefreshCw, ChevronRight, MapPin, Pencil, Copy, Download
 } from "lucide-react";
 import ConfirmDialog from "@/components/ui/confirm-dialog";
 import { useProducts } from "@/hooks/useProducts";
 import ProductIcon from "@/components/products/ProductIcon";
+import { downloadJobReport } from "./JobReport";
 
 const statusConfig = {
   unpaid: { dot: "bg-orange-500", label: "Unpaid", variant: "destructive" },
   draft: { dot: "bg-muted-foreground", label: "Draft", variant: "secondary" },
   pending_review: { dot: "bg-amber-500", label: "Pending Review", variant: "secondary" },
+  flagged: { dot: "bg-red-600", label: "Flagged", variant: "destructive" },
   approved: { dot: "bg-emerald-500", label: "Active", variant: "default" },
   rejected: { dot: "bg-red-500", label: "Rejected", variant: "destructive" },
+  suspended: { dot: "bg-red-700", label: "Suspended", variant: "destructive" },
   expired: { dot: "bg-muted-foreground", label: "Expired", variant: "secondary" },
 };
 
@@ -57,7 +60,7 @@ export default function JobList({ jobs, user, employer, showJobForm, editingJob,
   };
 
   const { addons: addonProducts } = useProducts();
-  const purchasableAddons = addonProducts.filter((a) => a.id !== "addon_import" && a.id !== "addon_duplicate");
+  const purchasableAddons = addonProducts;
 
   const handleActivateAddon = async () => {
     if (!addonConfirm) return;
@@ -204,13 +207,8 @@ export default function JobList({ jobs, user, employer, showJobForm, editingJob,
                 </div>
 
                 {/* Row 2: Addon badges */}
-                {(job.is_featured || job.is_highlighted || job.is_urgent || job.is_auto_renew || job.is_imported || job.is_duplicate) && (
+                {(job.is_highlighted || job.is_urgent || job.is_imported || job.is_duplicate) && (
                   <div className="flex items-center gap-1.5 flex-wrap mb-3">
-                    {job.is_featured && (
-                      <Badge variant="secondary" className="text-[0.6rem] gap-1 rounded-md px-2 py-0.5">
-                        <Star className="w-2.5 h-2.5 text-amber-500" /> Featured
-                      </Badge>
-                    )}
                     {job.is_highlighted && (
                       <Badge variant="secondary" className="text-[0.6rem] gap-1 rounded-md px-2 py-0.5">
                         <Sparkles className="w-2.5 h-2.5 text-blue-500" /> Highlighted
@@ -221,13 +219,25 @@ export default function JobList({ jobs, user, employer, showJobForm, editingJob,
                         <AlertTriangle className="w-2.5 h-2.5 text-red-500" /> Urgent
                       </Badge>
                     )}
-                    {job.is_auto_renew && (
-                      <Badge variant="secondary" className="text-[0.6rem] gap-1 rounded-md px-2 py-0.5">
-                        <RefreshCw className="w-2.5 h-2.5 text-emerald-500" /> Auto-Renew
-                      </Badge>
-                    )}
                     {job.is_imported && <Badge variant="outline" className="text-[0.6rem] rounded-md px-2 py-0.5">Imported</Badge>}
                     {job.is_duplicate && <Badge variant="outline" className="text-[0.6rem] rounded-md px-2 py-0.5">Duplicate</Badge>}
+                  </div>
+                )}
+
+                {/* Moderation issues banner for flagged jobs */}
+                {job.status === "flagged" && job.moderation_result?.issues?.length > 0 && (
+                  <div className="rounded-lg border border-red-200 bg-red-50 p-3 space-y-1.5">
+                    <p className="text-xs font-semibold text-red-800 flex items-center gap-1.5">
+                      <AlertTriangle className="w-3.5 h-3.5" />
+                      Compliance issues detected — please revise:
+                    </p>
+                    {job.moderation_result.issues.map((issue, idx) => (
+                      <div key={idx} className="text-xs text-red-700 pl-5">
+                        <span className="font-medium">"{issue.text}"</span>
+                        <span className="text-red-600"> — {issue.reason}</span>
+                        <Badge variant="outline" className="ml-1.5 text-[0.55rem] px-1.5 py-0 border-red-300 text-red-600">{(issue.category || "").replace(/_/g, " ")}</Badge>
+                      </div>
+                    ))}
                   </div>
                 )}
 
@@ -259,10 +269,11 @@ export default function JobList({ jobs, user, employer, showJobForm, editingJob,
                       {submittingReview === job.id ? "Submitting..." : "Submit for Review"}
                     </Button>
                   )}
-                  {job.is_expired && (
+                  {job.status === "approved" && !job.is_expired && job.expires_at && (
                     <Button
                       size="sm"
-                      className="bg-foreground hover:bg-foreground/90 text-background h-8 text-xs rounded-lg font-medium"
+                      variant="outline"
+                      className="h-8 text-xs rounded-lg font-medium"
                       onClick={() => setRenewConfirm(job)}
                     >
                       <RefreshCw className="w-3 h-3 mr-1" /> Renew
@@ -286,21 +297,40 @@ export default function JobList({ jobs, user, employer, showJobForm, editingJob,
                     ))
                   }
 
-                  {/* Management actions — right side */}
-                  <div className="flex items-center gap-0.5 ml-auto">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => navigate(`/jobs/${job.id}`)}>
-                      <Eye className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => { setEditingJob(job); setShowJobForm(true); }}>
-                      <Pencil className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setDuplicateConfirm(job)}>
-                      <Copy className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-destructive hover:text-destructive" onClick={() => setDeleteConfirm(job)}>
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
-                  </div>
+                  {/* Management actions — right side (disabled for flagged jobs) */}
+                  {job.status !== "flagged" && (
+                    <div className="flex items-center gap-0.5 ml-auto">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => navigate(`/jobs/${job.id}`)}>
+                        <Eye className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => { setEditingJob(job); setShowJobForm(true); }}>
+                        <Pencil className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setDuplicateConfirm(job)}>
+                        <Copy className="w-3.5 h-3.5" />
+                      </Button>
+                      {(job.status === "approved" || isExpired) && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 rounded-lg text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                          title="Download Proof of Advertisement Report"
+                          onClick={() => {
+                            toast.info("Generating report...");
+                            downloadJobReport(job.id, jobService).then(() => toast.success("Report downloaded")).catch(() => toast.error("Failed to generate report"));
+                          }}
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                        </Button>
+                      )}
+                      <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-destructive hover:text-destructive" onClick={() => setDeleteConfirm(job)}>
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  )}
+                  {job.status === "flagged" && (
+                    <p className="text-xs text-red-600 ml-auto">Contact admin to resolve</p>
+                  )}
                 </div>
               </div>
             );
@@ -311,8 +341,8 @@ export default function JobList({ jobs, user, employer, showJobForm, editingJob,
       <ConfirmDialog
         open={!!duplicateConfirm}
         title="Duplicate Job"
-        description={`Duplicating "${duplicateConfirm?.title}" will create a new paid listing. Credits will be deducted or you'll be redirected to Stripe.`}
-        confirmLabel={duplicating ? "Processing..." : "Duplicate & Pay"}
+        description={`Create a copy of "${duplicateConfirm?.title}"? The duplicate will be saved as a draft for you to review and submit.`}
+        confirmLabel={duplicating ? "Processing..." : "Duplicate"}
         onConfirm={() => handleDuplicate(duplicateConfirm.id)}
         onCancel={() => setDuplicateConfirm(null)}
         disabled={duplicating}
@@ -320,8 +350,8 @@ export default function JobList({ jobs, user, employer, showJobForm, editingJob,
       <ConfirmDialog
         open={!!renewConfirm}
         title="Renew Job Listing"
-        description={`Renew "${renewConfirm?.title}" for another 30 days? 1 credit will be deducted.`}
-        confirmLabel={renewing ? "Renewing..." : "Renew (1 credit)"}
+        description={`Extend "${renewConfirm?.title}" for another 30 days? You'll be redirected to Stripe to complete payment.`}
+        confirmLabel={renewing ? "Renewing..." : "Renew Listing"}
         onConfirm={() => handleRenew(renewConfirm.id)}
         onCancel={() => setRenewConfirm(null)}
         disabled={renewing}

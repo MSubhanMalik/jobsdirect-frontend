@@ -7,8 +7,20 @@ import { Search, X } from "lucide-react";
 import { CATEGORY_OPTIONS, JOB_TYPE_OPTIONS, LOCATION_OPTIONS } from "@/lib/siteSettings";
 import SearchableSelect from "@/components/ui/searchable-select";
 
+const WORK_TYPE_OPTIONS = [
+  { value: "on_site", label: "On-site" },
+  { value: "hybrid", label: "Hybrid" },
+  { value: "remote", label: "Remote" },
+];
+
+const DATE_POSTED_OPTIONS = [
+  { value: "24h", label: "Last 24 hours" },
+  { value: "7d", label: "Last 7 days" },
+  { value: "30d", label: "Last 30 days" },
+];
+
 export default function JobFilters({ filters, onChange, onClear }) {
-  const hasFilters = filters.keyword || filters.location || filters.type || filters.category || filters.is_featured || filters.is_highlighted || filters.is_urgent;
+  const hasFilters = filters.keyword || filters.location || filters.type || filters.category || filters.work_type || filters.date_posted || filters.is_highlighted || filters.is_urgent;
 
   return (
     <div className="bg-card rounded-2xl border border-border/60 p-3 shadow-[0_4px_24px_rgba(0,0,0,0.06)]">
@@ -101,12 +113,31 @@ export default function JobFilters({ filters, onChange, onClear }) {
         </div>
       </div>
 
-      {/* Badge filters */}
-      <div className="flex items-center gap-5 px-3 pt-2 pb-1 border-t border-border/30 mt-2">
-        <label className="flex items-center gap-1.5 cursor-pointer">
-          <Checkbox checked={filters.is_featured} onCheckedChange={(v) => onChange({ ...filters, is_featured: Boolean(v) })} />
-          <span className="text-xs text-muted-foreground">Featured</span>
-        </label>
+      {/* Extended filters */}
+      <div className="flex flex-wrap items-center gap-3 px-3 pt-2 pb-1 border-t border-border/30 mt-2">
+        {/* Work Type */}
+        <Select value={filters.work_type || "all"} onValueChange={(v) => onChange({ ...filters, work_type: v === "all" ? "" : v })}>
+          <SelectTrigger className="h-8 w-auto min-w-[100px] border-border/50 rounded-lg text-xs">
+            <SelectValue placeholder="Work Type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Work Types</SelectItem>
+            {WORK_TYPE_OPTIONS.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
+
+        {/* Date Posted */}
+        <Select value={filters.date_posted || "all"} onValueChange={(v) => onChange({ ...filters, date_posted: v === "all" ? "" : v })}>
+          <SelectTrigger className="h-8 w-auto min-w-[120px] border-border/50 rounded-lg text-xs">
+            <SelectValue placeholder="Date Posted" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Any Time</SelectItem>
+            {DATE_POSTED_OPTIONS.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
+
+        {/* Badge filters */}
         <label className="flex items-center gap-1.5 cursor-pointer">
           <Checkbox checked={filters.is_highlighted} onCheckedChange={(v) => onChange({ ...filters, is_highlighted: Boolean(v) })} />
           <span className="text-xs text-muted-foreground">Highlighted</span>

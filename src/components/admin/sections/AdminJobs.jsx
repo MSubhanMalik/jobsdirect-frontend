@@ -25,6 +25,7 @@ const JOB_STATUSES = [
   { value: "all", label: "All statuses" },
   { value: "approved", label: "Approved" },
   { value: "pending_review", label: "Pending Review" },
+  { value: "flagged", label: "Flagged (AI)" },
   { value: "rejected", label: "Rejected" },
   { value: "draft", label: "Draft" },
   { value: "archived", label: "Archived" },
@@ -33,10 +34,12 @@ const JOB_STATUSES = [
 const statusConfig = {
   approved: { dot: "bg-emerald-500", label: "Active" },
   pending_review: { dot: "bg-amber-500", label: "Pending" },
+  flagged: { dot: "bg-red-600", label: "Flagged" },
   rejected: { dot: "bg-red-500", label: "Rejected" },
   draft: { dot: "bg-muted-foreground", label: "Draft" },
   archived: { dot: "bg-muted-foreground", label: "Archived" },
   unpaid: { dot: "bg-orange-500", label: "Unpaid" },
+  suspended: { dot: "bg-red-700", label: "Suspended" },
   expired: { dot: "bg-muted-foreground", label: "Expired" },
 };
 
@@ -112,7 +115,8 @@ export default function AdminJobs() {
           {filtered.map((job) => {
             const config = statusConfig[job.status] || statusConfig.draft;
             return (
-              <div key={job.id} className="flex items-center gap-4 px-5 py-4 hover:bg-muted/20 transition-colors group">
+              <React.Fragment key={job.id}>
+              <div className="flex items-center gap-4 px-5 py-4 hover:bg-muted/20 transition-colors group">
                 {/* Status dot + info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
@@ -137,13 +141,13 @@ export default function AdminJobs() {
                   {job.is_urgent && (
                     <Badge variant="secondary" className="text-[0.6rem] rounded-md px-2 py-0.5 capitalize">Urgent</Badge>
                   )}
-                  {job.is_auto_renew && (
-                    <Badge variant="secondary" className="text-[0.6rem] rounded-md px-2 py-0.5 capitalize">Auto Renew</Badge>
-                  )}
                 </div>
 
                 {/* Status label */}
                 <span className="text-xs font-medium text-muted-foreground capitalize shrink-0 w-16 text-right">{config.label}</span>
+                {job.status === "flagged" && job.moderation_result?.severity && (
+                  <Badge variant="destructive" className="text-[0.55rem] px-1.5 py-0 shrink-0">{job.moderation_result.severity.toUpperCase()}</Badge>
+                )}
 
                 {/* Actions */}
                 <div className="flex items-center gap-1 shrink-0">
@@ -182,6 +186,7 @@ export default function AdminJobs() {
                   </DropdownMenu>
                 </div>
               </div>
+              </React.Fragment>
             );
           })}
         </div>

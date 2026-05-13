@@ -19,7 +19,8 @@ export default function Jobs() {
     location: searchParams.get("location") || "",
     type: searchParams.get("type") || "",
     category: searchParams.get("category") || "",
-    is_featured: searchParams.get("is_featured") === "true",
+    work_type: searchParams.get("work_type") || "",
+    date_posted: searchParams.get("date_posted") || "",
     is_highlighted: searchParams.get("is_highlighted") === "true",
     is_urgent: searchParams.get("is_urgent") === "true",
   });
@@ -27,7 +28,7 @@ export default function Jobs() {
   const [allJobs, setAllJobs] = useState([]);
 
   const { data, isLoading, isFetching } = useQuery({
-    queryKey: ["jobs", filters.keyword, filters.location, filters.type, filters.category, filters.is_featured, filters.is_highlighted, filters.is_urgent, page],
+    queryKey: ["jobs", filters.keyword, filters.location, filters.type, filters.category, filters.work_type, filters.date_posted, filters.is_highlighted, filters.is_urgent, page],
     queryFn: async () => {
       const result = await jobService.list({
         status: "approved",
@@ -35,7 +36,8 @@ export default function Jobs() {
         locationSearch: filters.location || undefined,
         job_type: filters.type || undefined,
         category: filters.category || undefined,
-        is_featured: filters.is_featured ? "true" : undefined,
+        work_type: filters.work_type || undefined,
+        date_posted: filters.date_posted || undefined,
         is_highlighted: filters.is_highlighted ? "true" : undefined,
         is_urgent: filters.is_urgent ? "true" : undefined,
         page,
@@ -67,7 +69,8 @@ export default function Jobs() {
     if (newFilters.location) params.set("location", newFilters.location);
     if (newFilters.type) params.set("type", newFilters.type);
     if (newFilters.category) params.set("category", newFilters.category);
-    if (newFilters.is_featured) params.set("is_featured", "true");
+    if (newFilters.work_type) params.set("work_type", newFilters.work_type);
+    if (newFilters.date_posted) params.set("date_posted", newFilters.date_posted);
     if (newFilters.is_highlighted) params.set("is_highlighted", "true");
     if (newFilters.is_urgent) params.set("is_urgent", "true");
     setSearchParams(params, { replace: true });

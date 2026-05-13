@@ -11,17 +11,17 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LogOut, Home, Briefcase, User, CreditCard, FileText, Send, Settings, MessageSquare, Bookmark, File, Bell, Search } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import RoleSelector from "@/components/dashboard/RoleSelector";
 import NotificationBell from "@/components/dashboard/NotificationBell";
+import { Features } from "@/config/features";
 
 const employerNav = [
   { id: "overview", label: "Overview", path: "/dashboard", icon: Briefcase },
   { id: "profile", label: "Profile", path: "/dashboard/profile", icon: Settings },
   { id: "jobs", label: "My Jobs", path: "/dashboard/jobs", icon: FileText },
-  { id: "cv-search", label: "CV Database", path: "/dashboard/cv-search", icon: Search },
+  { id: "cv-search", label: "CV Database", path: "/dashboard/cv-search", icon: Search, feature: "cvDatabase" },
   { id: "applications", label: "Applications", path: "/dashboard/applications", icon: Send },
   { id: "billing", label: "Billing", path: "/dashboard/billing", icon: CreditCard },
-  { id: "messages", label: "Messages", path: "/dashboard/messages", icon: MessageSquare },
+  { id: "messages", label: "Messages", path: "/dashboard/messages", icon: MessageSquare, feature: "fullMessaging" },
 ];
 
 const employeeNav = [
@@ -30,7 +30,7 @@ const employeeNav = [
   { id: "alerts", label: "Job Alerts", path: "/dashboard/alerts", icon: Bell },
   { id: "cvs", label: "My CVs", path: "/dashboard/cvs", icon: File },
   { id: "profile", label: "Profile", path: "/dashboard/profile", icon: User },
-  { id: "messages", label: "Messages", path: "/dashboard/messages", icon: MessageSquare },
+  { id: "messages", label: "Messages", path: "/dashboard/messages", icon: MessageSquare, feature: "fullMessaging" },
 ];
 
 export default function DashboardLayout() {
@@ -117,12 +117,12 @@ export default function DashboardLayout() {
   
   const navItems = useMemo(() => {
     let items = isEmployer ? employerNav : employeeNav;
+    // Feature flags — hide items whose feature is disabled
+    items = items.filter(item => !item.feature || Features[item.feature]);
     if (isEmployer) {
       if (!isApproved) {
-        // Only show Overview and Profile for unapproved employers
         items = items.filter(item => item.id === "overview" || item.id === "profile");
       } else {
-        // For approved employers, check for CV Database access
         const hasCVAccess = employer.candidate_database_access;
         if (!hasCVAccess) {
           items = items.filter(item => item.id !== "cv-search");
@@ -142,6 +142,13 @@ export default function DashboardLayout() {
       });
 
       const currentId = currentItem?.id;
+
+      // Block access to feature-flagged routes
+      const currentNavItem = employerNav.find(item => item.id === currentId);
+      if (currentNavItem?.feature && !Features[currentNavItem.feature]) {
+        navigate("/dashboard", { replace: true });
+        return;
+      }
 
       if (!isApproved && currentId && currentId !== "overview" && currentId !== "profile") {
         navigate("/dashboard", { replace: true });
@@ -175,10 +182,17 @@ export default function DashboardLayout() {
   }
 
   if (!employer && !employee) {
-    return <RoleSelector user={user} onCreated={(type, data) => {
-      if (type === "employer") setEmployer(data);
-      else setEmployee(data);
-    }} />;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4">
+        <div className="text-center max-w-md">
+          <h2 className="text-xl font-display font-bold text-foreground mb-2">Profile Setup Required</h2>
+          <p className="text-sm text-muted-foreground mb-6">Your account doesn't have a profile yet. Please sign up again to set up your employer or job seeker profile.</p>
+          <Button onClick={() => { authService.logout("/auth"); }} className="bg-accent hover:bg-accent/90 text-accent-foreground rounded-xl px-6">
+            Sign Up Again
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   const initials = `${(user.first_name || "U")[0]}${(user.last_name || "")[0] || ""}`.toUpperCase();

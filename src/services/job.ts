@@ -73,6 +73,24 @@ class JobService {
     return res.data;
   }
 
+  async scanContent(title: string, description: string, jobId?: string): Promise<{ approved: boolean; severity?: string; issues: any[] }> {
+    const res = await axiosInstance.post(api.endpoints.JOB_SCAN_CONTENT, { title, description, job_id: jobId });
+    // Backend wraps in { data, message, status, success } — unwrap
+    return (res.data as any)?.data || res.data;
+  }
+
+  async resubmit(id: string, payload: Record<string, any>): Promise<Job> {
+    const url = api.endpoints.JOB_RESUBMIT.replace(":id", id);
+    const res = await axiosInstance.post<Job>(url, payload);
+    return res.data;
+  }
+
+  async getReport(id: string): Promise<any> {
+    const url = api.endpoints.JOB_REPORT.replace(":id", id);
+    const res = await axiosInstance.get(url);
+    return res.data;
+  }
+
   async scrapeJobsIreland(payload: Record<string, any>): Promise<any> {
     const res = await axiosInstance.post(
       api.endpoints.JOB_SCRAPE_JOBSIRELAND,
