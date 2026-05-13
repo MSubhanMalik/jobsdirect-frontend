@@ -6,10 +6,13 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "react-toastify";
-import { FileText, Upload, Star, Trash2, Download, Wand2, Lock, Palette, Crown, Loader2, ArrowRight } from "lucide-react";
+import { FileText, Upload, Star, Trash2, Download, Wand2, Lock, Palette, Crown, Loader2, ArrowRight, Pencil, Plus, X } from "lucide-react";
 import cvService from "@/services/cv";
 import paymentService from "@/services/payment";
 import ConfirmDialog from "@/components/ui/confirm-dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 const TEMPLATE_INFO = {
   basic: { label: "Basic", description: "Clean, minimal — blue accent headers" },
@@ -126,6 +129,40 @@ export default function DashboardCVs() {
     catch { toast.error("Could not delete CV."); }
   };
 
+  const [editingCV, setEditingCV] = useState(null);
+  const [editForm, setEditForm] = useState({});
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  const openEditCV = (cv) => {
+    setEditForm({
+      title: cv.title || "",
+      bio: cv.bio || "",
+      skills: cv.skills || "",
+      work_experience: Array.isArray(cv.work_experience) ? cv.work_experience : [],
+      education: Array.isArray(cv.education) ? cv.education : [],
+    });
+    setEditingCV(cv);
+  };
+
+  const saveEditCV = async () => {
+    setSavingEdit(true);
+    try {
+      await cvService.updateContent(editingCV.id, editForm);
+      toast.success("CV content updated.");
+      setEditingCV(null);
+      refresh();
+    } catch (err) { toast.error(err.message || "Failed to save."); }
+    finally { setSavingEdit(false); }
+  };
+
+  const addWorkExp = () => setEditForm(f => ({ ...f, work_experience: [...f.work_experience, { job_title: "", company: "", location: "", start_date: "", end_date: "", current: false, responsibilities: "" }] }));
+  const removeWorkExp = (i) => setEditForm(f => ({ ...f, work_experience: f.work_experience.filter((_, idx) => idx !== i) }));
+  const updateWorkExp = (i, key, val) => setEditForm(f => { const u = [...f.work_experience]; u[i] = { ...u[i], [key]: val }; return { ...f, work_experience: u }; });
+
+  const addEdu = () => setEditForm(f => ({ ...f, education: [...f.education, { degree: "", institution: "", field_of_study: "", start_date: "", end_date: "" }] }));
+  const removeEdu = (i) => setEditForm(f => ({ ...f, education: f.education.filter((_, idx) => idx !== i) }));
+  const updateEdu = (i, key, val) => setEditForm(f => { const u = [...f.education]; u[i] = { ...u[i], [key]: val }; return { ...f, education: u }; });
+
   const canAddMore = cvs.length < limits.maxCVs;
   const planInfo = PLAN_INFO[plan] || PLAN_INFO.free;
 
@@ -219,6 +256,9 @@ export default function DashboardCVs() {
                 </div>
               </div>
               <div className="flex items-center gap-1 shrink-0">
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => openEditCV(cv)} title="Edit CV content">
+                  <Pencil className="w-3.5 h-3.5" />
+                </Button>
                 {!cv.is_default && (
                   <Button variant="ghost" size="sm" className="h-8 text-xs rounded-lg" onClick={() => handleSetDefault(cv.id)}>
                     <Star className="w-3.5 h-3.5 mr-1" /> Default
@@ -321,6 +361,86 @@ export default function DashboardCVs() {
         </div>
         );
       })()}
+
+      {/* Edit CV Content Dialog */}
+      <Dialog open={!!editingCV} onOpenChange={(v) => !v && setEditingCV(null)}>
+        <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-display">Edit CV — {editingCV?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6 py-4">
+            {/* Title & Bio */}
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <Label className="text-sm font-medium">Professional Title</Label>
+                <Input value={editForm.title || ""} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} placeholder="e.g. Senior Frontend Developer" className="h-9" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-sm font-medium">Professional Summary</Label>
+                <textarea value={editForm.bio || ""} onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })} placeholder="Brief overview of your experience and goals..." className="w-full min-h-[80px] px-3 py-2 rounded-lg border border-input bg-background text-sm resize-none focus:outline-none focus:ring-1 focus:ring-ring" />
+              </div>
+            </div>
+
+            {/* Skills */}
+            <div className="space-y-1">
+              <Label className="text-sm font-medium">Skills</Label>
+              <Input value={editForm.skills || ""} onChange={(e) => setEditForm({ ...editForm, skills: e.target.value })} placeholder="React, TypeScript, Node.js, PostgreSQL..." className="h-9" />
+              <p className="text-xs text-muted-foreground">Comma-separated list</p>
+            </div>
+
+            {/* Work Experience */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">Work Experience</Label>
+                <Button type="button" variant="outline" size="sm" className="h-7 text-xs rounded-lg" onClick={addWorkExp}><Plus className="w-3 h-3 mr-1" />Add</Button>
+              </div>
+              {(editForm.work_experience || []).map((exp, i) => (
+                <div key={i} className="rounded-lg border border-border/50 p-3 space-y-2 relative">
+                  <button type="button" className="absolute top-2 right-2 text-muted-foreground hover:text-destructive" onClick={() => removeWorkExp(i)}><X className="w-3.5 h-3.5" /></button>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input value={exp.job_title || ""} onChange={(e) => updateWorkExp(i, "job_title", e.target.value)} placeholder="Job Title" className="h-8 text-sm" />
+                    <Input value={exp.company || ""} onChange={(e) => updateWorkExp(i, "company", e.target.value)} placeholder="Company" className="h-8 text-sm" />
+                    <Input value={exp.location || ""} onChange={(e) => updateWorkExp(i, "location", e.target.value)} placeholder="Location" className="h-8 text-sm" />
+                    <div className="grid grid-cols-2 gap-1">
+                      <Input type="date" value={exp.start_date || ""} onChange={(e) => updateWorkExp(i, "start_date", e.target.value)} className="h-8 text-xs" />
+                      <Input type="date" value={exp.end_date || ""} onChange={(e) => updateWorkExp(i, "end_date", e.target.value)} className="h-8 text-xs" disabled={exp.current} />
+                    </div>
+                  </div>
+                  <textarea value={exp.responsibilities || ""} onChange={(e) => updateWorkExp(i, "responsibilities", e.target.value)} placeholder="Key responsibilities..." className="w-full min-h-[50px] px-2 py-1.5 rounded border border-input bg-background text-xs resize-none" />
+                </div>
+              ))}
+            </div>
+
+            {/* Education */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">Education</Label>
+                <Button type="button" variant="outline" size="sm" className="h-7 text-xs rounded-lg" onClick={addEdu}><Plus className="w-3 h-3 mr-1" />Add</Button>
+              </div>
+              {(editForm.education || []).map((edu, i) => (
+                <div key={i} className="rounded-lg border border-border/50 p-3 space-y-2 relative">
+                  <button type="button" className="absolute top-2 right-2 text-muted-foreground hover:text-destructive" onClick={() => removeEdu(i)}><X className="w-3.5 h-3.5" /></button>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input value={edu.degree || ""} onChange={(e) => updateEdu(i, "degree", e.target.value)} placeholder="Degree / Qualification" className="h-8 text-sm" />
+                    <Input value={edu.institution || ""} onChange={(e) => updateEdu(i, "institution", e.target.value)} placeholder="Institution" className="h-8 text-sm" />
+                    <Input value={edu.field_of_study || ""} onChange={(e) => updateEdu(i, "field_of_study", e.target.value)} placeholder="Field of Study" className="h-8 text-sm" />
+                    <div className="grid grid-cols-2 gap-1">
+                      <Input type="date" value={edu.start_date || ""} onChange={(e) => updateEdu(i, "start_date", e.target.value)} className="h-8 text-xs" />
+                      <Input type="date" value={edu.end_date || ""} onChange={(e) => updateEdu(i, "end_date", e.target.value)} className="h-8 text-xs" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingCV(null)}>Cancel</Button>
+            <Button onClick={saveEditCV} disabled={savingEdit} className="bg-accent hover:bg-accent/90 text-accent-foreground">
+              {savingEdit ? <><Loader2 className="w-4 h-4 animate-spin mr-1.5" />Saving...</> : "Save CV Content"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <ConfirmDialog
         open={!!deleteConfirm}
