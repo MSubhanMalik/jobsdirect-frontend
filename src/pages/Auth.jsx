@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { AlertCircle, KeyRound, Lock, Mail, User, Loader2, Building2, Briefcase, ArrowLeft } from 'lucide-react';
+import { AlertCircle, KeyRound, Lock, Mail, Loader2, Building2, Briefcase, ArrowLeft } from 'lucide-react';
 // Building2 kept for role selection card icon
 import authService from "@/services/auth";
 import { useAuthStore } from "@/stores/authStore";
@@ -65,7 +65,7 @@ export default function Auth() {
   const [signupStep, setSignupStep] = useState('role'); // 'role' | 'form'
   const [selectedRole, setSelectedRole] = useState(null); // 'employer' | 'employee'
   const [form, setForm] = useState({
-    first_name: '', last_name: '', email: '', password: '',
+    email: '', password: '',
   });
   const [forgotEmail, setForgotEmail] = useState('');
   const [resetForm, setResetForm] = useState({ token: initialResetToken, password: '' });
@@ -84,8 +84,8 @@ export default function Auth() {
     : 'Welcome back';
 
   const subtitle = isRegisterRole ? 'How would you like to use JobsDirect?'
-    : isRegisterForm && selectedRole === 'employer' ? 'Set up your company profile'
-    : isRegisterForm ? 'A few details to get started'
+    : isRegisterForm && selectedRole === 'employer' ? 'Create your employer account'
+    : isRegisterForm ? 'Enter your email and password to get started'
     : mode === 'forgot' ? 'Enter your email to receive reset instructions'
     : mode === 'reset' ? 'Use your token to set a new password'
     : 'Sign in to your JobsDirect.ie account';
@@ -112,8 +112,6 @@ export default function Auth() {
     try {
       if (mode === 'register') {
         const payload = {
-          first_name: form.first_name,
-          last_name: form.last_name,
           email: form.email,
           password: form.password,
           role: selectedRole,
@@ -254,28 +252,6 @@ export default function Auth() {
 
               {/* Form */}
               <form className="space-y-4" onSubmit={handleSubmit}>
-                {isRegisterForm && (
-                  <>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
-                        <Label htmlFor="first_name" className="text-sm font-medium">First name</Label>
-                        <div className="relative">
-                          <User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/40" />
-                          <Input id="first_name" {...f('first_name')} placeholder="John" className="h-11 pl-10 rounded-xl" required />
-                        </div>
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label htmlFor="last_name" className="text-sm font-medium">Last name</Label>
-                        <div className="relative">
-                          <User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/40" />
-                          <Input id="last_name" {...f('last_name')} placeholder="Doe" className="h-11 pl-10 rounded-xl" required />
-                        </div>
-                      </div>
-                    </div>
-
-                  </>
-                )}
-
                 {(mode === 'login' || isRegisterForm) && (
                   <div className="space-y-1.5">
                     <Label htmlFor="email" className="text-sm font-medium">Email</Label>

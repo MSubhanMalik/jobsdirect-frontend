@@ -57,13 +57,15 @@ export default function EmployerProfile({ employer, setEmployer }) {
 
   const visibleGroups = useMemo(
     () =>
-      COMPANY_FIELD_GROUPS.map((group) => ({
-        ...group,
-        fields: group.fields.filter((field) => {
-          if (field.adminOnly || field.manageInEmployerForm === false) return false;
-          return companyFormConfig?.[field.key]?.visible !== false;
-        }),
-      })).filter((group) => group.fields.length),
+      COMPANY_FIELD_GROUPS
+        .filter((group) => group.id !== "contact_person")
+        .map((group) => ({
+          ...group,
+          fields: group.fields.filter((field) => {
+            if (field.adminOnly || field.manageInEmployerForm === false) return false;
+            return companyFormConfig?.[field.key]?.visible !== false;
+          }),
+        })).filter((group) => group.fields.length),
     [companyFormConfig],
   );
 
@@ -91,19 +93,7 @@ export default function EmployerProfile({ employer, setEmployer }) {
     try {
       const updated = await employerService.update(employer.id, form);
       setEmployer({ ...employer, ...updated });
-      // Sync name to auth store so header updates
-      if (form.first_name || form.last_name) {
-        const { useAuthStore } = await import("@/stores/authStore");
-        const currentUser = useAuthStore.getState().user;
-        if (currentUser) {
-          useAuthStore.getState().setUser({
-            ...currentUser,
-            first_name: form.first_name || currentUser.first_name,
-            last_name: form.last_name || currentUser.last_name,
-          });
-        }
-      }
-      toast.success("Profile Updated — Your employer profile has been saved.");
+      toast.success("Profile Updated — Your company profile has been saved.");
     } catch (err) {
       toast.error(err.message || "Failed to update profile");
     } finally {

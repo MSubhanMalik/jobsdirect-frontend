@@ -57,6 +57,7 @@ const DashboardCVs = lazy(() => import('./pages/dashboard/DashboardCVs'));
 const DashboardCVSearch = lazy(() => import('./pages/dashboard/DashboardCVSearch'));
 const DashboardCandidateDetail = lazy(() => import('./pages/dashboard/DashboardCandidateDetail'));
 const DashboardNotifications = lazy(() => import('./pages/dashboard/NotificationsPage'));
+const DashboardUserProfile = lazy(() => import('./pages/dashboard/DashboardUserProfile'));
 const DashboardJobAlerts = lazy(() => import('./pages/dashboard/DashboardJobAlerts'));
 
 function PageLoader() {
@@ -94,6 +95,7 @@ function App() {
                 <Route path="/dashboard" element={<DashboardLayout />}>
                   <Route index element={<DashboardOverview />} />
                   <Route path="profile" element={<DashboardProfile />} />
+                  <Route path="user-profile" element={<DashboardUserProfile />} />
                   <Route path="jobs" element={<DashboardJobs />} />
                   <Route path="applications" element={<DashboardApplications />} />
                   <Route path="applications/:id" element={<DashboardApplicationDetail />} />

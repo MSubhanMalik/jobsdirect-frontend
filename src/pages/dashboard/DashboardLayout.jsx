@@ -16,7 +16,8 @@ import { Features } from "@/config/features";
 
 const employerNav = [
   { id: "overview", label: "Overview", path: "/dashboard", icon: Briefcase },
-  { id: "profile", label: "Profile", path: "/dashboard/profile", icon: Settings },
+  { id: "profile", label: "Company Profile", path: "/dashboard/profile", icon: Settings },
+  { id: "user-profile", label: "User Profile", path: "/dashboard/user-profile", icon: User },
   { id: "jobs", label: "My Jobs", path: "/dashboard/jobs", icon: FileText },
   { id: "applications", label: "Applications", path: "/dashboard/applications", icon: Send },
   { id: "team", label: "Team", path: "/dashboard/team", icon: Users, ownerOnly: true },
@@ -145,7 +146,7 @@ export default function DashboardLayout() {
     // Owner-only tabs (Team, Billing)
     if (!isOwner) items = items.filter(item => !item.ownerOnly);
     if (isEmployer && !isApproved) {
-      items = items.filter(item => item.id === "overview" || item.id === "profile");
+      items = items.filter(item => item.id === "overview" || item.id === "profile" || item.id === "user-profile");
     }
     return items;
   }, [isEmployer, isApproved, isOwner, employer?.candidate_database_access]);
@@ -168,7 +169,7 @@ export default function DashboardLayout() {
         return;
       }
 
-      if (!isApproved && currentId && currentId !== "overview" && currentId !== "profile") {
+      if (!isApproved && currentId && currentId !== "overview" && currentId !== "profile" && currentId !== "user-profile") {
         navigate("/dashboard", { replace: true });
         toast.warning("Profile Verification Required — Please upload your documents and wait for approval to access all features.");
       }
